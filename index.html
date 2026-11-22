@@ -21,10 +21,12 @@
     --brand-ink: #ffffff;
     --accent: #e8f1e6;
     --danger: #b3261e;
+    --hdr-sel: rgba(255,255,255,.2);
+    --knob: #ffffff;
     --radius: 14px;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) { color-scheme: dark;
       --bg: #121712;
       --card: #1b221c;
       --ink: #e6ede5;
@@ -36,6 +38,17 @@
       --danger: #ff8a80;
     }
   }
+  :root[data-theme="dark"] { color-scheme: dark;
+      --bg: #121712;
+      --card: #1b221c;
+      --ink: #e6ede5;
+      --muted: #9aa99b;
+      --line: #2c372d;
+      --brand: #5fae6c;
+      --brand-ink: #0d140e;
+      --accent: #213024;
+      --danger: #ff8a80;
+    }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body {
@@ -43,21 +56,22 @@
     background: var(--bg);
     color: var(--ink);
     font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    padding: env(safe-area-inset-top) 0 calc(24px + env(safe-area-inset-bottom));
+    padding-bottom: 24px;
   }
   header {
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
     background: var(--brand);
     color: var(--brand-ink);
-    padding: 14px 16px;
+    padding-block: 14px;
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
   }
   header h1 { font-size: 1.15rem; margin: 0; }
   header select {
     font: inherit; padding: 6px 8px; border-radius: 10px; border: 0;
-    background: rgba(255,255,255,.2); color: inherit;
+    background: var(--hdr-sel); color: inherit;
   }
-  header select option { color: #000; }
-  main { max-width: 640px; margin: 0 auto; padding: 12px 16px; }
+  header select option { color: var(--ink); background: var(--card); }
+  main { max-width: 640px; margin: 0 auto; padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .card {
     background: var(--card); border: 1px solid var(--line);
     border-radius: var(--radius); padding: 14px; margin-bottom: 14px;
@@ -71,6 +85,14 @@
   .tile .val { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .tile .val small { font-size: .8rem; font-weight: 500; color: var(--muted); }
   .tile.big { grid-column: 1 / -1; }
+  #otherTiles { display: contents; }
+  [hidden] { display: none !important; }
+  header select { width: auto; flex: 0 0 auto; }
+  .spray-total { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 10px 12px;
+    background: var(--accent); border-radius: 12px; }
+  .spray-total span { flex: 1; font-size: .9rem; color: var(--muted); }
+  .spray-total strong { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+  .spray-total select { width: auto; min-width: 84px; background: var(--card); }
 
   label { display: block; font-size: .85rem; color: var(--muted); margin: 10px 0 4px; }
   input, select, textarea {
@@ -100,7 +122,7 @@
   .switch input { appearance: none; -webkit-appearance: none; width: 52px; min-height: 0; height: 30px; padding: 0;
     border-radius: 999px; background: var(--line); position: relative; flex: 0 0 auto; border: 0; }
   .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
-    border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+    border-radius: 50%; background: var(--knob); transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
   .switch input:checked { background: var(--brand); }
   .switch input:checked::after { left: 25px; }
   .gps-status { font-size: .82rem; color: var(--muted); margin-top: 6px; }
@@ -122,15 +144,25 @@
   .toast.show { opacity: 1; }
   details summary { cursor: pointer; font-weight: 600; }
   .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
+  .sync { font-size: .8rem; color: var(--muted); margin: 0 0 12px; }
+  .sync.warn { color: var(--danger); }
+  .copybox { display: flex; gap: 8px; margin-top: 8px; }
+  .copybox textarea { min-height: 120px; font-size: .85rem; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  header { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+  body { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  .gps-status { font-size: .82rem; color: var(--muted); margin-top: 6px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>🌿 Weed Spray Log</h1>
+  <h1>Weed Spray Log</h1>
   <select id="yearSel" aria-label="Year"></select>
 </header>
 
 <main>
+  <p class="sync" id="sync">Loading your log…</p>
   <!-- Running totals -->
   <section class="card" aria-live="polite">
     <h2>Running total — <span id="totYear"></span></h2>
@@ -139,7 +171,9 @@
       <div class="tile"><div class="lbl">Vinegar (50%)</div><div class="val" id="tVinegar">0</div></div>
       <div class="tile"><div class="lbl">Salt</div><div class="val" id="tSalt">0</div></div>
       <div class="tile"><div class="lbl">Dish soap</div><div class="val" id="tSoap">0</div></div>
-      <div class="tile"><div class="lbl">Times sprayed</div><div class="val" id="tCount">0</div></div>
+      <div class="tile"><div class="lbl">Water</div><div class="val" id="tWater">0</div></div>
+      <div id="otherTiles"></div>
+      <div class="tile" id="countTile"><div class="lbl">Times sprayed</div><div class="val" id="tCount">0</div></div>
     </div>
   </section>
 
@@ -156,18 +190,11 @@
     <label for="place">Location name</label>
     <input id="place" list="placeList" placeholder="e.g. Front driveway, fence line">
     <datalist id="placeList"></datalist>
-
     <div class="switch">
       <span>Use GPS location</span>
       <input type="checkbox" id="gpsToggle" aria-label="Use GPS location">
     </div>
-    <div class="gps-status" id="gpsStatus">GPS is off — only the location name will be saved.</div>
-
-    <label for="total">Total amount sprayed</label>
-    <div class="amt">
-      <input type="number" id="total" inputmode="decimal" min="0" step="any" placeholder="0">
-      <select id="totalUnit"></select>
-    </div>
+    <div class="gps-status" id="gpsStatus">GPS is off. Only the location name will be saved.</div>
 
     <label for="vinegar">Vinegar (50%)</label>
     <div class="amt">
@@ -185,6 +212,26 @@
     <div class="amt">
       <input type="number" id="soap" inputmode="decimal" min="0" step="any" placeholder="0">
       <select id="soapUnit"></select>
+    </div>
+
+    <label for="water">Water</label>
+    <div class="amt">
+      <input type="number" id="water" inputmode="decimal" min="0" step="any" placeholder="0">
+      <select id="waterUnit"></select>
+    </div>
+
+    <label for="otherName">Other chemical (optional)</label>
+    <select id="otherName"></select>
+    <input id="otherNew" placeholder="Chemical name, e.g. Roundup" style="margin-top:8px" hidden>
+    <div class="amt" id="otherAmt" style="margin-top:8px" hidden>
+      <input type="number" id="other" inputmode="decimal" min="0" step="any" placeholder="0" aria-label="Other chemical amount">
+      <select id="otherUnit" aria-label="Other chemical unit"></select>
+    </div>
+
+    <div class="spray-total" aria-live="polite">
+      <span>Total this spray<br><small>adds up automatically</small></span>
+      <strong id="liveTotal">0</strong>
+      <select id="totalUnit" aria-label="Unit for total sprayed"></select>
     </div>
 
     <div class="btns" style="margin-top:10px">
@@ -205,12 +252,12 @@
     <label for="email">Email to</label>
     <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
     <div class="btns" style="margin-top:10px">
-      <button type="button" class="primary" id="emailBtn">📧 Email PDF</button>
+      <button type="button" class="primary" id="emailBtn">Email PDF</button>
     </div>
     <div class="btns" style="margin-top:8px">
       <button type="button" id="pdfBtn">Download PDF</button>
     </div>
-    <p class="hint">On a phone, “Email PDF” opens the share sheet with the PDF attached — pick Mail or Gmail. On a computer it downloads the PDF and opens a new email; attach the downloaded file.</p>
+    <p class="hint">On a phone, “Email PDF” opens the share sheet with the PDF attached. Pick Mail or Gmail. On a computer it downloads the PDF and opens a new email; attach the downloaded file.</p>
   </section>
 
   <!-- Log -->
@@ -239,148 +286,122 @@
 <script src="lib/jspdf.plugin.autotable.min.js"></script>
 <script>
 (() => {
-  // ---------- Units (all volume, converted through fluid ounces) ----------
+  // All amounts are volumes; convert through fluid ounces.
   const UNITS = { gal: 128, qt: 32, pt: 16, cup: 8, 'fl oz': 1, tbsp: 0.5, tsp: 1/6, L: 33.814, mL: 0.033814 };
-  const DEFAULT_UNITS = { total: 'gal', vinegar: 'gal', salt: 'cup', soap: 'tbsp' };
-  const INGREDIENTS = ['total', 'vinegar', 'salt', 'soap'];
-  const LABELS = { total: 'Total sprayed', vinegar: 'Vinegar (50%)', salt: 'Salt', soap: 'Dish soap' };
-
-  const KEY = 'sprayLog.v1';
+  const DEFAULT_UNITS = { total: 'gal', vinegar: 'gal', salt: 'cup', soap: 'tbsp', water: 'gal' };
+  const INGREDIENTS = ['total', 'vinegar', 'salt', 'soap', 'water'];
+  const PARTS = ['vinegar', 'salt', 'soap', 'water']; // fixed mix ingredients; 'other' is the optional extra chemical
+  const NEW_CHEM = '__new__';
+  const LABELS = { total: 'Total sprayed', vinegar: 'Vinegar (50%)', salt: 'Salt', soap: 'Dish soap', water: 'Water' };
+  const LS_KEY = 'sprayLog.v1';
   const $ = id => document.getElementById(id);
 
+  let entries = [];
+  let settings = { email: '', units: { ...DEFAULT_UNITS }, mix: null, chemicals: [], otherUnits: {}, gps: false };
+  let col = null; // db collection for this person, or null when using this device only
+
   // ---------- Storage ----------
-  function load() {
-    try {
-      const d = JSON.parse(localStorage.getItem(KEY));
-      if (d && Array.isArray(d.entries)) return d;
-    } catch (e) {}
-    return { entries: [], settings: {} };
+  function lsLoad() {
+    try { const d = JSON.parse(localStorage.getItem(LS_KEY)); if (d && Array.isArray(d.entries)) return d; } catch (e) {}
+    return null;
   }
-  let db = load();
-  db.settings = Object.assign({ gps: false, email: '', units: { ...DEFAULT_UNITS }, mix: null }, db.settings);
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(db)); }
-    catch (e) { toast('Could not save on this device — make a backup!'); }
+  function lsSave() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ entries, settings })); } catch (e) {}
+  }
+  function setSync(msg, warn) { const el = $('sync'); el.textContent = msg; el.classList.toggle('warn', !!warn); }
+
+  async function putEntry(e) {
+    lsSave();
+    if (col) { try { await col.doc(e.id).set({ kind: 'entry', ...clean(e) }); } catch (err) { setSync('Could not save to your account. Saved on this device only.', true); } }
+  }
+  async function removeEntry(id) {
+    lsSave();
+    if (col) { try { await col.doc(id).delete(); } catch (err) { setSync('Could not delete from your account.', true); } }
+  }
+  let settingsTimer;
+  function putSettings() {
+    lsSave();
+    if (!col) return;
+    clearTimeout(settingsTimer);
+    settingsTimer = setTimeout(() => col.doc('settings').set({ kind: 'settings', ...clean(settings) }).catch(() => {}), 500);
+  }
+  const clean = o => JSON.parse(JSON.stringify(o));
+
+  async function connect() {
+    const local = lsLoad();
+    if (local) { entries = local.entries; settings = Object.assign(settings, local.settings || {}); }
+    settings.units = Object.assign({ ...DEFAULT_UNITS }, settings.units);
+    applySettings(); resetForm(); render();
+    setSync('Saved on this device. Use Backup & restore now and then so you never lose it.');
   }
 
   // ---------- Helpers ----------
-  const fmtNum = n => {
-    if (!isFinite(n) || n === 0) return '0';
-    const r = Math.round(n * 100) / 100;
-    return r.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  };
-  const convert = (amt, from, to) => amt * UNITS[from] / UNITS[to];
+  const fmtNum = n => (!isFinite(n) || n === 0) ? '0' : (Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const convert = (amt, from, to) => amt * (UNITS[from] || 1) / (UNITS[to] || 1);
   const pad = n => String(n).padStart(2, '0');
   const todayStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const timeStr = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  const prettyDate = s => {
-    const [y, m, d] = s.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  };
-  const prettyTime = s => {
-    const [h, m] = s.split(':').map(Number);
-    return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-  };
-  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const prettyDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }); };
+  const prettyTime = s => { const [h, m] = s.split(':').map(Number); return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); };
+  const uid = () => 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let toastTimer;
-  function toast(msg) {
-    const t = $('toast'); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
-  }
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2800); }
 
-  // ---------- Year selection ----------
+  // ---------- Year ----------
   let selectedYear = new Date().getFullYear();
-  function yearsAvailable() {
-    const ys = new Set(db.entries.map(e => Number(e.date.slice(0, 4))));
-    ys.add(new Date().getFullYear());
-    return [...ys].sort((a, b) => b - a);
-  }
   function renderYears() {
-    const sel = $('yearSel');
-    sel.innerHTML = yearsAvailable().map(y => `<option value="${y}">${y}</option>`).join('');
-    sel.value = selectedYear;
+    const ys = new Set(entries.map(e => Number(e.date.slice(0, 4)))); ys.add(new Date().getFullYear()); ys.add(selectedYear);
+    $('yearSel').innerHTML = [...ys].sort((a, b) => b - a).map(y => `<option value="${y}">${y}</option>`).join('');
+    $('yearSel').value = selectedYear;
   }
   $('yearSel').addEventListener('change', e => { selectedYear = Number(e.target.value); render(); });
-  const entriesForYear = y => db.entries
-    .filter(e => e.date.startsWith(String(y)))
-    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-
-  // ---------- Totals ----------
+  const entriesForYear = y => entries.filter(e => e.date && e.date.startsWith(String(y))).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   function totalsFor(list) {
-    const out = {};
-    for (const k of INGREDIENTS) {
-      const unit = db.settings.units[k];
-      out[k] = { amt: list.reduce((s, e) => s + (e[k] ? convert(e[k].amt, e[k].unit, unit) : 0), 0), unit };
+    const out = { count: list.length };
+    for (const k of INGREDIENTS) { const unit = settings.units[k]; out[k] = { amt: list.reduce((s, e) => s + (e[k] ? convert(e[k].amt, e[k].unit, unit) : 0), 0), unit }; }
+    out.others = {};
+    for (const e of list) {
+      if (!e.other) continue;
+      const name = e.other.name, unit = (settings.otherUnits || {})[name] || e.other.unit;
+      out.others[name] = out.others[name] || { amt: 0, unit };
+      out.others[name].amt += convert(e.other.amt, e.other.unit, out.others[name].unit);
     }
-    out.count = list.length;
     return out;
   }
 
   // ---------- Render ----------
+  let pendingDelete = null;
   function render() {
     renderYears();
-    const list = entriesForYear(selectedYear);
-    const t = totalsFor(list);
+    const list = entriesForYear(selectedYear), t = totalsFor(list);
     $('totYear').textContent = selectedYear;
-    $('tTotal').innerHTML = `${fmtNum(t.total.amt)} <small>${t.total.unit}</small>`;
-    $('tVinegar').innerHTML = `${fmtNum(t.vinegar.amt)} <small>${t.vinegar.unit}</small>`;
-    $('tSalt').innerHTML = `${fmtNum(t.salt.amt)} <small>${t.salt.unit}</small>`;
-    $('tSoap').innerHTML = `${fmtNum(t.soap.amt)} <small>${t.soap.unit}</small>`;
-    $('tCount').textContent = t.count;
-    $('logCount').textContent = list.length;
-
-    const places = [...new Set(db.entries.map(e => e.place).filter(Boolean))];
-    $('placeList').innerHTML = places.map(p => `<option value="${esc(p)}">`).join('');
-
-    const log = $('log');
-    if (!list.length) { log.innerHTML = `<p class="empty">No sprays logged for ${selectedYear} yet.</p>`; return; }
-    log.innerHTML = list.slice().reverse().map(e => {
-      const amts = INGREDIENTS.filter(k => k !== 'total' && e[k])
-        .map(k => `${LABELS[k].replace(' (50%)', '')} ${fmtNum(e[k].amt)} ${e[k].unit}`).join(' · ');
-      const gps = e.gps ? ` · <a href="https://maps.google.com/?q=${e.gps.lat},${e.gps.lon}" target="_blank" rel="noopener">map</a>` : '';
+    for (const [k, id] of [['total', 'tTotal'], ['vinegar', 'tVinegar'], ['salt', 'tSalt'], ['soap', 'tSoap'], ['water', 'tWater']]) $(id).innerHTML = `${fmtNum(t[k].amt)} <small>${esc(t[k].unit)}</small>`;
+    $('tCount').textContent = t.count; $('logCount').textContent = list.length;
+    const names = Object.keys(t.others).sort();
+    $('countTile').classList.toggle('big', names.length % 2 === 0);
+    $('otherTiles').innerHTML = names.map(n => `<div class="tile"><div class="lbl">${esc(n)}</div><div class="val">${fmtNum(t.others[n].amt)} <small>${esc(t.others[n].unit)}</small></div></div>`).join('');
+    renderChemOptions();
+    $('placeList').innerHTML = [...new Set(entries.map(e => e.place).filter(Boolean))].map(p => `<option value="${esc(p)}">`).join('');
+    if (!list.length) { $('log').innerHTML = `<p class="empty">No sprays logged for ${selectedYear} yet. Fill in the form above and tap “Save spray”.</p>`; return; }
+    $('log').innerHTML = list.slice().reverse().map(e => {
+      const amts = PARTS.filter(k => e[k]).map(k => `${LABELS[k].replace(' (50%)', '')} ${fmtNum(e[k].amt)} ${esc(e[k].unit)}`)
+        .concat(e.other ? [`${esc(e.other.name)} ${fmtNum(e.other.amt)} ${esc(e.other.unit)}`] : []).join(' · ');
       return `<div class="entry">
-        <div class="top"><span>${prettyDate(e.date)}, ${prettyTime(e.time)}</span>
-          <span>${e.total ? fmtNum(e.total.amt) + ' ' + e.total.unit : ''}</span></div>
-        <div class="meta">${esc(e.place || (e.gps ? 'GPS location' : 'No location'))}${gps}</div>
+        <div class="top"><span>${prettyDate(e.date)}, ${prettyTime(e.time)}</span><span>${e.total ? fmtNum(e.total.amt) + ' ' + esc(e.total.unit) : ''}</span></div>
+        <div class="meta">${esc(e.place || (e.gps ? 'GPS location' : 'No location'))}${e.gps ? ` · <a href="https://maps.google.com/?q=${e.gps.lat},${e.gps.lon}" target="_blank" rel="noopener">map</a>` : ''}</div>
         ${amts ? `<div class="meta">${amts}</div>` : ''}
         ${e.notes ? `<div class="meta">${esc(e.notes)}</div>` : ''}
-        <div class="acts">
-          <button class="small" data-edit="${e.id}">Edit</button>
-          <button class="small danger" data-del="${e.id}">Delete</button>
-        </div></div>`;
+        <div class="acts"><button class="small" data-edit="${e.id}">Edit</button>
+        <button class="small danger" data-del="${e.id}">${pendingDelete === e.id ? 'Tap again to delete' : 'Delete'}</button></div></div>`;
     }).join('');
-  }
-  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-
-  // ---------- Form ----------
-  for (const k of INGREDIENTS) {
-    const sel = $(k + 'Unit');
-    sel.innerHTML = Object.keys(UNITS).map(u => `<option>${u}</option>`).join('');
-    sel.value = db.settings.units[k];
-  }
-  function setNow() { const d = new Date(); $('date').value = todayStr(d); $('time').value = timeStr(d); }
-  $('nowBtn').addEventListener('click', setNow);
-
-  let editingId = null;
-  let currentGps = null;
-
-  function resetForm() {
-    editingId = null;
-    $('form').reset();
-    for (const k of INGREDIENTS) $(k + 'Unit').value = db.settings.units[k];
-    setNow();
-    $('formTitle').textContent = 'New spray';
-    $('saveBtn').textContent = 'Save spray';
-    $('cancelWrap').style.display = 'none';
-    $('gpsToggle').checked = db.settings.gps;
-    if (db.settings.mix) fillMix();
-    if (db.settings.gps) getGps(); else setGpsOff();
   }
 
   // ---------- GPS ----------
-  function setGpsOff() { currentGps = null; $('gpsStatus').textContent = 'GPS is off — only the location name will be saved.'; }
+  let currentGps = null;
+  function setGpsOff() { currentGps = null; $('gpsStatus').textContent = 'GPS is off. Only the location name will be saved.'; }
   function getGps() {
-    if (!('geolocation' in navigator)) { $('gpsStatus').textContent = 'GPS not available on this device.'; return; }
+    if (!('geolocation' in navigator)) { $('gpsStatus').textContent = 'GPS isn’t available on this device.'; return; }
     $('gpsStatus').textContent = 'Getting your location…';
     navigator.geolocation.getCurrentPosition(p => {
       if (!$('gpsToggle').checked) return;
@@ -389,81 +410,124 @@
     }, err => {
       currentGps = null;
       $('gpsStatus').textContent = err.code === 1
-        ? 'Location permission denied — allow it in your browser settings, or turn GPS off.'
-        : 'Could not get location. Tap the switch off and on to retry.';
+        ? 'Location permission was denied. Allow it in your browser settings, or turn GPS off.'
+        : 'Couldn’t get your location. Turn the switch off and on to try again.';
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
   }
   $('gpsToggle').addEventListener('change', e => {
-    db.settings.gps = e.target.checked; save();
+    settings.gps = e.target.checked; putSettings();
     if (e.target.checked) getGps(); else setGpsOff();
   });
 
-  // ---------- Usual mix ----------
+  // ---------- Form ----------
+  for (const k of [...INGREDIENTS, 'other']) $(k + 'Unit').innerHTML = Object.keys(UNITS).map(u => `<option>${u}</option>`).join('');
+  $('otherUnit').value = 'fl oz';
+  function knownChemicals() {
+    return [...new Set([...(settings.chemicals || []), ...entries.filter(e => e.other).map(e => e.other.name)])].sort((a, b) => a.localeCompare(b));
+  }
+  function renderChemOptions() {
+    const sel = $('otherName'), cur = sel.value;
+    sel.innerHTML = '<option value="">None</option>' + knownChemicals().map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('') + `<option value="${NEW_CHEM}">+ Add a new chemical…</option>`;
+    sel.value = [...sel.options].some(o => o.value === cur) ? cur : '';
+    syncChemUI();
+  }
+  function setChem(name) {
+    renderChemOptions();
+    if (name && !knownChemicals().includes(name)) { $('otherName').value = NEW_CHEM; $('otherNew').value = name; }
+    else $('otherName').value = name || '';
+    syncChemUI();
+  }
+  function syncChemUI() {
+    const v = $('otherName').value;
+    $('otherNew').hidden = v !== NEW_CHEM;
+    $('otherAmt').hidden = v === '';
+    updateLiveTotal();
+  }
+  $('otherName').addEventListener('change', () => {
+    const v = $('otherName').value;
+    if (v && v !== NEW_CHEM && settings.otherUnits && settings.otherUnits[v]) $('otherUnit').value = settings.otherUnits[v];
+    syncChemUI();
+    if (v === NEW_CHEM) $('otherNew').focus(); else if (v) $('other').focus();
+  });
+  function chemName() { const v = $('otherName').value; return v === NEW_CHEM ? $('otherNew').value.trim() : v; }
+  function sprayTotal(a) {
+    const unit = $('totalUnit').value;
+    return [...PARTS, 'other'].reduce((s, k) => s + (a[k] ? convert(a[k].amt, a[k].unit, unit) : 0), 0);
+  }
+  function updateLiveTotal() { $('liveTotal').textContent = fmtNum(sprayTotal(readAmounts())); }
+  $('form').addEventListener('input', updateLiveTotal);
+  $('form').addEventListener('change', updateLiveTotal);
+  function applySettings() { for (const k of INGREDIENTS) if (!editingId) $(k + 'Unit').value = settings.units[k]; $('email').value = settings.email || ''; }
+  function setNow() { const d = new Date(); $('date').value = todayStr(d); $('time').value = timeStr(d); }
+  $('nowBtn').addEventListener('click', setNow);
+  let editingId = null;
+  function resetForm() {
+    editingId = null; $('form').reset();
+    for (const k of INGREDIENTS) $(k + 'Unit').value = settings.units[k];
+    setChem(''); $('otherUnit').value = 'fl oz';
+    $('gpsToggle').checked = !!settings.gps; if (settings.gps) getGps(); else setGpsOff();
+    setNow(); $('formTitle').textContent = 'New spray'; $('saveBtn').textContent = 'Save spray'; $('cancelWrap').style.display = 'none';
+    if (settings.mix) fillMix();
+    updateLiveTotal();
+  }
   function readAmounts() {
     const out = {};
-    for (const k of INGREDIENTS) {
-      const v = parseFloat($(k).value);
-      out[k] = isFinite(v) && v > 0 ? { amt: v, unit: $(k + 'Unit').value } : null;
-    }
+    for (const k of PARTS) { const v = parseFloat($(k).value); out[k] = isFinite(v) && v > 0 ? { amt: v, unit: $(k + 'Unit').value } : null; }
+    const name = chemName(), ov = parseFloat($('other').value);
+    out.other = $('otherName').value && name && isFinite(ov) && ov > 0 ? { name, amt: ov, unit: $('otherUnit').value } : null;
     return out;
   }
   function fillMix() {
-    const m = db.settings.mix; if (!m) return;
-    for (const k of INGREDIENTS) {
-      if (m[k]) { $(k).value = m[k].amt; $(k + 'Unit').value = m[k].unit; } else $(k).value = '';
-    }
+    const m = settings.mix; if (!m) return;
+    for (const k of PARTS) { if (m[k]) { $(k).value = m[k].amt; $(k + 'Unit').value = m[k].unit; } else $(k).value = ''; }
+    if (m.other) { setChem(m.other.name); $('other').value = m.other.amt; $('otherUnit').value = m.other.unit; } else { setChem(''); $('other').value = ''; }
+    updateLiveTotal();
   }
-  $('useMixBtn').addEventListener('click', () => {
-    if (!db.settings.mix) return toast('No usual mix saved yet — fill in amounts and tap “Save as usual mix”.');
-    fillMix(); toast('Usual mix filled in');
-  });
-  $('saveMixBtn').addEventListener('click', () => {
-    const a = readAmounts();
-    if (!INGREDIENTS.some(k => a[k])) return toast('Enter some amounts first');
-    db.settings.mix = a; save(); toast('Saved as your usual mix');
-  });
+  $('useMixBtn').addEventListener('click', () => { if (!settings.mix) return toast('No usual mix yet. Fill in amounts and tap “Save as usual mix”.'); fillMix(); toast('Usual mix filled in'); });
+  $('saveMixBtn').addEventListener('click', () => { const a = readAmounts(); if (!PARTS.some(k => a[k]) && !a.other) return toast('Enter some amounts first'); settings.mix = a; putSettings(); toast('Saved as your usual mix'); });
 
-  // ---------- Save / edit / delete ----------
   $('form').addEventListener('submit', ev => {
     ev.preventDefault();
     const a = readAmounts();
-    if (!INGREDIENTS.some(k => a[k])) return toast('Enter at least one amount');
-    const existing = editingId && db.entries.find(e => e.id === editingId);
-    const entry = {
-      id: editingId || uid(),
-      date: $('date').value,
-      time: $('time').value,
-      place: $('place').value.trim(),
-      gps: $('gpsToggle').checked ? (currentGps || (existing && existing.gps) || null) : null,
-      notes: $('notes').value.trim(),
-      ...a,
-    };
-    // remember the units chosen as the units for totals
-    for (const k of INGREDIENTS) db.settings.units[k] = $(k + 'Unit').value;
-    if (existing) Object.assign(existing, entry); else db.entries.push(entry);
-    save();
+    if ($('otherName').value === NEW_CHEM && !$('otherNew').value.trim()) return toast('Type a name for the new chemical');
+    if ($('otherName').value && !a.other) return toast('Enter how much ' + (chemName() || 'of the other chemical') + ' you used');
+    if (!PARTS.some(k => a[k]) && !a.other) return toast('Enter at least one amount');
+    const tot = sprayTotal(a);
+    a.total = tot > 0 ? { amt: Math.round(tot * 1000) / 1000, unit: $('totalUnit').value } : null;
+    if (a.other && !(settings.chemicals || []).includes(a.other.name)) { settings.chemicals = [...(settings.chemicals || []), a.other.name]; }
+    if (a.other) { settings.otherUnits = settings.otherUnits || {}; if (!settings.otherUnits[a.other.name]) settings.otherUnits[a.other.name] = a.other.unit; }
+    if (!$('date').value || !$('time').value) return toast('Enter a date and time');
+    const entry = { id: editingId || uid(), date: $('date').value, time: $('time').value, place: $('place').value.trim(), gps: $('gpsToggle').checked ? (currentGps || (entries.find(x => x.id === editingId) || {}).gps || null) : null, notes: $('notes').value.trim(), ...a };
+    const i = entries.findIndex(e => e.id === entry.id);
+    if (i >= 0) entries[i] = entry; else entries.push(entry);
+    let unitsChanged = false;
+    for (const k of INGREDIENTS) if (a[k] && settings.units[k] !== a[k].unit) { settings.units[k] = a[k].unit; unitsChanged = true; }
+    putSettings();
+    putEntry(entry);
     selectedYear = Number(entry.date.slice(0, 4));
-    toast(existing ? 'Spray updated' : 'Spray saved ✔');
+    toast(i >= 0 ? 'Spray updated' : 'Spray saved');
     resetForm(); render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-  $('cancelEdit').addEventListener('click', () => { resetForm(); });
+  $('cancelEdit').addEventListener('click', resetForm);
 
   $('log').addEventListener('click', ev => {
     const edit = ev.target.dataset.edit, del = ev.target.dataset.del;
     if (del) {
-      if (!confirm('Delete this spray entry?')) return;
-      db.entries = db.entries.filter(e => e.id !== del); save(); render(); toast('Deleted');
+      if (pendingDelete !== del) { pendingDelete = del; render(); setTimeout(() => { if (pendingDelete === del) { pendingDelete = null; render(); } }, 4000); return; }
+      pendingDelete = null; entries = entries.filter(e => e.id !== del); removeEntry(del); render(); toast('Deleted');
     }
     if (edit) {
-      const e = db.entries.find(x => x.id === edit); if (!e) return;
+      const e = entries.find(x => x.id === edit); if (!e) return;
       editingId = e.id;
       $('date').value = e.date; $('time').value = e.time; $('place').value = e.place || ''; $('notes').value = e.notes || '';
-      for (const k of INGREDIENTS) { $(k).value = e[k] ? e[k].amt : ''; $(k + 'Unit').value = e[k] ? e[k].unit : db.settings.units[k]; }
+      for (const k of PARTS) { $(k).value = e[k] ? e[k].amt : ''; $(k + 'Unit').value = e[k] ? e[k].unit : settings.units[k]; }
+      $('totalUnit').value = e.total ? e.total.unit : settings.units.total;
+      if (e.other) { setChem(e.other.name); $('other').value = e.other.amt; $('otherUnit').value = e.other.unit; } else { setChem(''); $('other').value = ''; }
+      updateLiveTotal();
       $('gpsToggle').checked = !!e.gps; currentGps = e.gps || null;
-      $('gpsStatus').textContent = e.gps ? `📍 ${e.gps.lat}, ${e.gps.lon} (saved)` : 'GPS is off — only the location name will be saved.';
-      $('formTitle').textContent = 'Edit spray'; $('saveBtn').textContent = 'Update spray';
-      $('cancelWrap').style.display = 'block';
+      $('gpsStatus').textContent = e.gps ? `📍 ${e.gps.lat}, ${e.gps.lon} (saved)` : 'GPS is off. Only the location name will be saved.';
+      $('formTitle').textContent = 'Edit spray'; $('saveBtn').textContent = 'Update spray'; $('cancelWrap').style.display = 'block';
       $('form').scrollIntoView({ behavior: 'smooth' });
     }
   });
@@ -471,116 +535,78 @@
   // ---------- PDF ----------
   function buildPdf() {
     const { jsPDF } = window.jspdf;
-    const list = entriesForYear(selectedYear);
-    const t = totalsFor(list);
+    const list = entriesForYear(selectedYear), t = totalsFor(list);
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-    const W = doc.internal.pageSize.getWidth();
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
-    doc.text(`Weed Spray Log — ${selectedYear}`, 40, 50);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90);
-    doc.text(`Generated ${new Date().toLocaleString()}`, 40, 66);
-    doc.setTextColor(0);
-
-    doc.autoTable({
-      startY: 82,
-      head: [['Year totals', '']],
-      body: [
-        ['Times sprayed', String(t.count)],
-        ['Total sprayed', `${fmtNum(t.total.amt)} ${t.total.unit}`],
-        ['Vinegar (50%)', `${fmtNum(t.vinegar.amt)} ${t.vinegar.unit}`],
-        ['Salt', `${fmtNum(t.salt.amt)} ${t.salt.unit}`],
-        ['Dish soap', `${fmtNum(t.soap.amt)} ${t.soap.unit}`],
-      ],
-      theme: 'grid', tableWidth: 260,
-      headStyles: { fillColor: [47, 107, 58] }, styles: { fontSize: 10 },
-    });
-
-    const a = e => k => e[k] ? `${fmtNum(e[k].amt)} ${e[k].unit}` : '';
-    doc.autoTable({
-      startY: doc.lastAutoTable.finalY + 20,
-      head: [['Date', 'Time', 'Location', 'Total', 'Vinegar', 'Salt', 'Soap', 'Notes']],
-      body: list.map(e => [
-        e.date, prettyTime(e.time),
-        [e.place, e.gps ? `${e.gps.lat}, ${e.gps.lon}` : ''].filter(Boolean).join('\n') || '—',
-        a(e)('total'), a(e)('vinegar'), a(e)('salt'), a(e)('soap'), e.notes || '',
-      ]),
-      theme: 'striped',
-      headStyles: { fillColor: [47, 107, 58] },
-      styles: { fontSize: 8.5, cellPadding: 4, overflow: 'linebreak' },
-      columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 48 }, 2: { cellWidth: 110 }, 7: { cellWidth: 'auto' } },
-      didDrawPage: () => {
-        doc.setFontSize(8); doc.setTextColor(120);
-        doc.text(`Page ${doc.internal.getNumberOfPages()}`, W - 70, doc.internal.pageSize.getHeight() - 20);
-        doc.setTextColor(0);
-      },
-    });
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text(`Weed Spray Log - ${selectedYear}`, 40, 50);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90); doc.text(`Generated ${new Date().toLocaleString()}`, 40, 66); doc.setTextColor(0);
+    doc.autoTable({ startY: 82, head: [['Year totals', '']], body: [
+      ['Times sprayed', String(t.count)], ['Total sprayed', `${fmtNum(t.total.amt)} ${t.total.unit}`],
+      ['Vinegar (50%)', `${fmtNum(t.vinegar.amt)} ${t.vinegar.unit}`], ['Salt', `${fmtNum(t.salt.amt)} ${t.salt.unit}`], ['Dish soap', `${fmtNum(t.soap.amt)} ${t.soap.unit}`], ['Water', `${fmtNum(t.water.amt)} ${t.water.unit}`],
+      ...Object.keys(t.others).sort().map(n => [n, `${fmtNum(t.others[n].amt)} ${t.others[n].unit}`])],
+      theme: 'grid', tableWidth: 260, headStyles: { fillColor: [47, 107, 58] }, styles: { fontSize: 10 } });
+    const a = (e, k) => e[k] ? `${fmtNum(e[k].amt)} ${e[k].unit}` : '';
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 20,
+      head: [['Date', 'Time', 'Location', 'Total', 'Vinegar', 'Salt', 'Soap', 'Water', 'Other', 'Notes']],
+      body: list.map(e => [e.date, prettyTime(e.time), [e.place, e.gps ? `${e.gps.lat}, ${e.gps.lon}` : ''].filter(Boolean).join('\n') || '-', a(e, 'total'), a(e, 'vinegar'), a(e, 'salt'), a(e, 'soap'), a(e, 'water'), e.other ? `${e.other.name} ${fmtNum(e.other.amt)} ${e.other.unit}` : '', e.notes || '']),
+      theme: 'striped', headStyles: { fillColor: [47, 107, 58] }, styles: { fontSize: 8.5, cellPadding: 4, overflow: 'linebreak' },
+      columnStyles: { 0: { cellWidth: 54 }, 1: { cellWidth: 44 }, 2: { cellWidth: 76 } },
+      didDrawPage: () => { doc.setFontSize(8); doc.setTextColor(120); doc.text(`Page ${doc.internal.getNumberOfPages()}`, W - 70, H - 20); doc.setTextColor(0); } });
     if (!list.length) { doc.setFontSize(11); doc.text('No sprays logged this year.', 40, doc.lastAutoTable.finalY + 20); }
     return doc;
   }
-  const pdfName = () => `weed-spray-log-${selectedYear}.pdf`;
-  function downloadBlob(blob, name) {
+  function offerFile(filename, data, okMsg) {
+    const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a'); link.href = url; link.download = name;
+    const link = document.createElement('a'); link.href = url; link.download = filename;
     document.body.appendChild(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
+    if (okMsg) toast(okMsg);
+    return true;
   }
+  $('pdfBtn').addEventListener('click', () => {
+    if (!window.jspdf) return toast('The PDF maker didn’t load. Check your connection and reload.');
+    offerFile(`weed-spray-log-${selectedYear}.pdf`, buildPdf().output('blob'), 'PDF downloaded');
+  });
   function summaryText() {
     const t = totalsFor(entriesForYear(selectedYear));
-    return `Weed spray log for ${selectedYear}\n\nTimes sprayed: ${t.count}\nTotal sprayed: ${fmtNum(t.total.amt)} ${t.total.unit}\n` +
-      `Vinegar (50%): ${fmtNum(t.vinegar.amt)} ${t.vinegar.unit}\nSalt: ${fmtNum(t.salt.amt)} ${t.salt.unit}\nDish soap: ${fmtNum(t.soap.amt)} ${t.soap.unit}\n\nFull log attached as PDF.`;
+    return `Weed spray log for ${selectedYear}\n\nTimes sprayed: ${t.count}\nTotal sprayed: ${fmtNum(t.total.amt)} ${t.total.unit}\nVinegar (50%): ${fmtNum(t.vinegar.amt)} ${t.vinegar.unit}\nSalt: ${fmtNum(t.salt.amt)} ${t.salt.unit}\nDish soap: ${fmtNum(t.soap.amt)} ${t.soap.unit}\nWater: ${fmtNum(t.water.amt)} ${t.water.unit}\n${Object.keys(t.others).sort().map(n => `${n}: ${fmtNum(t.others[n].amt)} ${t.others[n].unit}\n`).join('')}\nFull log attached: weed-spray-log-${selectedYear}.pdf`;
   }
-  $('pdfBtn').addEventListener('click', () => { downloadBlob(buildPdf().output('blob'), pdfName()); toast('PDF downloaded'); });
-
-  $('email').value = db.settings.email || '';
-  $('email').addEventListener('change', e => { db.settings.email = e.target.value.trim(); save(); });
-
+  $('email').addEventListener('change', e => { settings.email = e.target.value.trim(); putSettings(); });
   $('emailBtn').addEventListener('click', async () => {
+    if (!window.jspdf) return toast('The PDF maker didn’t load. Reload the page.');
     const blob = buildPdf().output('blob');
-    const file = new File([blob], pdfName(), { type: 'application/pdf' });
-    const subject = `Weed Spray Log ${selectedYear}`;
+    const name = `weed-spray-log-${selectedYear}.pdf`, subject = `Weed Spray Log ${selectedYear}`;
+    const file = new File([blob], name, { type: 'application/pdf' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: subject, text: summaryText() });
-        return;
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-      }
+      try { await navigator.share({ files: [file], title: subject, text: summaryText() }); return; }
+      catch (err) { if (err.name === 'AbortError') return; }
     }
-    // Fallback: download the PDF, then open an email draft to attach it to
-    downloadBlob(blob, pdfName());
+    offerFile(name, blob, 'PDF downloaded. Attach it to the email.');
     const to = encodeURIComponent($('email').value.trim());
-    setTimeout(() => {
-      location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(summaryText() + '\n\n(Attach the downloaded file: ' + pdfName() + ')')}`;
-    }, 400);
-    toast('PDF downloaded — attach it to the email');
+    setTimeout(() => { location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(summaryText())}`; }, 400);
   });
 
   // ---------- Backup / restore ----------
-  $('backupBtn').addEventListener('click', () => {
-    downloadBlob(new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' }), `spray-log-backup-${todayStr(new Date())}.json`);
-    toast('Backup saved');
-  });
+  $('backupBtn').addEventListener('click', () => offerFile(`spray-log-backup-${todayStr(new Date())}.json`, JSON.stringify({ entries, settings }, null, 2), 'Backup saved'));
   $('restoreBtn').addEventListener('click', () => $('restoreFile').click());
   $('restoreFile').addEventListener('change', async ev => {
     const f = ev.target.files[0]; if (!f) return;
     try {
-      const d = JSON.parse(await f.text());
-      if (!d || !Array.isArray(d.entries)) throw new Error();
-      const have = new Set(db.entries.map(e => e.id));
+      const d = JSON.parse(await f.text()); if (!d || !Array.isArray(d.entries)) throw 0;
+      const have = new Set(entries.map(e => e.id));
       const added = d.entries.filter(e => e && e.id && e.date && !have.has(e.id));
-      db.entries.push(...added); save(); render();
+      entries.push(...added); added.forEach(putEntry); render();
       toast(`Restored ${added.length} entr${added.length === 1 ? 'y' : 'ies'}`);
-    } catch (e) { toast('That file is not a valid backup'); }
+    } catch (e) { toast('That file isn’t a spray log backup'); }
     ev.target.value = '';
   });
 
-  // ---------- Start ----------
   resetForm();
-  render();
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
+  connect();
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
+
 </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // Caches the app so it opens with no signal (out in the yard).
-const CACHE = 'spray-log-v1';
+const CACHE = 'spray-log-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
   'lib/jspdf.umd.min.js', 'lib/jspdf.plugin.autotable.min.js'];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
