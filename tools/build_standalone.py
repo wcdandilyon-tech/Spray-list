@@ -114,8 +114,17 @@ R('  // ---------- Form ----------', '''  // ---------- GPS ----------
     $('gpsStatus').textContent = 'Getting your location…';
     navigator.geolocation.getCurrentPosition(p => {
       if (!$('gpsToggle').checked) return;
-      currentGps = { lat: +p.coords.latitude.toFixed(6), lon: +p.coords.longitude.toFixed(6), acc: Math.round(p.coords.accuracy) };
-      $('gpsStatus').textContent = `📍 ${currentGps.lat}, ${currentGps.lon} (±${currentGps.acc} m)`;
+      const g = { lat: +p.coords.latitude.toFixed(6), lon: +p.coords.longitude.toFixed(6), acc: Math.round(p.coords.accuracy) };
+      currentGps = g;
+      $('gpsStatus').textContent = '📍 Found you. Looking up the street…';
+      lookupAddress(g.lat, g.lon).then(addr => {
+        if (currentGps !== g) return;
+        g.address = addr;
+        $('gpsStatus').textContent = `📍 Near ${addr} (within ${g.acc} m)`;
+      }, () => {
+        if (currentGps !== g) return;
+        $('gpsStatus').textContent = '📍 Location saved. The street name will be added once you have signal.';
+      });
     }, err => {
       currentGps = null;
       $('gpsStatus').textContent = err.code === 1
@@ -123,6 +132,40 @@ R('  // ---------- Form ----------', '''  // ---------- GPS ----------
         : 'Couldn’t get your location. Turn the switch off and on to try again.';
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
   }
+  // Street address for a GPS point, from OpenStreetMap (needs signal; a few seconds at most).
+  const addrCache = {};
+  async function lookupAddress(lat, lon) {
+    const key = lat.toFixed(5) + ',' + lon.toFixed(5);
+    if (addrCache[key]) return addrCache[key];
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat=${lat}&lon=${lon}&accept-language=${encodeURIComponent(navigator.language || 'en')}`, { signal: ctrl.signal });
+      if (!r.ok) throw new Error('lookup failed');
+      const d = await r.json(), a = d.address || {};
+      const street = [a.house_number, a.road || a.pedestrian || a.footway || a.path || a.track].filter(Boolean).join(' ');
+      const town = a.city || a.town || a.village || a.hamlet || a.suburb || a.county || '';
+      const addr = [street || a.neighbourhood || d.name, town].filter(Boolean).join(', ')
+        || (d.display_name || '').split(',').slice(0, 3).join(',').trim();
+      if (!addr) throw new Error('no address');
+      return (addrCache[key] = addr);
+    } finally { clearTimeout(t); }
+  }
+  const gpsLabel = g => g.address || `${g.lat}, ${g.lon}`;
+  // Add street names to sprays saved with GPS but no signal at the time.
+  let filling = false;
+  async function fillMissingAddresses() {
+    if (filling || !navigator.onLine) return;
+    filling = true;
+    try {
+      for (const e of entries.filter(x => x.gps && !x.gps.address)) {
+        try { e.gps.address = await lookupAddress(e.gps.lat, e.gps.lon); putEntry(e); render(); }
+        catch (err) { break; }
+        await new Promise(r => setTimeout(r, 1100)); // OpenStreetMap asks for at most one lookup per second
+      }
+    } finally { filling = false; }
+  }
+  window.addEventListener('online', fillMissingAddresses);
+
   $('gpsToggle').addEventListener('change', e => {
     settings.gps = e.target.checked; putSettings();
     if (e.target.checked) getGps(); else setGpsOff();
@@ -133,14 +176,19 @@ R("    setNow(); $('formTitle').textContent = 'New spray';",
   "    $('gpsToggle').checked = !!settings.gps; if (settings.gps) getGps(); else setGpsOff();\n    setNow(); $('formTitle').textContent = 'New spray';")
 R("place: $('place').value.trim(), notes:", "place: $('place').value.trim(), gps: $('gpsToggle').checked ? (currentGps || (entries.find(x => x.id === editingId) || {}).gps || null) : null, notes:")
 R("      $('formTitle').textContent = 'Edit spray';",
-  "      $('gpsToggle').checked = !!e.gps; currentGps = e.gps || null;\n      $('gpsStatus').textContent = e.gps ? `📍 ${e.gps.lat}, ${e.gps.lon} (saved)` : 'GPS is off. Only the location name will be saved.';\n      $('formTitle').textContent = 'Edit spray';")
+  "      $('gpsToggle').checked = !!e.gps; currentGps = e.gps || null;\n      $('gpsStatus').textContent = e.gps ? `📍 Near ${gpsLabel(e.gps)} (saved)` : 'GPS is off. Only the location name will be saved.';\n      $('formTitle').textContent = 'Edit spray';")
 R("<div class=\"meta\">${esc(e.place || 'No location')}</div>",
-  "<div class=\"meta\">${esc(e.place || (e.gps ? 'GPS location' : 'No location'))}${e.gps ? ` · <a href=\"https://maps.google.com/?q=${e.gps.lat},${e.gps.lon}\" target=\"_blank\" rel=\"noopener\">map</a>` : ''}</div>")
-R("e.place || '-', a(e, 'total')", "[e.place, e.gps ? `${e.gps.lat}, ${e.gps.lon}` : ''].filter(Boolean).join('\\n') || '-', a(e, 'total')")
+  "<div class=\"meta\">${esc([e.place, e.gps ? 'near ' + gpsLabel(e.gps) : ''].filter(Boolean).join(' · ') || 'No location')}${e.gps ? ` · <a href=\"https://maps.google.com/?q=${e.gps.lat},${e.gps.lon}\" target=\"_blank\" rel=\"noopener\">map</a>` : ''}</div>")
+R("e.place || '-', a(e, 'total')", "[e.place, e.gps ? 'near ' + gpsLabel(e.gps) : ''].filter(Boolean).join('\\n') || '-', a(e, 'total')")
+
+R("    putEntry(entry);\n", "    putEntry(entry);\n    if (entry.gps && !entry.gps.address) setTimeout(fillMissingAddresses, 1500);\n")
+
+R("columnStyles: { 0: { cellWidth: 54 }, 1: { cellWidth: 44 }, 2: { cellWidth: 76 } },", "columnStyles: { 0: { cellWidth: 52 }, 1: { cellWidth: 42 }, 2: { cellWidth: 104 } },")
 
 # ---- start: no account connection, register offline cache
 R("  resetForm();\n  connect();", """  resetForm();
   connect();
+  setTimeout(fillMissingAddresses, 2000);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});""")
 
 (root / 'index.html').write_text(h)

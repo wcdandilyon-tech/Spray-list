@@ -3,7 +3,9 @@
 A simple phone-friendly form for logging weed spraying (50% vinegar, salt, dish soap).
 
 - **Date & time** fill in automatically (tap **Now** to refresh).
-- **Location**: type a name (e.g. "Front driveway"). Turn the **GPS switch** on to also save coordinates, or leave it off.
+- **Location**: type a name (e.g. "Front driveway"). Turn the **GPS switch** on to also save the street you're on
+  (e.g. "near 350 5th Avenue, New York", looked up from OpenStreetMap), or leave it off.
+  With no signal it saves the GPS point and adds the street name once you're back online.
 - **Amounts**: vinegar, salt, dish soap and water, each with its own unit (gal, qt, cup, tbsp, L…).
   An optional **Other chemical** dropdown remembers any other product you use (pick "+ Add a new chemical…" the first time).
   **Total this spray adds itself up** from everything above. Save your usual recipe once with **Save as usual mix**.

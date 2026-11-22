@@ -389,7 +389,7 @@
         .concat(e.other ? [`${esc(e.other.name)} ${fmtNum(e.other.amt)} ${esc(e.other.unit)}`] : []).join(' · ');
       return `<div class="entry">
         <div class="top"><span>${prettyDate(e.date)}, ${prettyTime(e.time)}</span><span>${e.total ? fmtNum(e.total.amt) + ' ' + esc(e.total.unit) : ''}</span></div>
-        <div class="meta">${esc(e.place || (e.gps ? 'GPS location' : 'No location'))}${e.gps ? ` · <a href="https://maps.google.com/?q=${e.gps.lat},${e.gps.lon}" target="_blank" rel="noopener">map</a>` : ''}</div>
+        <div class="meta">${esc([e.place, e.gps ? 'near ' + gpsLabel(e.gps) : ''].filter(Boolean).join(' · ') || 'No location')}${e.gps ? ` · <a href="https://maps.google.com/?q=${e.gps.lat},${e.gps.lon}" target="_blank" rel="noopener">map</a>` : ''}</div>
         ${amts ? `<div class="meta">${amts}</div>` : ''}
         ${e.notes ? `<div class="meta">${esc(e.notes)}</div>` : ''}
         <div class="acts"><button class="small" data-edit="${e.id}">Edit</button>
@@ -405,8 +405,17 @@
     $('gpsStatus').textContent = 'Getting your location…';
     navigator.geolocation.getCurrentPosition(p => {
       if (!$('gpsToggle').checked) return;
-      currentGps = { lat: +p.coords.latitude.toFixed(6), lon: +p.coords.longitude.toFixed(6), acc: Math.round(p.coords.accuracy) };
-      $('gpsStatus').textContent = `📍 ${currentGps.lat}, ${currentGps.lon} (±${currentGps.acc} m)`;
+      const g = { lat: +p.coords.latitude.toFixed(6), lon: +p.coords.longitude.toFixed(6), acc: Math.round(p.coords.accuracy) };
+      currentGps = g;
+      $('gpsStatus').textContent = '📍 Found you. Looking up the street…';
+      lookupAddress(g.lat, g.lon).then(addr => {
+        if (currentGps !== g) return;
+        g.address = addr;
+        $('gpsStatus').textContent = `📍 Near ${addr} (within ${g.acc} m)`;
+      }, () => {
+        if (currentGps !== g) return;
+        $('gpsStatus').textContent = '📍 Location saved. The street name will be added once you have signal.';
+      });
     }, err => {
       currentGps = null;
       $('gpsStatus').textContent = err.code === 1
@@ -414,6 +423,40 @@
         : 'Couldn’t get your location. Turn the switch off and on to try again.';
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
   }
+  // Street address for a GPS point, from OpenStreetMap (needs signal; a few seconds at most).
+  const addrCache = {};
+  async function lookupAddress(lat, lon) {
+    const key = lat.toFixed(5) + ',' + lon.toFixed(5);
+    if (addrCache[key]) return addrCache[key];
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat=${lat}&lon=${lon}&accept-language=${encodeURIComponent(navigator.language || 'en')}`, { signal: ctrl.signal });
+      if (!r.ok) throw new Error('lookup failed');
+      const d = await r.json(), a = d.address || {};
+      const street = [a.house_number, a.road || a.pedestrian || a.footway || a.path || a.track].filter(Boolean).join(' ');
+      const town = a.city || a.town || a.village || a.hamlet || a.suburb || a.county || '';
+      const addr = [street || a.neighbourhood || d.name, town].filter(Boolean).join(', ')
+        || (d.display_name || '').split(',').slice(0, 3).join(',').trim();
+      if (!addr) throw new Error('no address');
+      return (addrCache[key] = addr);
+    } finally { clearTimeout(t); }
+  }
+  const gpsLabel = g => g.address || `${g.lat}, ${g.lon}`;
+  // Add street names to sprays saved with GPS but no signal at the time.
+  let filling = false;
+  async function fillMissingAddresses() {
+    if (filling || !navigator.onLine) return;
+    filling = true;
+    try {
+      for (const e of entries.filter(x => x.gps && !x.gps.address)) {
+        try { e.gps.address = await lookupAddress(e.gps.lat, e.gps.lon); putEntry(e); render(); }
+        catch (err) { break; }
+        await new Promise(r => setTimeout(r, 1100)); // OpenStreetMap asks for at most one lookup per second
+      }
+    } finally { filling = false; }
+  }
+  window.addEventListener('online', fillMissingAddresses);
+
   $('gpsToggle').addEventListener('change', e => {
     settings.gps = e.target.checked; putSettings();
     if (e.target.checked) getGps(); else setGpsOff();
@@ -504,6 +547,7 @@
     for (const k of INGREDIENTS) if (a[k] && settings.units[k] !== a[k].unit) { settings.units[k] = a[k].unit; unitsChanged = true; }
     putSettings();
     putEntry(entry);
+    if (entry.gps && !entry.gps.address) setTimeout(fillMissingAddresses, 1500);
     selectedYear = Number(entry.date.slice(0, 4));
     toast(i >= 0 ? 'Spray updated' : 'Spray saved');
     resetForm(); render();
@@ -526,7 +570,7 @@
       if (e.other) { setChem(e.other.name); $('other').value = e.other.amt; $('otherUnit').value = e.other.unit; } else { setChem(''); $('other').value = ''; }
       updateLiveTotal();
       $('gpsToggle').checked = !!e.gps; currentGps = e.gps || null;
-      $('gpsStatus').textContent = e.gps ? `📍 ${e.gps.lat}, ${e.gps.lon} (saved)` : 'GPS is off. Only the location name will be saved.';
+      $('gpsStatus').textContent = e.gps ? `📍 Near ${gpsLabel(e.gps)} (saved)` : 'GPS is off. Only the location name will be saved.';
       $('formTitle').textContent = 'Edit spray'; $('saveBtn').textContent = 'Update spray'; $('cancelWrap').style.display = 'block';
       $('form').scrollIntoView({ behavior: 'smooth' });
     }
@@ -548,9 +592,9 @@
     const a = (e, k) => e[k] ? `${fmtNum(e[k].amt)} ${e[k].unit}` : '';
     doc.autoTable({ startY: doc.lastAutoTable.finalY + 20,
       head: [['Date', 'Time', 'Location', 'Total', 'Vinegar', 'Salt', 'Soap', 'Water', 'Other', 'Notes']],
-      body: list.map(e => [e.date, prettyTime(e.time), [e.place, e.gps ? `${e.gps.lat}, ${e.gps.lon}` : ''].filter(Boolean).join('\n') || '-', a(e, 'total'), a(e, 'vinegar'), a(e, 'salt'), a(e, 'soap'), a(e, 'water'), e.other ? `${e.other.name} ${fmtNum(e.other.amt)} ${e.other.unit}` : '', e.notes || '']),
+      body: list.map(e => [e.date, prettyTime(e.time), [e.place, e.gps ? 'near ' + gpsLabel(e.gps) : ''].filter(Boolean).join('\n') || '-', a(e, 'total'), a(e, 'vinegar'), a(e, 'salt'), a(e, 'soap'), a(e, 'water'), e.other ? `${e.other.name} ${fmtNum(e.other.amt)} ${e.other.unit}` : '', e.notes || '']),
       theme: 'striped', headStyles: { fillColor: [47, 107, 58] }, styles: { fontSize: 8.5, cellPadding: 4, overflow: 'linebreak' },
-      columnStyles: { 0: { cellWidth: 54 }, 1: { cellWidth: 44 }, 2: { cellWidth: 76 } },
+      columnStyles: { 0: { cellWidth: 52 }, 1: { cellWidth: 42 }, 2: { cellWidth: 104 } },
       didDrawPage: () => { doc.setFontSize(8); doc.setTextColor(120); doc.text(`Page ${doc.internal.getNumberOfPages()}`, W - 70, H - 20); doc.setTextColor(0); } });
     if (!list.length) { doc.setFontSize(11); doc.text('No sprays logged this year.', 40, doc.lastAutoTable.finalY + 20); }
     return doc;
@@ -604,6 +648,7 @@
 
   resetForm();
   connect();
+  setTimeout(fillMissingAddresses, 2000);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 
