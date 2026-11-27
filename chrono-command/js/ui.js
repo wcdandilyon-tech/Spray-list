@@ -55,10 +55,12 @@
           return `<li class="${sp.equipped && mine ? 'on' : ''}"><div>${head}</div>${act}</li>`;
         }
         const g = goals[i - 1];
-        const next = i - 1 === rank;
+        const open = CW.prestigeUnlocked();
+        const next = i - 1 === rank && open;
         const have = next ? Math.min(g[1], CW.statVal(lid, g[0])) : 0;
         const ready = next && mine && have >= g[1];
-        const goal = `<small class="goal">Prestige ${i}: ${esc(CW.goalTextFor(g[0], g[1]))}${next ? '' : ' (after prestige ' + (i - 1) + ')'}</small>` +
+        const when = !open ? ' (opens after the main story)' : i - 1 === rank ? '' : ' (after prestige ' + (i - 1) + ')';
+        const goal = `<small class="goal">Prestige ${i}: ${esc(CW.goalTextFor(g[0], g[1]))}${when}</small>` +
           (next ? `<span class="gbar"><i data-gbar="${lid}" style="width:${((100 * have) / g[1]).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(have)} / ${nfmt(g[1])}</small>` : '');
         return `<li class="lock"><div>${head}${goal}</div>${ready ? `<button class="btn sm" data-act="prestige" data-id="${lid}">Prestige</button>` : '<span class="lk">Locked</span>'}</li>`;
       })
@@ -1202,7 +1204,7 @@
     };
     return `<div class="phead"><h2>Team</h2>${st.council ? '<button class="btn blue" data-act="council">Change at the War Council</button>' : ''}</div>
       <div class="cards">${card(st.main, 0)}${card(st.partners[0], 1)}${card(st.partners[1], 2)}</div>
-      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. ★ marks where a leader excels; positions apply from the next battle. Each leader equips one special at a time; their meter fills as your soldiers defeat enemies. Prestige a leader by meeting their goal to unlock their next special (+25% strength on the field and +20% attributes each time).</p>`;
+      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. ★ marks where a leader excels; positions apply from the next battle. Each leader equips one special at a time; their meter fills as your soldiers defeat enemies. ${CW.prestigeUnlocked() ? 'Prestige a leader by meeting their goal to unlock their next special (+25% strength on the field and +20% attributes each time).' : 'Leader prestige opens once the main story is over (finish the Galactic Age): then each leader can unlock two more specials by meeting their own goals.'}</p>`;
   }
   let deckEls = null;
   function updateDeck() {
@@ -1270,7 +1272,7 @@
     el.spop.innerHTML = `<h4><span>${esc(LEADER[lid].name)} ${pips(lid)}</span><span data-spv></span></h4><div class="m"><i data-spm></i></div>
       <button class="spb" data-use><b>${esc(sp.name)}<span>${KIND[sp.t]} · ${sp.cost}%</span></b><small>${esc(CW.specialText(sp))}</small></button>
       ${others.map((x) => `<button class="spe" data-eq="${x.i}"><span>Equip <b>${esc(x.name)}</b></span><em>${KIND[x.t]} · ${x.cost}%</em></button>`).join('')}
-      ${locked.length ? `<div class="splock">${gl ? `<span>Prestige ${gl.rank} unlocks <b>${esc(locked[0].name)}</b>: ${esc(CW.goalText(gl))}</span><span class="gbar"><i data-gbar="${lid}" style="width:${((100 * gl.have) / gl.n).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(gl.have)} / ${nfmt(gl.n)}</small>` : ''}${gl && gl.done ? `<button class="btn sm" data-pre>Prestige now</button>` : ''}</div>` : '<p class="splock done">All three specials unlocked</p>'}
+      ${locked.length ? (gl && gl.locked ? `<div class="splock"><span>Prestige opens after the main story: finish the Galactic Age. Then <b>${esc(locked[0].name)}</b> unlocks when ${esc(LEADER[lid].name)} meets their goal: ${esc(CW.goalText(gl).charAt(0).toLowerCase() + CW.goalText(gl).slice(1))}.</span></div>` : `<div class="splock">${gl ? `<span>Prestige ${gl.rank} unlocks <b>${esc(locked[0].name)}</b>: ${esc(CW.goalText(gl))}</span><span class="gbar"><i data-gbar="${lid}" style="width:${((100 * gl.have) / gl.n).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(gl.have)} / ${nfmt(gl.n)}</small>` : ''}${gl && gl.done ? `<button class="btn sm" data-pre>Prestige now</button>` : ''}</div>`) : '<p class="splock done">All three specials unlocked</p>'}
       <button class="more" data-more>Leader details</button>`;
     el.spop.hidden = false;
     const r = chip.getBoundingClientRect();
@@ -1400,7 +1402,7 @@
       base.push(ids.join(','), st.eraReached, st.buyMode, JSON.stringify(st.uattr), ids.map((id) => CW.uslots(id)).join(''));
       base.push((st.champs || []).join(','), CW.champSlots(), CW.champMax(), st.best > CW.PATH_LEN);
     }
-    const presSig = () => JSON.stringify(st.prest) + JSON.stringify(st.spEq);
+    const presSig = () => JSON.stringify(st.prest) + JSON.stringify(st.spEq) + CW.prestigeUnlocked();
     if (tab === 'leaders') base.push(Object.entries(st.roster).map(([k, r]) => k + r.stars).join(','), presSig());
     if (tab === 'command') base.push(deckSig, !!st.council, JSON.stringify(st.pos), presSig(), [st.main].concat(st.partners).map((id) => { const gl = CW.prestigeGoal(id); return gl && gl.done ? 1 : 0; }).join(''));
     if (tab === 'doctrines') base.push(JSON.stringify(st.doctrines), !!st.council);
@@ -1595,7 +1597,7 @@
     const own = Object.keys(st.roster).length;
     let h = `<div class="phead"><h2>Codex</h2></div>
       <div class="cxtop"><input type="search" data-cx placeholder="Search leaders, attributes or specials" aria-label="Search the codex" value="${esc(cxQuery)}"><span>${own} / ${LEADERS.length} recruited</span></div>
-      <p class="note">Every leader in the game. Tap one for their attributes, their three specials and what it takes to prestige them.</p>`;
+      <p class="note">Every leader in the game. Tap one for their attributes, their three specials and what it takes to prestige them${CW.prestigeUnlocked() ? '' : ' (prestige opens once the main story is over)'}.</p>`;
     for (let e = 0; e <= NERA; e++) {
       const ls = LEADERS.filter((l) => l.era === e);
       if (!ls.length) continue;
@@ -2006,7 +2008,7 @@
       `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:128px;height:128px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === NERA ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
       <p class="bio">${esc(l.bio)}</p>
       <h3>Attributes · always on</h3><div class="sklist">${[0, 1, 2].map((i) => `<div class="sk"><em>${labels[i]}</em><b>${esc(CW.attr(id, i).name)}</b>: ${esc(CW.attrText(id, i, r ? CW.attrStrength(id, i === 1 && st.main !== id ? 'partner' : 'main') : 1))}</div>`).join('')}<div class="sk"><em>Commander bonus · ${esc(cl.name)}</em>${esc(cl.d)}</div></div>
-      <h3>Specials · one equipped at a time ${pips(id)}</h3><ul class="sps2">${specialRows(id, !!r)}</ul>
+      <h3>Specials · one equipped at a time ${pips(id)}</h3>${CW.prestigeUnlocked() ? '' : '<p class="note">Prestige opens once the main story is over (finish the Galactic Age). Goals count from then on.</p>'}<ul class="sps2">${specialRows(id, !!r)}</ul>
       <div class="sklist" style="margin-top:6px"><div class="sk"><em>Best position · ${CW.prefPos(id) === 'front' ? 'front lines' : 'behind the army'}</em>${esc(CW.posText(id))}</div>${CW.prestige(id) ? `<div class="sk"><em>Prestige ${CW.prestige(id)}</em>+${25 * CW.prestige(id)}% strength on the field, +${20 * CW.prestige(id)}% attribute strength, stronger specials</div>` : ''}</div>
       <p class="note">They work while this leader is standing. When you fight them, they power the enemy army instead.</p>
       <div class="acts">${r ? `<button class="btn" data-act="train" data-id="${id}" ${CW.trainCost(id) > st.gold ? 'disabled' : ''}>Train to Lv ${r.lv + 1} · ${fmt(CW.trainCost(id))}</button>` : ''}<button class="btn ghost" data-act="close">Close</button></div>`
@@ -2044,7 +2046,8 @@
   CW.on('chaos', () => {
     SFX.play('era');
     toast('Time shatters: random eras ahead', 'red');
-    setTimeout(() => toast('Leaders can now join the ranks · Army', 'blue'), 1600);
+    setTimeout(() => toast('The story is over: leader prestige is open · Team', 'blue'), 1600);
+    setTimeout(() => toast('Leaders can now join the ranks · Army', 'blue'), 3400);
   });
   CW.on('prestige', (e) => {
     SFX.play('era');

@@ -47,8 +47,10 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   reinforcements, executions, life drain and shields. Tap a leader's chip to fire it or swap to another unlocked one.
   Auto specials fires a charged special after 4 seconds. Enemy leaders have a meter too; once time shatters they may use
   any of their three.
-- **Leader prestige.** Leaders start with only their first special. Each has two prestige goals of their own, counted
-  while they command, partner or fight in the ranks: the Devil prestiges after 666 and then 6,666 defeated enemies,
+- **Leader prestige (after the main story).** Leaders start with only their first special. Prestige opens once the main
+  story is over, when you finish the time pathway through the Galactic Age (right where a Time Rift would come next), and it
+  stays open in every later run. From then on each leader has two prestige goals of their own, counted while they command,
+  partner or fight in the ranks: the Devil prestiges after 666 and then 6,666 defeated enemies,
   Leonidas after 300 infantry and then 300 wins at the front, Sargon after his 34 victories, Napoleon after beating 7
   enemy leaders, God after 7 wins and then 777 flawless ones. Prestiging unlocks and equips the next special and adds +25%
   strength on the field and +20% attribute strength. Prestige is kept through Time Rifts.

@@ -1114,7 +1114,7 @@
       B.fx.push({ k: 'herofall', lid: q.lid, champ: !!q.champ });
       emit('heroFall', q.lid);
     }
-    if (q.side === 'e' && !q.isBoss && B.lids) {
+    if (q.side === 'e' && !q.isBoss && B.lids && prestigeOn()) {
       for (const lid of B.lids) {
         const o = lst(lid);
         o.kills++;
@@ -1178,6 +1178,10 @@
 
   // ---- prestige: every leader has two goals of their own (the Devil needs 666 defeated enemies, Leonidas 300 infantry...).
   // Meeting one lets you prestige the leader: +25% strength on the field, +20% attribute strength and a new special.
+  // Prestige opens once the main story is over (the time pathway finished, right where a Time Rift would come next);
+  // goals only count from then on, and it stays open through later Time Rifts.
+  const prestigeOn = () => !!S && S.best > PATH_LEN;
+  CW.prestigeUnlocked = prestigeOn;
   const PSTAT = { kills: 1, inf: 1, rng: 1, cav: 1, hvy: 1, wins: 1, bosses: 1, front: 1, back: 1, specials: 1, flawless: 1, taps: 1, time: 1, spkills: 1, revived: 1 };
   function lst(lid) {
     let o = S.lstats[lid];
@@ -1202,7 +1206,8 @@
     const g = CW.PRESTIGE[lid] && CW.PRESTIGE[lid][rank];
     if (!g) return null;
     const have = Math.min(g[1], statVal(lid, g[0]));
-    return { rank: rank + 1, stat: g[0], n: g[1], have, done: have >= g[1] && !!S.roster[lid] };
+    const locked = !prestigeOn();
+    return { rank: rank + 1, stat: g[0], n: g[1], have: locked ? 0 : have, locked, done: !locked && have >= g[1] && !!S.roster[lid] };
   };
   CW.doPrestige = function (lid) {
     const g = CW.prestigeGoal(lid);
@@ -1224,7 +1229,7 @@
   CW.goalTextFor = (stat, n) => GOAL_TXT[stat].replace('{n}', n.toLocaleString('en-US'));
   // leaders whose stats count in this battle: your commander, partners and leaders in the ranks
   function track(key, n, only) {
-    if (!B || !B.lids) return;
+    if (!B || !B.lids || !prestigeOn()) return;
     for (const lid of only || B.lids) lst(lid)[key] += n;
   }
   const big = (q) => q.isBoss || q.isHero;
@@ -1445,7 +1450,7 @@
       const sp = CW.bossSpecial();
       runSpecial({ name: sp[0], t: sp[1], k: B.info.mystery ? 1.15 : 1 }, 'e', B.boss.lid);
     }
-    for (const lid of B.lids) lst(lid).time += dt;
+    if (prestigeOn()) for (const lid of B.lids) lst(lid).time += dt;
     sides();
     const sa = B.sa;
     const se = B.se;
@@ -1544,6 +1549,7 @@
 
   // prestige progress from a won battle
   function trackWin() {
+    if (!prestigeOn()) return;
     for (const lid of B.lids) {
       const o = lst(lid);
       o.wins++;
