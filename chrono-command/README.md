@@ -58,7 +58,7 @@ version, your stage moves to the matching era and you get a full army of that er
 | `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 134 leaders and the 31 doctrines |
 | `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
-| `js/sprites.js` | The leader sprite generator: every leader drawn as a 64x64 chibi battle sprite, with signature props |
+| `js/bodies.js` | The animated base figure (embedded sheet), body-part detection, and the dressing of every leader and foot soldier |
 | `js/ui.js` | Battlefield rendering and its HUD overlay, the army builder, command deck, panels, dialogs, sound effects, autosave and offline progress |
 
 Balance knobs live in `CW.CFG` at the top of `js/engine.js` (enemy growth, era power, army capacity, recruit and training
@@ -67,25 +67,31 @@ on whichever soldier or upgrade adds the most strength. Even that bot starts los
 hits walls every few eras where it has to save up and train, reaches its first Time Rift after about 2 to 2.5 hours,
 and opens Shattered Time after about 10 to 11 hours.
 
+On a phone turned sideways the battlefield fills the whole screen (full battle mode), with the shortcuts down the right
+edge, your commanders bottom left and the menus opening as a side drawer. Everywhere else the menus are a row of
+shortcuts under the battlefield (Army, Commanders, Leaders, Doctrines, Time Rift, Options) that open as a sheet.
+
 Saves are stored in the browser's `localStorage` on each device. Use **Options → Export save** to move a game between devices.
 
 ## Art and performance
 
-Every leader is a chibi battle sprite on a 64x64 grid: a big head and hair, large anime eyes with a glint, a 3/4 action pose
-with an oversized weapon, light-to-shadow shading in four bands and dark outlines. The sprites are drawn pixel by pixel
-from each leader's recipe (skin, hair, beard, hat, outfit, colours) plus signature props that make famous figures
-recognisable: Napoleon's hand in his waistcoat, Churchill's cigar and V sign, Stalin's pipe, Mao's red book, Gandhi's
-walking staff and round glasses, Lincoln's top hat and axe, Thatcher's handbag, Teddy Roosevelt's big stick, Leonidas's
-lambda shield and spear, Elizabeth II's corgi, Santa's sack, the Devil's tail. The same sprite is used on the cards and on
-the battlefield, where your commanders stand on coloured rings and the enemy leader fights at double size.
-Units and era backdrops use Scale2x (a pixel-art upscaler) with edge lighting and outlines.
+Every leader and every foot soldier is built from one animated base figure (`js/bodies.js`, a sheet of frames facing
+right: idle, cheer, thrust, walk, throw, shoot and swing). Each frame is split into body parts (head, neck, torso,
+arms, hands, legs, feet) and recoloured along its own shading ramp, so clothes keep the original pixel shading. Hair,
+hats, beards, glasses, capes, shields and weapons are drawn on top, placed from the head and hands found in that frame,
+so they move with the animation. Leaders are dressed from their recipe plus signature props that make famous figures
+recognisable: Napoleon's bicorne and sash, Churchill's cigar, Stalin's pipe, Mao's red book, Gandhi's walking staff and
+round glasses, Lincoln's top hat and axe, Thatcher's handbag, Teddy Roosevelt's big stick, Leonidas's lambda shield and
+spear, Santa's sack, the Devil's tail. Soldiers wear their era's helmet or hat, their unit colours and a team-coloured
+scarf (blue for you, red for the enemy). Soldiers walk, strike, shoot or throw and cheer when they win; commanders stand
+on coloured rings and the enemy leader fights at double size. Vehicles, animals and riders keep their own sprites.
 
 The battlefield is a tilted top-down view: soldiers further away are drawn smaller and higher up. Sprites are prepared
 at a handful of fixed sizes so they grow in clean pixel steps as they move toward the camera instead of shimmering, and
 fallen soldiers are painted once onto the ground layer instead of being redrawn every frame. Shadows are pre-made at each
 size, and the HUD is a light page overlay rather than canvas text. The field is drawn on a fixed 768x432 pixel grid that the
 browser scales up, so the work per frame stays the same on any screen size. In headless Chromium (software drawing, no GPU),
-a late-game battle with about 350 soldiers on the field runs at about 390 fps, or about 50 to 75 fps with the CPU throttled 4x (depending on the era).
+a late-game battle with about 350 animated soldiers on the field runs at about 300 fps, or about 45 to 55 fps with the CPU throttled 4x.
 
 The menus around the battlefield use a quiet, modern style (Manrope, graphite panels, one brass accent); the pixel art
 stays on the battlefield and the portraits.

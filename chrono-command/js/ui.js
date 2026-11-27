@@ -163,6 +163,78 @@
     return q[k] || (q[k] = CW.unitSprite(q.uid, q.side, flip));
   }
   const unitScale = (q, s) => s * 0.9 * (UNIT[q.uid].size || 1);
+  const BODY_K = 0.72; // soldiers built from the base body are drawn at this share of its size, times the depth scale
+  // base-body frames shrink by keeping the most common colour in each block (outlines win ties), so faces stay readable
+  const BBK = 0.06;
+  function sizedBody(img, ds) {
+    const b = Math.max(4, Math.round(ds / BBK));
+    const arr = img._sb || (img._sb = []);
+    let c = arr[b];
+    if (c) return c;
+    const k = b * BBK;
+    if (k >= 0.97) return (arr[b] = k > 1.03 ? sized(img, k) : img);
+    const sw = img.width;
+    const sh = img.height;
+    const src = img.getContext('2d').getImageData(0, 0, sw, sh).data;
+    const ow = Math.max(1, Math.round(sw * k));
+    const oh = Math.max(1, Math.round(sh * k));
+    c = document.createElement('canvas');
+    c.width = ow;
+    c.height = oh;
+    const cx = c.getContext('2d');
+    const od = cx.createImageData(ow, oh);
+    const cnt = new Map();
+    for (let oy = 0; oy < oh; oy++)
+      for (let ox = 0; ox < ow; ox++) {
+        const x0 = Math.floor(ox / k);
+        const x1 = Math.max(x0 + 1, Math.floor((ox + 1) / k));
+        const y0 = Math.floor(oy / k);
+        const y1 = Math.max(y0 + 1, Math.floor((oy + 1) / k));
+        cnt.clear();
+        let empty = 0;
+        let tot = 0;
+        for (let y = y0; y < Math.min(sh, y1); y++)
+          for (let x = x0; x < Math.min(sw, x1); x++) {
+            const i = (y * sw + x) * 4;
+            tot++;
+            if (src[i + 3] < 128) {
+              empty++;
+              continue;
+            }
+            const key = (src[i] << 16) | (src[i + 1] << 8) | src[i + 2];
+            const wgt = src[i] + src[i + 1] + src[i + 2] < 150 ? 1.6 : 1;
+            cnt.set(key, (cnt.get(key) || 0) + wgt);
+          }
+        if (empty > tot * 0.55 || !cnt.size) continue;
+        let best = 0;
+        let bw = -1;
+        for (const [key, wgt] of cnt)
+          if (wgt > bw) {
+            bw = wgt;
+            best = key;
+          }
+        const o = (oy * ow + ox) * 4;
+        od.data[o] = best >> 16;
+        od.data[o + 1] = (best >> 8) & 255;
+        od.data[o + 2] = best & 255;
+        od.data[o + 3] = 255;
+      }
+    cx.putImageData(od, 0, 0);
+    return (arr[b] = c);
+  }
+  // which frame of the base-body animation a fighter shows right now
+  const ATK_T = 0.42;
+  function pose(q, B, t, kind, who) {
+    if (B.phase === 'victory' && q.side === 'a') return ['cheer', Math.floor(t * 7 + q.id) % 4];
+    if (q._atk !== undefined && q._atk < ATK_T) {
+      const a = q._aa || (q._aa = CW.attackAnim(kind, who));
+      const n = CW.ANIM[a].f.length;
+      return [a, Math.min(n - 1, Math.floor((q._atk / ATK_T) * n))];
+    }
+    if (stepping(B, q)) return ['walk', Math.floor(t * 11 + q.id * 0.37) % 9];
+    return ['idle', 0];
+  }
+  const bodyOf = (q) => q._bd === undefined ? (q._bd = q.kind === 'unit' && CW.usesBody(q.uid)) : q._bd;
 
   // ---- per-battle ground: the field plus everything that has fallen on it (bodies, wrecks, scorch marks)
   const ground = document.createElement('canvas');
@@ -185,8 +257,15 @@
   function bakeBody(q) {
     const P = proj(q.x, q.z);
     let img;
-    if (q.kind === 'unit') img = sized(unitImg(q).c, unitScale(q, P.s));
-    else img = sized(CW.heroSprite(q.lid, q.side, q.isBoss ? groundOf.info.variant : '').c, q.isBoss ? 2 : 1);
+    if (q.kind === 'unit' && bodyOf(q)) {
+      const f = CW.unitFrame(q.uid, q.side, 'idle', 0, q.face < 0);
+      img = f ? sizedBody(f, P.s * BODY_K) : null;
+    } else if (q.kind === 'unit') img = sized(unitImg(q).c, unitScale(q, P.s));
+    else {
+      const f = CW.leaderFrame(q.lid, q.side, q.isBoss ? groundOf.info.variant : '', 'idle', 0);
+      img = f ? sized(f, q.isBoss ? 2 : 1) : null;
+    }
+    if (!img) return;
     const body = CW.corpse(img);
     gg.globalAlpha = 0.7;
     gg.drawImage(body, Math.round(P.x * K - body.width / 2), Math.round(P.y * K - body.height * 0.75));
@@ -227,7 +306,8 @@
   // the point a projectile or spark should aim at: roughly the chest of the sprite
   function chest(q) {
     const P = proj(q.x, q.z);
-    if (q.isBoss || q.isHero) return { x: P.x, y: P.y - (q.isBoss ? 34 : 17), s: P.s };
+    if (q.isBoss || q.isHero) return { x: P.x, y: P.y - (q.isBoss ? 26 : 13), s: P.s };
+    if (bodyOf(q)) return { x: P.x, y: P.y - 11 * P.s, s: P.s };
     const h = q.air ? 30 : 7;
     return { x: P.x, y: P.y - h * P.s, s: P.s };
   }
@@ -320,7 +400,10 @@
     if (q.hpS >= q.hpT) q.hpT = q.hpS;
     else q.hpT += (q.hpS - q.hpT) * Math.min(1, dt * 2.5);
     q.flash = Math.max(0, q.flash - dt * 6);
+    if (q.lunge > (q._pl || 0) + 0.01) q._atk = 0;
+    if (q._atk !== undefined) q._atk += dt;
     q.lunge = Math.max(0, q.lunge - dt * 5);
+    q._pl = q.lunge;
   }
   function hpBar(q, x, y, w, col) {
     R(x - 0.5, y - 0.5, w + 1, 2.5, '#0b0d08');
@@ -399,7 +482,8 @@
       g.globalAlpha = 0.75;
       blit(ring, P.x - ring.width / (2 * K), P.y - ring.height / (2 * K));
       g.globalAlpha = 1;
-    } else w = (unitImg(q).w || 10) * 0.85 * (UNIT[q.uid].size || 1) * P.s;
+    } else if (bodyOf(q)) w = 13 * P.s;
+    else w = (unitImg(q).w || 10) * 0.85 * (UNIT[q.uid].size || 1) * P.s;
     const c = shadowOf(Math.max(4, Math.round(w * K)));
     if (q.air) g.globalAlpha = 0.6;
     blit(c, P.x - c.width / (2 * K), P.y - c.height / (2 * K));
@@ -408,6 +492,26 @@
 
   function drawUnit(q, t, B) {
     const P = q._P;
+    if (bodyOf(q)) {
+      const [an, fi] = pose(q, B, t, 'U', q.uid);
+      const f = CW.unitFrame(q.uid, q.side, an, fi, q.face < 0);
+      if (f) {
+        const img = sizedBody(f, P.s * BODY_K);
+        const k = img.width / f.width;
+        const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * (q.proj ? -0.6 : 2) * P.s * q.face : 0;
+        const x = P.x - (f.width / 2 / K) * k + lx;
+        const y = P.y - ((f.height - 2) / K) * k + 0.5;
+        blit(img, x, y);
+        if (q.flash > 0.05) {
+          g.globalAlpha = q.flash * 0.85;
+          blit(whiteOf(img), x, y);
+          g.globalAlpha = 1;
+        }
+        if (q.stun > 0) stunStars(P.x, y + 2, t, 4 * P.s);
+        if (q.burn && (q.id + Math.floor(t * 10)) % 3 === 0) R(P.x - 1 + Math.random() * 2, y + (img.height / K) * 0.4 - Math.random() * 3, 1, 1, '#ff9a3a');
+        return;
+      }
+    }
     const sp = unitImg(q);
     const img = sized(sp.c, unitScale(q, P.s));
     const w = img.width / K;
@@ -434,26 +538,30 @@
     const isBoss = q.isBoss;
     const info = B.info;
     const P = q._P;
-    const hs = CW.heroSprite(q.lid, q.side, isBoss ? info.variant : '');
+    const variant = isBoss ? info.variant : '';
     // leaders are drawn pixel for pixel (the enemy leader at double size), never squashed by distance
     const ds = isBoss ? 2 : 1;
-    const img = sized(hs.c, ds);
+    const flip = q.side === 'e';
+    let [an, fi] = q.alive ? pose(q, B, t, 'L', q.lid) : ['idle', 0];
+    const f = CW.leaderFrame(q.lid, q.side, variant, an, fi, flip);
+    if (!f) return;
+    const img = sized(f, ds);
     const W = img.width / K;
     const H = img.height / K;
+    const x0 = P.x - W / 2;
+    const y0 = P.y - (H * (f.height - 2)) / f.height;
     if (!q.alive) {
       if (q.side === 'a') {
         g.globalAlpha = 0.35;
-        blit(sized(hs.shadow, ds), P.x - W / 2, P.y - H);
+        blit(CW.tinted(img, '#0a0710'), x0, y0);
         g.globalAlpha = 1;
-        text('DOWN', P.x, P.y - H - 6, '#ff8a7a', 1, 'c');
+        text('DOWN', P.x, y0 - 4, '#ff8a7a', 1, 'c');
       }
       return;
     }
-    let bob = Math.sin(t * 2.6 + q.id) * 0.6 * P.s;
-    if (stepping(B, q)) bob = -Math.abs(Math.sin(t * 8 + q.id)) * 2 * P.s;
-    const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * 4 * P.s * (q.side === 'a' ? 1 : -1) : 0;
-    const x = P.x - W / 2 + lx;
-    const y = P.y - H + bob + 1;
+    const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * 2.5 * (q.side === 'a' ? 1 : -1) * ds : 0;
+    const x = x0 + lx;
+    const y = y0 + 0.5;
     const hidden = isBoss && info.mystery && B.phase === 'deploy';
     if (isBoss || q.main) {
       const aura = !isBoss ? '#ffd23f' : info.mystery ? '#d08aff' : info.chaos ? '#b070ff' : info.variant === 'echo' ? '#2ee6ff' : '#ff5a4a';
@@ -465,15 +573,15 @@
       blit(au, x, y - d);
       g.globalAlpha = 1;
     }
-    blit(hidden ? sized(hs.shadow, ds) : img, x, y);
+    blit(hidden ? CW.tinted(img, '#0a0710') : img, x, y);
     if (q.flash > 0.05 && !hidden) {
       g.globalAlpha = q.flash * 0.8;
       blit(whiteOf(img), x, y);
       g.globalAlpha = 1;
     }
     if (hidden) text('?', P.x, y + H * 0.3, '#e8d0ff', 4, 'c');
-    if (!isBoss) hpBar(q, P.x - 9 * P.s, P.y + 1.5, 18 * P.s, q.main ? '#ffd23f' : '#5ad1ff');
-    if (q.stun > 0) stunStars(P.x, y - 3, t, 7 * P.s);
+    if (!isBoss) hpBar(q, P.x - 9, P.y + 1.5, 18, q.main ? '#ffd23f' : '#5ad1ff');
+    if (q.stun > 0) stunStars(P.x, y + 2, t, 7);
   }
 
   // ---- projectiles straight from the simulation: arrows and shells arc, bullets and lasers fly flat
@@ -486,8 +594,17 @@
     const P = proj(x, z);
     return { x: P.x, y: P.y - h * P.s, s: P.s };
   }
+  const FLASHY = { bullet: '#fff2a0', laser: '#9afcff', plasma: '#e0b0ff', rocket: '#ffb060', shell: '#ffd080' };
   function drawProj(B) {
     for (const p of B.proj) {
+      // a muzzle flash for the first moments of a shot
+      if (p.t < 0.07 && FLASHY[p.kind]) {
+        const m = projPos(p, 0);
+        const d = CW.disc(Math.max(1, 2.2 * m.s), FLASHY[p.kind]);
+        g.globalAlpha = 1 - p.t / 0.07;
+        g.drawImage(d, q2(m.x - d.width / 4), q2(m.y - d.height / 4), d.width / 2, d.height / 2);
+        g.globalAlpha = 1;
+      }
       const k = Math.min(1, p.t / p.dur);
       const a = projPos(p, k);
       const b = projPos(p, Math.max(0, k - 0.08));
@@ -648,6 +765,11 @@
       }
     }
     for (const q of order) if (q.alive) drawShadow(q, B);
+    if (B.phase === 'deploy' || B.ft < 3) {
+      for (const q of order)
+        if (q.alive && !q.air && stepping(B, q) && Math.random() < dt * 1.6 && parts.length < 200)
+          parts.push({ x: q._P.x + (Math.random() - 0.5) * 6, y: q._P.y - 1, vx: -q.face * 6, vy: -6, t: 0, life: 0.5, col: 'rgba(200,190,170,.7)', kind: 'up' });
+    }
     order.sort(byDepth);
     for (const q of order) {
       if (q.kind === 'unit') drawUnit(q, t, B);
@@ -744,7 +866,7 @@
   const el = {
     gold: $('#gold'), gps: $('#gps'), shards: $('#shards'), era: $('#eraName'), year: $('#year'), stage: $('#stage'),
     nextImg: $('#nextImg'), nextBar: $('#nextBar'), nextTxt: $('#nextTxt'), challenge: $('#btnChallenge'), council: $('#btnCouncil'),
-    deck: $('#deck'), panel: $('#panel'), autoPush: $('#autoPush'), modal: $('#modal'), dlg: $('#dlg'),
+    deck: $('#deck'), panel: $('#panel'), sheet: $('#sheet'), sheetTitle: $('#sheetTitle'), shortcuts: $('#shortcuts'), autoPush: $('#autoPush'), modal: $('#modal'), dlg: $('#dlg'),
   };
   $('#icoGold').src = CW.icon('coin');
   $('#icoShard').src = CW.icon('shard');
@@ -808,15 +930,26 @@
     const st = S();
     deckSig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars).join(',')].join('|');
     deckEls = null;
+    el.deck.innerHTML = [st.main, st.partners[0], st.partners[1]]
+      .filter(Boolean)
+      .map((lid, i) => `<button class="chip ${i === 0 ? 'main' : ''}" data-card="${lid}" title="${esc(LEADER[lid].name)}"><img class="px" src="${CW.headURL(lid)}" alt=""><span>${esc(short(lid))}<span class="hp${i === 0 ? ' main' : ''}"><i data-hp="${lid}"></i></span></span></button>`)
+      .join('');
+    if (!el.sheet.hidden && tab === 'command') renderPanel();
+  }
+  // the Commanders sheet: full cards with each leader's attributes
+  function renderCommand() {
+    const st = S();
     const card = (lid, i) => {
-      if (!lid) return '<div class="partner box"><div class="who"><b>Open slot</b></div></div>';
+      if (!lid) return '<div class="partner box"><div class="who"><b>Open slot</b><small>Win leader battles to recruit partners</small></div></div>';
       const L = LEADER[lid];
       const r = st.roster[lid];
       const main = i === 0;
       const cl = CLASSES[L.cls];
-      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}" title="Tap for details"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small><span class="hp${main ? ' main' : ''}"><i data-hp="${lid}"></i></span></div><ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul></div>`;
+      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}" title="Tap for details"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small></div><ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul></div>`;
     };
-    el.deck.innerHTML = card(st.main, 0) + card(st.partners[0], 1) + card(st.partners[1], 2);
+    return `<div class="phead"><h2>Commanders</h2>${st.council ? '<button class="btn blue" data-act="council">Change at the War Council</button>' : ''}</div>
+      <div class="cards">${card(st.main, 0)}${card(st.partners[0], 1)}${card(st.partners[1], 2)}</div>
+      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. Swap them after any leader battle.</p>`;
   }
   let deckEls = null;
   function updateDeck() {
@@ -861,13 +994,48 @@
   }
 
   // ------------------------------------------------------------ panels
-  document.getElementById('tabs').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-tab]');
-    if (!b) return;
-    tab = b.dataset.tab;
-    document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
+  const TITLES = { army: 'Army', command: 'Commanders', leaders: 'Leaders', doctrines: 'Doctrines', rift: 'Time Rift', options: 'Options' };
+  function openSheet(t) {
+    tab = t;
+    setText(el.sheetTitle, TITLES[t]);
+    el.sheet.hidden = false;
+    document.querySelectorAll('[data-sc]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sc === t)));
     renderPanel();
+    el.panel.scrollTop = 0;
+  }
+  function closeSheet() {
+    el.sheet.hidden = true;
+    el.shortcuts.querySelectorAll('[data-sc]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+  }
+  el.shortcuts.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sc]');
+    if (!b) return;
+    SFX.ensure();
+    if (!el.sheet.hidden && tab === b.dataset.sc) closeSheet();
+    else openSheet(b.dataset.sc);
   });
+  $('#sheetClose').addEventListener('click', closeSheet);
+  el.sheet.addEventListener('click', (e) => {
+    if (e.target === el.sheet) return closeSheet();
+    const b = e.target.closest('.stabs [data-sc]');
+    if (b) openSheet(b.dataset.sc);
+  });
+  // what each shortcut shows at a glance
+  const scEls = {};
+  document.querySelectorAll('[data-scs]').forEach((n) => (scEls[n.dataset.scs] = n));
+  function updateShortcuts() {
+    const st = S();
+    setText(scEls.army, CW.armyUsed() + ' / ' + CW.capacity());
+    setText(scEls.command, short(st.main));
+    setText(scEls.leaders, Object.keys(st.roster).length + ' / ' + LEADERS.length);
+    setText(scEls.doctrines, st.council && st.council.picks ? 'Pick one' : String(Object.keys(st.doctrines).length));
+    const n = CW.riftShards();
+    setText(scEls.rift, n ? '+' + fmt(n) : 'Stage 40');
+    setText(scEls.options, fmt(st.shards) + ' shards');
+    const alertD = !!(st.council && st.council.picks);
+    const b = el.shortcuts.querySelector('[data-sc="doctrines"]');
+    if (b._a !== alertD) b.classList.toggle('alert', (b._a = alertD));
+  }
 
   function panelSig() {
     const st = S();
@@ -877,6 +1045,7 @@
       base.push(ids.join(','), st.eraReached, st.buyMode, JSON.stringify(st.uattr), ids.map((id) => CW.uslots(id)).join(''));
     }
     if (tab === 'leaders') base.push(Object.entries(st.roster).map(([k, r]) => k + r.stars).join(','));
+    if (tab === 'command') base.push(deckSig, !!st.council);
     if (tab === 'doctrines') base.push(JSON.stringify(st.doctrines), !!st.council);
     if (tab === 'rift') base.push(st.runMax, Math.floor(Math.log10(st.shards + 1) * 20));
     if (tab === 'options') base.push(st.sound);
@@ -885,7 +1054,7 @@
 
   function renderPanel() {
     lastSig = panelSig();
-    const f = { army: renderArmy, leaders: renderLeaders, doctrines: renderDoctrines, rift: renderRift, options: renderOptions }[tab];
+    const f = { army: renderArmy, command: renderCommand, leaders: renderLeaders, doctrines: renderDoctrines, rift: renderRift, options: renderOptions }[tab];
     el.panel.innerHTML = f();
     updatePanel();
   }
@@ -1065,6 +1234,8 @@
   }
 
   el.panel.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-card]');
+    if (card && !e.target.closest('[data-act]')) return openLeader(card.dataset.card);
     const b = e.target.closest('[data-act]');
     if (!b) return;
     SFX.ensure();
@@ -1186,6 +1357,7 @@
       if (e.key === 'Escape') closeModal();
       return;
     }
+    if (!el.sheet.hidden && e.key === 'Escape') return closeSheet();
     if (e.key === ' ' && !e.target.closest('button')) {
       e.preventDefault();
       SFX.ensure();
@@ -1286,7 +1458,7 @@
     const locked = CW.UATTRS.filter((a) => a.era > st.eraReached);
     showModal(
       'uattr',
-      `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.unitURL(id)}" alt="" style="width:56px;height:44px"><div class="who"><h2>${esc(u.name)}</h2><small>Attribute slot ${slot + 1} of ${CW.uslots(id)} · every ${esc(u.name)} in your army gets it</small></div></div>
+      `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.unitURL(id)}" alt="" style="width:52px;height:52px"><div class="who"><h2>${esc(u.name)}</h2><small>Attribute slot ${slot + 1} of ${CW.uslots(id)} · every ${esc(u.name)} in your army gets it</small></div></div>
       <div class="chooser uachooser">${list
         .map((a) => {
           const at = eq.indexOf(a.id);
@@ -1461,7 +1633,8 @@
       panelT += dt;
       if (panelT > 0.4) {
         panelT = 0;
-        updatePanel();
+        updateShortcuts();
+        if (!el.sheet.hidden) updatePanel();
       }
       saveT += dt;
       if (saveT > 15) {
@@ -1519,6 +1692,8 @@
   try {
     if (hot && hot.snapshot) hot.snapshot(() => (started ? { save: CW.serialize() } : {}));
   } catch (e) {}
-  if (hot && hot.ready) hot.ready(boot);
-  else boot((hot && hot.data) || {});
+  // the base bodies load first, so every leader and soldier can be dressed before the first frame
+  const start = (d) => CW.bodiesReady.then(() => boot(d));
+  if (hot && hot.ready) hot.ready(start);
+  else start((hot && hot.data) || {});
 })();
