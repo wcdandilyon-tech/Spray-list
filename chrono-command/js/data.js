@@ -1043,6 +1043,26 @@
     sk('Warp Arrows', [['strike', 'random', 6]]),
     sk('Tribute of Worlds', [['gold', 20]]));
 
+  // ---- legend, machine and heaven
+  L('arthur', 'King Arthur', 'Legend, c. 6th century', 520, 3, 'defender', 'The Once and Future King',
+    'Legendary king of the Britons who, in medieval romance, pulled the sword from the stone, wielded Excalibur and led the Knights of the Round Table from Camelot. Historians still debate whether he ever lived.',
+    { sk: SK.p, hr: HR.brn, hs: 'wavy', fh: 'beard', hat: 'crown', hc: '#e8c84a', ha: '#2a6ac8', out: 'plate', oc: '#c0c4cc', ac: '#c8102e', bg: '#1a2a4a' },
+    ult('Excalibur', [['strike', 'boss', 10], ['buff', 'crit', 0.2, 8]]),
+    sk('Knights of the Round Table', [['buff', 'def', 0.35, 8]]),
+    sk('Avalon', [['heal', 0.3]]));
+  L('robohitler', 'Robo Hitler', 'Built 2045', 2045, 11, 'tyrant', 'War Machine in a Dictator\'s Face',
+    'A fictional war machine built in the likeness of Adolf Hitler, the Nazi dictator who started the Second World War and led the Holocaust. Like the man it copies, it exists to be defeated.',
+    { sk: '#c4cad4', hr: '#18181c', hs: 'side', fh: 'toothbrush', fc: '#121216', eyes: '#ff2a2a', robot: 1, out: 'silver', oc: '#6a707c', ac: '#ff2a2a', bg: '#2a0a0a' },
+    ult('Iron Onslaught', [['strike', 'all', 7], ['buff', 'atk', 0.3, 8]]),
+    sk('Armored Chassis', [['buff', 'def', 0.5, 8]]),
+    sk('Targeting Array', [['buff', 'crit', 0.25, 8]]));
+  L('god', 'God', 'Before time began', null, 14, 'peacemaker', 'Creator of All Things',
+    'The Creator of everything, as artists have painted Him for centuries: white-bearded, robed in light and crowned with a halo. When time shatters completely, even heaven takes the field.',
+    { sk: SK.p, hr: HR.wht, hs: 'longwavy', fh: 'longbeard', fc: HR.wht, hat: 'halo', hc: '#ffe86a', out: 'robe', oc: '#e8dcc0', ac: '#d9a830', bg: '#4a4020' },
+    ult('Let There Be Light', [['strike', 'all', 10], ['heal', 0.3]]),
+    sk('Divine Shield', [['buff', 'def', 0.5, 10]]),
+    sk('Resurrection', [['revive', 1, 0.6]]));
+
   LEADERS.sort((a, b) => a.era - b.era || (a.starter === b.starter ? (a.yr || 0) - (b.yr || 0) : a.starter ? -1 : 1));
   CW.LEADERS = LEADERS;
   CW.LEADER = {};
@@ -1054,7 +1074,7 @@
     leonidas: 'spear', shaka: 'spear', ragnar: 'axe', ivar: 'axe', erik: 'axe', harald: 'axe', lincoln: 'axe',
     genghis: 'bow', kublai: 'bow', attila: 'bow', nobunaga: 'katana', tokugawa: 'katana', saladin: 'scimitar', suleiman: 'scimitar', mehmed: 'scimitar',
     troosevelt: 'club', mao: 'book', thatcher: 'handbag', mlk: 'mic', elizabeth1: 'sceptre', catherine: 'sceptre', ivan: 'sceptre', victoria: 'sceptre',
-    gandhi: 'staff', mobutu: 'staff', cleopatra: 'sceptre', hatshepsut: 'sceptre', ramesses: 'sceptre', patton: 'gun', churchill: 'none', lenin: 'none', mandela: 'none', elizabeth2: 'flag',
+    gandhi: 'staff', mobutu: 'staff', cleopatra: 'sceptre', hatshepsut: 'sceptre', ramesses: 'sceptre', patton: 'gun', arthur: 'excalibur', robohitler: 'mg', god: 'staff', churchill: 'none', lenin: 'none', mandela: 'none', elizabeth2: 'flag',
     castro: 'rifle', che: 'rifle', ho_chi_minh: 'rifle', chavez: 'rifle', tubman: 'rifle', polpot: 'rifle', kirk: 'mic', trump: 'flag',
     caveman: 'club', neanderthal: 'club', otzi: 'club', firekeeper: 'club', mammothmother: 'club', zelensky: 'rifle', synth: 'raygun', admiral: 'raygun', moonking: 'staff', archon: 'staff', cosmickhan: 'raygun', devil: 'trident', overmind: 'staff', warlord: 'gun', hive: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
   };
@@ -1062,9 +1082,9 @@
   CW.MYSTERY = LEADERS.filter((l) => l.era === CW.ERAS.length).map((l) => l.id);
 
   // Future era: echoes of the past rebuilt as war machines.
-  CW.ECHO_POOL = ['alexander', 'caesar', 'genghis', 'napoleon', 'hitler', 'stalin', 'hannibal', 'attila', 'timur', 'qin',
+  CW.ECHO_POOL = ['alexander', 'caesar', 'genghis', 'napoleon', 'stalin', 'hannibal', 'attila', 'timur', 'qin',
     'wilhelm', 'mao', 'nobunaga', 'saladin', 'patton', 'churchill', 'shaka', 'ramesses'];
-  CW.FUTURE_POOL = ['exterminator', 'alien', 'synth', 'neonshogun', 'overmind', 'warlord', 'admiral', 'moonking', 'empress', 'hive', 'archon', 'cosmickhan'].concat(CW.ECHO_POOL);
+  CW.FUTURE_POOL = ['exterminator', 'alien', 'synth', 'robohitler', 'neonshogun', 'overmind', 'warlord', 'admiral', 'moonking', 'empress', 'hive', 'archon', 'cosmickhan'].concat(CW.ECHO_POOL);
 
   // ---------------------------------------------------------------- doctrines (random army-management skills)
   // r: rarity 0 common, 1 rare, 2 epic ; max: stack limit

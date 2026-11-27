@@ -27,11 +27,11 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   trebuchets, samurai and cannons, landships, tanks and fighter planes, attack helicopters, stealth bombers, power armor,
   battle mechs, space marines and titan mechs. New units arrive already trained close to your best unit's level.
 - **Leader battles.** Every third stage you face a famous leader who fights as a giant on the field with a timer,
-  and whose attributes power their army. Win and they join your roster. 134 in all, from a Stone Age caveman, Otzi,
-  Gilgamesh and Hatshepsut to Alexander, Caesar, Nero, Ragnar, Kublai Khan, Mehmed II, Napoleon, Frederick the Great,
+  and whose attributes power their army. Win and they join your roster. 137 in all, from a Stone Age caveman, Otzi,
+  Gilgamesh and Hatshepsut to Alexander, Caesar, Nero, Ragnar, King Arthur, Kublai Khan, Mehmed II, Napoleon, Frederick the Great,
   Grant, Hitler, Stalin, Mussolini, Rommel, Zhukov, Mao, Khrushchev, Pol Pot, Idi Amin, Gandhi, Martin Luther King Jr.,
   Mandela, Obama, Putin, Kim Jong Un, Zelenskyy, Charlie Kirk and Donald Trump, plus original future rulers (a cyborg
-  assassin, an android queen, a neon shogun, a space admiral, the Archon) and the Devil and Santa Claus.
+  assassin, Robo Hitler, an android queen, a neon shogun, a space admiral, the Archon) and, once time shatters, the Devil, Santa Claus and God.
 - **Commanders on the front line.** Your commander and two partners fight in the battle as full-body sprites next to
   their troops. If one falls, their attributes switch off for the rest of that battle.
 - **Leader attributes, not moves.** Every leader has three always-on attributes, each explained in plain words.
@@ -55,7 +55,7 @@ version, your stage moves to the matching era and you get a full army of that er
 | File | What's in it |
 | --- | --- |
 | `index.html` | Page layout and all styling |
-| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 134 leaders and the 31 doctrines |
+| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders and the 31 doctrines |
 | `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
 | `js/bodies.js` | The animated base figure (embedded sheet), body-part detection, and the dressing of every leader and foot soldier |

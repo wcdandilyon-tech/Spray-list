@@ -457,16 +457,19 @@
       return;
     }
     const front = ['slick', 'neat', 'side'].includes(hs) ? 0.5 : 1;
-    ell(B, -0.5, -1.6, 10.7, 9.2, col, h, { clip: (x, y) => y < front || (x < -2 && y < 7.5) || (x < 1 && y < 3), bias: 0.1 });
+    // short styles hug the skull; longer ones are fuller and come down the back of the head
+    const close = ['short', 'side', 'neat', 'slick', 'swoop'].includes(hs);
+    const back = close ? 4.5 : 7.5;
+    ell(B, -0.5, -1.6, close ? 10.3 : 10.7, close ? 8.9 : 9.2, col, h, { clip: (x, y) => y < front || (x < -2 && y < back) || (x < 1 && y < 3), bias: 0.1 });
     const spikes = (list) => list.forEach(([x, y, tx, ty]) => poly(B, [[x, y], [x + 4.4, y - 0.4], [tx, ty]], col, h, { gain: 0.7 }));
     if (['short', 'wild', 'curly', 'wavy', 'long', 'longwavy', 'bob', 'bun', 'updo', 'bouffant'].includes(hs))
       spikes([[-2.5, -1, 0.3, 3.7], [1, -1, 4, 3.9], [4.5, -1.2, 7.6, 3.4], [7.2, -1.8, 10.2, 2]]);
     if (!hat && (hs === 'short' || hs === 'wild')) spikes([[-11, -2, -14.5, 0.5], [-9, -7, -13, -9], [-4, -9.5, -6, -13.6]]);
     if (!hat && hs === 'wild') spikes([[1, -10, 2.5, -14], [6, -8.5, 10, -11], [-11, 3, -14, 6.5]]);
     if (['curly', 'wavy', 'bouffant'].includes(hs)) for (const [x, y] of [[-8, -6], [-3, -9], [3, -9.4], [8, -6.5], [-10.5, 0], [10, -2]]) ell(B, x, y, 3.4, 3, col, h);
-    if (['side', 'neat', 'slick'].includes(hs)) {
-      poly(B, [[-9, -4], [10.5, -4.5], [11, 0.5], [5, -0.6], [-2, 0], [-8, 1.5]], col, h, { gain: 0.6 });
-    }
+    if (['neat', 'slick'].includes(hs)) poly(B, [[-9, -4], [10.5, -4.5], [11, 0.5], [5, -0.6], [-2, 0], [-8, 1.5]], col, h, { gain: 0.6 });
+    // a side parting: a forelock swept down across the forehead
+    if (hs === 'side') poly(B, [[-8, -4], [10, -4.5], [10.5, -0.5], [6.6, 3.2], [3.5, 0.4], [-2, 0], [-7.5, 1.5]], col, h, { gain: 0.6 });
     if (hs === 'swoop') poly(B, [[-11, -2], [-4, -10], [6, -10.5], [12.5, -5.5], [13, 0], [7, -1.6], [0, -0.5], [-6, 1], [-10, 3]], col, h, { gain: 0.7 });
     if (hs === 'powdered') {
       ell(B, -9.5, 3.5, 3, 2.3, col, h);
@@ -694,6 +697,13 @@
       case 'spacehelm':
         ell(B, 0, 0.5, 13, 12.5, hc, H, { clip: (x, y) => !(x > -4 && y > -3 && y < 10), bias: 0.2 });
         break;
+      case 'halo':
+        // a golden ring floating above the head
+        for (let a = 0; a < Math.PI * 2; a += 0.35) {
+          const b = a + 0.4;
+          cap(B, Math.cos(a) * 7.5, -10.6 + Math.sin(a) * 1.9, Math.cos(b) * 7.5, -10.6 + Math.sin(b) * 1.9, 0.75, 0.75, hc, H, { bias: 0.45 });
+        }
+        break;
       case 'shards':
         for (let i = 0; i < 5; i++) poly(B, [[-9 + i * 4.4, -5], [-7 + i * 4.4, -5], [-8 + i * 4.4 + (i - 2) * 0.6, i % 2 ? -13 : -17]], hc, H, { bias: 0.35 });
         break;
@@ -701,7 +711,7 @@
   }
 
   // ---------------------------------------------------------------- weapons (local to the hand, pointing along +x)
-  const GRIP = { sword: 1, katana: 1, scimitar: 1, blade: 1, axe: 1, club: 1, spear: 2, javelin: 2, trident: 2, staff: 2, sceptre: 2, scythe: 2, flag: 3, candy: 3 };
+  const GRIP = { excalibur: 1, sword: 1, katana: 1, scimitar: 1, blade: 1, axe: 1, club: 1, spear: 2, javelin: 2, trident: 2, staff: 2, sceptre: 2, scythe: 2, flag: 3, candy: 3 };
   const GUNS = new Set(['gun', 'rifle', 'musket', 'mg', 'smg', 'longrifle', 'laser', 'raygun', 'plasma']);
   function weapon(B, w, opt) {
     const wp = part(B);
@@ -717,6 +727,13 @@
         blade(15, 1.4, steel);
         cap(B, 1.5, -3, 1.5, 3, 0.8, 0.8, gold, wp, { bias: 0.3 });
         cap(B, -2.5, 0, 0, 0, 0.9, 0.9, '#5a3a1a', wp);
+        break;
+      case 'excalibur':
+        blade(17, 1.5, '#d8f0ff');
+        for (let i = 4; i < 16; i += 3) dot(B, i, 0.5, '#9ad8ff');
+        cap(B, 1.5, -3.4, 1.5, 3.4, 0.9, 0.9, '#e8c84a', wp, { bias: 0.35 });
+        cap(B, -3, 0, 0, 0, 0.9, 0.9, '#2a4a8a', wp);
+        dot(B, 1.5, 0, '#2a6ac8');
         break;
       case 'katana':
         blade(16, 1.1, '#dfe4ea');
@@ -837,6 +854,8 @@
     mehmed: { cape: '#a8241c' }, frederick: { cape: '#2a3a6a' }, nelson: { sash: '#1a2a5a' }, archon: { cape: '#ffe86a' },
     cosmickhan: { cape: '#2ee6ff' }, empress: { cape: '#9ad8ff' }, admiral: { cape: '#1a1a2a' }, mobutu: { walk: 1 },
     troosevelt: { club: '#6a4a2a' }, hive: { pole: '#5a6a3a', tip: '#9adc5a' },
+    arthur: { cape: '#c8102e', shield: { c: '#2a4a8a', e: '#e8c84a', kite: 1 } }, robohitler: { core: '#ff2a2a' },
+    god: { cape: '#e8c84a', orb: '#fff6c8', sash: '#e8c84a' },
   };
   CW.SIG = SIG;
   // cloth colours for each outfit
@@ -1032,6 +1051,10 @@
       for (let i = 0; i < Math.min(6, L.p.medals * 3); i++) dot(fr, -1.5 + (i % 3), 14 + Math.floor(i / 3) * 1.6, mc[i % 4]);
     }
     if (L.out === 'santa') for (let y = 11; y < 25; y++) dot(fr, 2, y, '#f4f0ea');
+    if (sg.core) {
+      ell(fr, 3, 15, 1.8, 1.8, sg.core, part(fr), { bias: 0.5 });
+      dot(fr, 2.5, 14.5, '#ffd0d0');
+    }
     if (L.out === 'ruff') ell(fr, 1.5, 10.5, 7, 2.4, '#f6f3ee', part(fr), { bias: 0.3 });
     if (L.p && (L.p.pearls || L.id === 'elizabeth2')) for (let x = -1; x < 5; x++) dot(fr, x + 0.5, 11, '#f4f0ea');
     // head
@@ -1059,6 +1082,12 @@
         dots(fr, [[-1, 3], [0, 3], [3.5, 3], [4.5, 3]], p.eyes || '#7dffb0');
       } else {
         if (p.cosmic) for (let i = 0; i < 9; i++) dot(fr, -7 + ((i * 7) % 15), -5 + ((i * 5) % 13), i % 2 ? '#ffffff' : '#d08aff');
+        if (p.robot) {
+          const seam = shade(L.skin, -0.35);
+          for (let y = -9; y < 9; y++) dot(fr, -2.5, y + 0.5, seam);
+          for (let x = -5; x < 8; x++) dot(fr, x + 0.5, 8.4, seam);
+          dots(fr, [[-6, 1], [-6, 5], [7.5, -2], [-1, -8]], shade(L.skin, 0.45));
+        }
         if (p.cyborg) {
           poly(fr, [[3, -2], [9.5, -3], [9.5, 8], [3.5, 8]], '#9aa0aa', part(fr), { gain: 0.6 });
           dots(fr, [[5.5, 5], [6.5, 5]], '#ff2a2a');
@@ -1180,7 +1209,7 @@
       if (w === 'flag' || w === 'candy' || (pole && !fight)) ang = -Math.PI / 2 + 0.08;
       if (['rock', 'grenade', 'sling', 'mic', 'book', 'handbag'].includes(w)) ang = 0;
       setT(ax, ay, ang);
-      weapon(fr, w, { glow: L.p && L.p.eyes, flag: sg.flag || L.ac, orb: L.p && L.p.eyes, walk: sg.walk, book: sg.book, club: sg.club, pole: sg.pole, tip: sg.tip });
+      weapon(fr, w, { glow: L.p && L.p.eyes, flag: sg.flag || L.ac, orb: sg.orb || (L.p && L.p.eyes), walk: sg.walk, book: sg.book, club: sg.club, pole: sg.pole, tip: sg.tip });
       // the hand over the grip
       setT(ax, ay);
       if (!L.unit || L.weapon) ell(fr, 0, 0, 1.6, 1.6, L.hands || L.skin, part(fr), { bias: 0.3 });

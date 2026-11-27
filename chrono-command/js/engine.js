@@ -55,7 +55,7 @@
   // After it ends, time shatters: random eras, stronger foes and mystery bosses, forever.
   const BOSSES = [];
   for (let e = 0; e < 11; e++) BOSSES.push(LEADERS.filter((l) => l.era === e && !l.starter).map((l) => l.id));
-  BOSSES.push(['exterminator', null, 'synth', null, 'neonshogun', null, 'alien']); // Future: nulls are echoes of the past
+  BOSSES.push(['exterminator', null, 'synth', 'robohitler', 'neonshogun', null, 'alien']); // Future: nulls are echoes of the past
   BOSSES.push(['overmind', null, 'admiral', 'warlord', null, 'moonking']); // Space Age
   BOSSES.push(['empress', null, 'archon', null, 'cosmickhan', 'hive']); // Galactic Age
   const SPB = CFG.stagesPerBoss;
@@ -564,7 +564,7 @@
       face: side === 'a' ? 1 : -1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: false, isBoss: false,
     };
   }
-  const RANGED_W = { gun: 'bullet', rifle: 'bullet', raygun: 'laser', staff: 'plasma', bow: 'arrow' };
+  const RANGED_W = { gun: 'bullet', rifle: 'bullet', mg: 'bullet', raygun: 'laser', staff: 'plasma', bow: 'arrow' };
   const commandIds = () => [S.main].concat(S.partners).filter(Boolean);
   function heroStats(lid, isMain, ctx) {
     let dps = 0;
