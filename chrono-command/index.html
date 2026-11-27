@@ -277,6 +277,40 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
 @keyframes sheetUp{from{transform:translateY(28px);opacity:0}}
 .cards{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
 
+/* special meters and moves */
+.chip .spm{display:block;width:54px;height:3px;background:rgba(207,174,104,.18);border-radius:99px;overflow:hidden}
+.chip .spm i{display:block;height:100%;width:0;background:var(--brass)}
+.chip.half{box-shadow:inset 0 0 0 1px rgba(207,174,104,.55)}
+.chip.ready{box-shadow:inset 0 0 0 2px var(--brass);animation:pulse 1.2s ease-in-out infinite}
+.spop{position:fixed;z-index:45;width:min(340px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--line2);border-radius:14px;padding:12px 12px 8px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.spop h4{margin:0;font-size:15px;font-weight:800;display:flex;justify-content:space-between;gap:8px}
+.spop h4 span{color:var(--brass);font-variant-numeric:tabular-nums}
+.spop .m{height:6px;background:var(--surface3);border-radius:99px;overflow:hidden;margin:7px 0 4px}
+.spop .m i{display:block;height:100%;background:var(--brass)}
+.spb{display:grid;gap:3px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
+.spb b{font-weight:800;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.spb b span{color:var(--brass);font-size:12px;white-space:nowrap}
+.spb small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.spb:disabled{opacity:.45;cursor:not-allowed}
+.spb:not(:disabled):hover{border-color:var(--brass)}
+.spop .more{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;margin-top:6px;cursor:pointer;padding:4px 0}
+.sbanner{position:absolute;left:50%;top:36%;transform:translateX(-50%);text-align:center;white-space:nowrap;opacity:0;transition:opacity .2s}
+.sbanner.on{opacity:1}
+.sbanner b{display:block;font-weight:800;font-size:1.9em;letter-spacing:-.01em;color:#ffe08a;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.sbanner.foe b{color:#ff9a8a}
+.sbanner small{display:block;font-weight:700;font-size:.95em;color:#f0ece4;text-shadow:0 1px 0 rgba(0,0,0,.6)}
+.bsp{height:.22em;border-radius:99px;background:rgba(255,255,255,.08);margin-top:.3em;overflow:hidden}
+.bsp i{display:block;height:100%;background:#d08aff;width:0}
+.pos{display:flex;gap:2px;padding:3px;background:var(--surface2);border-radius:9px;grid-column:1/-1}
+.pos button{flex:1;border:0;background:none;color:var(--muted);font-size:13px;font-weight:700;padding:6px 8px;border-radius:7px;cursor:pointer}
+.pos button[aria-pressed="true"]{background:var(--surface3);color:var(--ink)}
+.pos button .fit{color:var(--brass);margin-left:4px}
+.excel{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin:0;line-height:1.4}
+.sps{grid-column:1/-1;list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sps li{background:var(--surface2);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--muted);line-height:1.4}
+.sps b{color:var(--brass);font-weight:700;margin-right:6px}
+.sps em{font-style:normal;color:var(--faint);font-size:12px;margin-left:4px}
+
 /* full battle mode: a phone turned sideways gets the battlefield on the whole screen, with shortcuts on top */
 @media (orientation:landscape) and (max-height:540px){
   body{overflow:hidden}
@@ -352,8 +386,9 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
       <canvas id="cv" aria-label="Battlefield. Click or tap to strike the enemy."></canvas>
       <div class="ov" aria-hidden="true">
         <div class="ov-l glass"><b id="hudLabel">Stage 1</b><small id="hudSub" hidden>Regrouping</small><div class="tug"><i id="hudTug"></i></div><div class="cnts"><span id="hudA">0</span><span id="hudE">0</span></div></div>
-        <div class="ov-r glass" id="hudBoss" hidden><div class="bn"><b id="hudBossName">Leader</b><span id="hudTime">60s</span></div><div class="bhp"><i id="hudBossHp"></i></div><div class="btime"><i id="hudBossT"></i></div></div>
+        <div class="ov-r glass" id="hudBoss" hidden><div class="bn"><b id="hudBossName">Leader</b><span id="hudTime">60s</span></div><div class="bhp"><i id="hudBossHp"></i></div><div class="btime"><i id="hudBossT"></i></div><div class="bsp" title="Enemy leader's special meter"><i id="hudBossSp"></i></div></div>
         <div class="banner" id="banner"><b id="bannerT"></b><small id="bannerS"></small></div>
+        <div class="sbanner" id="sbanner"><small id="sbS"></small><b id="sbT"></b></div>
       </div>
       <div class="toast" id="toast" aria-live="polite"></div>
     </div>
@@ -362,6 +397,7 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
       <button class="btn blue pulse" id="btnCouncil" hidden>War Council</button>
       <div class="chips" id="deck" aria-label="Your commanders"></div>
       <label class="tog"><input type="checkbox" id="autoPush" checked> Auto-advance</label>
+      <label class="tog" title="Full meters fire the signature special after a few seconds"><input type="checkbox" id="autoSpecial" checked> Auto specials</label>
       <span class="spacer"></span>
       <span class="hint" id="hint">Tap the field to call in a strike</span>
     </div>
@@ -380,6 +416,8 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
 </main>
 
 <div class="sheet" id="sheet" hidden><div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-top"><b id="sheetTitle" hidden>Army</b><nav class="stabs" aria-label="Sections"><button data-sc="army">Army</button><button data-sc="command">Commanders</button><button data-sc="leaders">Leaders</button><button data-sc="doctrines">Doctrines</button><button data-sc="rift">Time Rift</button><button data-sc="options">Options</button></nav><button class="x" id="sheetClose" aria-label="Close">×</button></div><section class="panel" id="panel"></section></div></div>
+
+<div class="spop" id="spop" hidden role="dialog" aria-label="Choose a special"></div>
 
 <div class="modal" id="modal" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true"></div></div>
 

@@ -1086,6 +1086,77 @@
     'wilhelm', 'mao', 'nobunaga', 'saladin', 'patton', 'churchill', 'shaka', 'ramesses'];
   CW.FUTURE_POOL = ['exterminator', 'alien', 'synth', 'robohitler', 'neonshogun', 'overmind', 'warlord', 'admiral', 'moonking', 'empress', 'hive', 'archon', 'cosmickhan'].concat(CW.ECHO_POOL);
 
+  // ---------------------------------------------------------------- special moves
+  // Each leader has a signature special (its own move) and their class's special. Both are charged by the leader's
+  // special meter, which fills as your soldiers defeat enemies (stronger enemies fill it more).
+  // Templates: barrage, charge, snipe, rally, fortify, heal, revive, stun, terror, inferno, tribute, reinforce (see engine.js).
+  const SPC = {
+    neanderthal: ['Cave Bear Ambush', 'charge'], firekeeper: ['Wildfire', 'inferno'], mammothmother: ['Ivory Avalanche', 'charge'],
+    caveman: ['Boulder Rain', 'barrage'], otzi: ['Glacier Arrow', 'snipe'],
+    sun_tzu: ['Thirty-Six Stratagems', 'terror'], leonidas: ['Hold the Hot Gates', 'fortify'], gilgamesh: ['Bull of Heaven', 'snipe'],
+    sargon: ['Akkadian Onslaught', 'barrage'], hammurabi: ['Stele of Judgment', 'terror'], hatshepsut: ['Gifts of Punt', 'tribute'],
+    ramesses: ['Kadesh Chariots', 'charge'], nebuchadnezzar: ['Hanging Gardens', 'heal'], cyrus: ['March of the Immortals', 'rally'],
+    spartacus: ['Break the Chains', 'revive'], alexander: ['Charge at Gaugamela', 'charge'], ashoka: ['Pillars of Ashoka', 'heal'],
+    qin: ['Terracotta Legion', 'reinforce'], hannibal: ['Over the Alps', 'terror'], scipio: ['Open the Ranks', 'fortify'],
+    vercingetorix: ['Gaulish Uprising', 'rally'], caesar: ['Tenth Legion', 'rally'], cleopatra: ['Nile Treasury', 'tribute'],
+    boudica: ['Iceni Revolt', 'charge'], nero: ['Emperor\'s Games', 'stun'],
+    attila: ['Hunnic Storm', 'barrage'], charlemagne: ['Holy Roman Host', 'reinforce'], ragnar: ['Shield Wall Breaker', 'charge'],
+    ivar: ['Heathen Host', 'reinforce'], alfred: ['Burghal Forts', 'fortify'], erik: ['Longship Landing', 'charge'],
+    brianboru: ['High King\'s Muster', 'rally'], cnut: ['Northern Fleet', 'tribute'], william: ['Hastings Feint', 'terror'],
+    harald: ['Landwaster Banner', 'rally'], arthur: ['Sword from the Stone', 'snipe'],
+    elcid: ['Ride of the Champion', 'charge'], saladin: ['Desert Mirage', 'terror'], richard: ['Lionheart Charge', 'charge'],
+    genghis: ['Endless Steppe', 'reinforce'], kublai: ['Yuan Armada', 'barrage'], wallace: ['Highland Fury', 'rally'],
+    mansa_musa: ['River of Gold', 'tribute'], timur: ['Iron Lame Wrath', 'barrage'], joan: ['The Maid\'s Banner', 'rally'],
+    mehmed: ['Walls Come Down', 'snipe'], vlad: ['Moonlit Raid', 'stun'], suleiman: ['Magnificent Host', 'reinforce'],
+    ivan: ['Tsar\'s Cannons', 'barrage'], nobunaga: ['Three-Rank Volley', 'barrage'], akbar: ['Elephant Batteries', 'charge'],
+    elizabeth1: ['Fire Ships', 'inferno'], tokugawa: ['Unifier of Japan', 'terror'], gustavus: ['Swedish Brigade', 'rally'],
+    cromwell: ['Ironside Charge', 'charge'], peter: ['Northern Bastion', 'fortify'],
+    frederick: ['Leuthen Maneuver', 'terror'], catherine: ['Imperial Guard', 'reinforce'], washington: ['Delaware Surprise', 'stun'],
+    robespierre: ['Revolutionary Levy', 'reinforce'], toussaint: ['Spirit of Saint-Domingue', 'rally'], napoleon: ['Old Guard Charge', 'charge'],
+    nelson: ['Line of Battle', 'barrage'], shaka: ['Impi Charge', 'terror'], bolivar: ['Liberator\'s March', 'rally'],
+    garibaldi: ['The Thousand', 'reinforce'], lincoln: ['Better Angels', 'revive'], tubman: ['Conductor\'s Lantern', 'revive'],
+    grant: ['Siege of Vicksburg', 'stun'], bismarck: ['Iron and Blood', 'barrage'], victoria: ['Imperial Jubilee', 'tribute'],
+    diaz: ['Rurales', 'reinforce'], troosevelt: ['Rough Riders', 'charge'], wilhelm: ['Paris Gun', 'snipe'],
+    lenin: ['Storm the Winter Palace', 'rally'], gandhi: ['Quit India', 'fortify'],
+    mussolini: ['Balcony Speech', 'rally'], trujillo: ['Benefactor\'s Decree', 'terror'], franco: ['Ebro Offensive', 'charge'],
+    hitler: ['Panzer Thrust', 'charge'], churchill: ['Never Surrender', 'fortify'], tojo: ['Southern Strike', 'barrage'],
+    fdr: ['Victory Bonds', 'tribute'], rommel: ['Desert Blitz', 'charge'], stalin: ['Katyusha Barrage', 'barrage'],
+    patton: ['Relief of Bastogne', 'rally'], eisenhower: ['D-Day Landings', 'reinforce'], zhukov: ['Storm of Berlin', 'snipe'],
+    macarthur: ['Amphibious Assault', 'reinforce'],
+    mao: ['Prairie Fire', 'inferno'], kim_il_sung: ['Chollima Charge', 'charge'], tito: ['Partisan Ambush', 'terror'],
+    ho_chi_minh: ['Ho Chi Minh Trail', 'reinforce'], degaulle: ['Free French', 'rally'], che: ['Guerrilla Ambush', 'terror'],
+    castro: ['Havana Bastion', 'fortify'], jfk: ['Moonshot', 'rally'], khrushchev: ['Missile Crisis', 'barrage'],
+    mlk: ['Selma March', 'heal'], amin: ['Last King', 'terror'], pinochet: ['Iron Junta', 'stun'], polpot: ['Jungle War', 'terror'],
+    thatcher: ['Iron Lady', 'fortify'], reagan: ['Peace Through Strength', 'rally'],
+    gaddafi: ['Green Book', 'terror'], gorbachev: ['The Thaw', 'heal'], saddam: ['Baghdad Guard', 'reinforce'],
+    mandela: ['Robben Island Will', 'revive'], mobutu: ['Leopard\'s Fortune', 'tribute'], kim_jong_il: ['Songun Parade', 'rally'],
+    chavez: ['Bolivar\'s Heirs', 'rally'], mugabe: ['Bush War', 'terror'], obama: ['Hope and Change', 'heal'],
+    elizabeth2: ['Keep Calm', 'fortify'], kirk: ['Campus Debate', 'stun'], trump: ['The Deal', 'tribute'],
+    kim_jong_un: ['Missile Salvo', 'barrage'], putin: ['Iron Curtain', 'fortify'], zelensky: ['Kyiv Holds', 'fortify'],
+    exterminator: ['Termination', 'snipe'], synth: ['Machine Uprising', 'reinforce'], robohitler: ['Steel Barrage', 'barrage'],
+    neonshogun: ['Thousand Cuts', 'charge'], alien: ['Abduction Beam', 'stun'],
+    overmind: ['System Override', 'stun'], admiral: ['Full Broadside', 'barrage'], warlord: ['Martian Dust Storm', 'terror'],
+    moonking: ['Helium Rush', 'tribute'],
+    empress: ['Starfleet Armada', 'barrage'], hive: ['The Swarm Rises', 'reinforce'], archon: ['Supernova', 'barrage'],
+    cosmickhan: ['Comet Charge', 'charge'],
+    devil: ['Brimstone', 'inferno'], santa: ['Naughty List', 'stun'], wraith: ['The Reaping', 'snipe'], void: ['Black Hole', 'barrage'],
+    god: ['Divine Judgment', 'barrage'],
+  };
+  CW.SPECIAL = SPC;
+  CW.CLASS_SPECIAL = {
+    conqueror: ['Overrun', 'charge'], tyrant: ['Reign of Fear', 'terror'], strategist: ['Flanking Maneuver', 'barrage'],
+    defender: ['Hold the Line', 'fortify'], revolutionary: ['Uprising', 'reinforce'], statesman: ['War Bonds', 'tribute'],
+    peacemaker: ['Ceasefire', 'stun'], warrior: ['Battle Cry', 'rally'], orator: ['Rallying Speech', 'heal'],
+  };
+  // when a leader's signature special is already their class's kind of move, they get this one instead, so the choice is real
+  CW.CLASS_SPECIAL_ALT = {
+    conqueror: ['Blitz Assault', 'barrage'], tyrant: ['Iron Decree', 'stun'], strategist: ['False Retreat', 'terror'],
+    defender: ['Field Hospital', 'heal'], revolutionary: ['Barricades', 'fortify'], statesman: ['Grand Alliance', 'rally'],
+    peacemaker: ['Healing Hands', 'heal'], warrior: ['Lead the Charge', 'charge'], orator: ['Call to Arms', 'reinforce'],
+  };
+  // where each class leads best: fighters at the front, thinkers behind the army
+  CW.FRONT_CLASSES = ['warrior', 'conqueror', 'revolutionary', 'defender'];
+
   // ---------------------------------------------------------------- doctrines (random army-management skills)
   // r: rarity 0 common, 1 rare, 2 epic ; max: stack limit
   const D = (id, name, r, max, d, fx) => ({ id, name, r, max, d, fx });

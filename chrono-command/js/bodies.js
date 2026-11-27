@@ -246,11 +246,14 @@
   }
 
   // ---------------------------------------------------------------- a small rasteriser for overlays, with a movable frame
+  // the drawing area: the body frame size, or a bigger canvas while vehicles are drawn
+  let BW = FW;
+  let BH = FH;
   function Buf() {
-    this.c = new Float32Array(FW * FH * 3);
-    this.l = new Float32Array(FW * FH * 3);
-    this.id = new Int16Array(FW * FH);
-    this.ol = new Uint8Array(FW * FH);
+    this.c = new Float32Array(BW * BH * 3);
+    this.l = new Float32Array(BW * BH * 3);
+    this.id = new Int16Array(BW * BH);
+    this.ol = new Uint8Array(BW * BH);
     this.n = 1;
   }
   const part = (B) => B.n++;
@@ -280,8 +283,8 @@
     return m;
   }
   function put(B, x, y, m, lv, id, o) {
-    if (x < 0 || y < 0 || x >= FW || y >= FH) return;
-    const i = y * FW + x;
+    if (x < 0 || y < 0 || x >= BW || y >= BH) return;
+    const i = y * BW + x;
     const t = o.tone !== undefined ? o.tone : lv > 0.5 ? 0 : lv > -0.12 ? 1 : lv > -0.55 ? 2 : 3;
     const c = m.t[t];
     B.c.set(c, i * 3);
@@ -298,8 +301,8 @@
     o = o || {};
     const m = mat(h);
     const [a, b, c, d] = wbox(cx - rx, cy - ry, cx + rx, cy + ry);
-    for (let y = Math.max(0, b); y <= Math.min(FH - 1, d); y++)
-      for (let x = Math.max(0, a); x <= Math.min(FW - 1, c); x++) {
+    for (let y = Math.max(0, b); y <= Math.min(BH - 1, d); y++)
+      for (let x = Math.max(0, a); x <= Math.min(BW - 1, c); x++) {
         const [lx, ly] = toL(x + 0.5, y + 0.5);
         if (o.clip && !o.clip(lx, ly)) continue;
         const nx = (lx - cx) / rx;
@@ -315,8 +318,8 @@
     const L2 = dx * dx + dy * dy || 1;
     const R = Math.max(r1, r2);
     const [a, b, c, d] = wbox(Math.min(x1, x2) - R, Math.min(y1, y2) - R, Math.max(x1, x2) + R, Math.max(y1, y2) + R);
-    for (let y = Math.max(0, b); y <= Math.min(FH - 1, d); y++)
-      for (let x = Math.max(0, a); x <= Math.min(FW - 1, c); x++) {
+    for (let y = Math.max(0, b); y <= Math.min(BH - 1, d); y++)
+      for (let x = Math.max(0, a); x <= Math.min(BW - 1, c); x++) {
         const [px, py] = toL(x + 0.5, y + 0.5);
         let t = ((px - x1) * dx + (py - y1) * dy) / L2;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
@@ -350,8 +353,8 @@
     const hw = Math.max(1, (x1 - x0) / 2);
     const hh = Math.max(1, (y1 - y0) / 2);
     const [a, b, c, d] = wbox(x0, y0, x1, y1);
-    for (let y = Math.max(0, b); y <= Math.min(FH - 1, d); y++)
-      for (let x = Math.max(0, a); x <= Math.min(FW - 1, c); x++) {
+    for (let y = Math.max(0, b); y <= Math.min(BH - 1, d); y++)
+      for (let x = Math.max(0, a); x <= Math.min(BW - 1, c); x++) {
         const [lx, ly] = toL(x + 0.5, y + 0.5);
         if (o.clip && !o.clip(lx, ly)) continue;
         if (inside(pts, lx, ly)) put(B, x, y, m, lit(((lx - cx) / hw) * 0.85, ((ly - cy) / hh) * 0.85, o), id, o);
@@ -361,8 +364,8 @@
     const [wx, wy] = toW(x, y);
     const X = Math.round(wx - 0.5);
     const Y = Math.round(wy - 0.5);
-    if (X < 0 || Y < 0 || X >= FW || Y >= FH) return;
-    const i = Y * FW + X;
+    if (X < 0 || Y < 0 || X >= BW || Y >= BH) return;
+    const i = Y * BW + X;
     const c = typeof h === 'string' ? rgb(h) : h;
     B.c.set(c, i * 3);
     if (!B.id[i]) {
@@ -374,8 +377,8 @@
   const dots = (B, pts, h) => pts.forEach(([x, y]) => dot(B, x, y, h));
   // flatten a layer onto RGBA pixels: parts get dark edges against what's behind them, the layer gets an outline
   function flatten(B, out, outline, soft) {
-    const nb = [-1, 1, -FW, FW];
-    const n = FW * FH;
+    const nb = [-1, 1, -BW, BW];
+    const n = BW * BH;
     for (let i = 0; i < n; i++) {
       const id = B.id[i];
       if (!id) continue;
@@ -383,10 +386,10 @@
       let g = B.c[i * 3 + 1];
       let b = B.c[i * 3 + 2];
       if (B.ol[i]) {
-        const x = i % FW;
+        const x = i % BW;
         for (const d of nb) {
           const j = i + d;
-          if (j < 0 || j >= n || (d === -1 && x === 0) || (d === 1 && x === FW - 1)) continue;
+          if (j < 0 || j >= n || (d === -1 && x === 0) || (d === 1 && x === BW - 1)) continue;
           const nid = B.id[j];
           if (nid > 0 && nid < id) {
             r = r * 0.3 + B.l[i * 3] * 0.7;
@@ -405,12 +408,12 @@
     const edges = [];
     for (let i = 0; i < n; i++) {
       if (B.id[i]) continue;
-      const x = i % FW;
+      const x = i % BW;
       let best = -1;
       let bl = 1e9;
       for (const d of nb) {
         const j = i + d;
-        if (j < 0 || j >= n || (d === -1 && x === 0) || (d === 1 && x === FW - 1) || !B.id[j] || !B.ol[j] || B.id[j] === 9999) continue;
+        if (j < 0 || j >= n || (d === -1 && x === 0) || (d === 1 && x === BW - 1) || !B.id[j] || !B.ol[j] || B.id[j] === 9999) continue;
         const s = B.l[j * 3] + B.l[j * 3 + 1] + B.l[j * 3 + 2];
         if (s < bl) {
           bl = s;
@@ -734,6 +737,11 @@
         cap(B, 1.5, -3.4, 1.5, 3.4, 0.9, 0.9, '#e8c84a', wp, { bias: 0.35 });
         cap(B, -3, 0, 0, 0, 0.9, 0.9, '#2a4a8a', wp);
         dot(B, 1.5, 0, '#2a6ac8');
+        break;
+      case 'lance':
+        cap(B, -8, 0, 20, 0, 0.8, 0.5, '#c8b890', wp);
+        poly(B, [[19, -1.2], [24, 0], [19, 1.2]], '#c8ccd8', wp, { bias: 0.3 });
+        poly(B, [[14, 0.5], [18, 0.5], [17, 4], [14, 3]], opt.flag || '#c8102e', part(B), { gain: 0.5 });
         break;
       case 'katana':
         blade(16, 1.1, '#dfe4ea');
@@ -1298,6 +1306,441 @@
   CW.unitFrame = (uid, side, anim, i, flip) => frame('U', uid, side, '', anim, i, flip === undefined ? side === 'e' : flip);
   CW.bodiesLoaded = () => ready;
 
+  // ---------------------------------------------------------------- vehicles, animals and riders
+  // Drawn in the same style as the bodies (banded light, outlines), facing right, with a few frames each:
+  // 'move' (4 frames: legs, wheels, tracks, rotors), 'idle' and 'fire' (recoil, a swung arm). Riders and crews are
+  // the dressed base body, cropped at the waist and seated on top.
+  const VSIZE = {
+    wolf: [46, 30], mammoth: [64, 58], ram: [58, 40], chariot: [66, 48], elephant: [66, 58], rider: [58, 54], catapult: [54, 42],
+    trebuchet: [56, 62], cannon: [50, 34], landship: [74, 42], car: [58, 40], tank: [70, 42], plane: [66, 32], bomber: [74, 30],
+    heli: [70, 42], drone: [46, 30], mech: [54, 66], hoverbike: [62, 42],
+  };
+  CW.VSIZE = VSIZE;
+  function newBuf(w, h) {
+    BW = w;
+    BH = h;
+    return new Buf();
+  }
+  // a wheel: rim, hub and spokes that turn with the frame
+  function wheel(B, cx, cy, r, col, f, id) {
+    ell(B, cx, cy, r, r, shade(col, -0.25), id, { bias: 0.2 });
+    ell(B, cx, cy, r * 0.62, r * 0.62, col, part(B), { bias: 0.3, noOL: true });
+    for (let i = 0; i < 4; i++) {
+      const a = (f * Math.PI) / 8 + (i * Math.PI) / 4;
+      for (let t = 0.25; t < 0.95; t += 0.3) dot(B, cx + Math.cos(a) * r * t, cy + Math.sin(a) * r * t, shade(col, -0.45));
+    }
+    dot(B, cx, cy, shade(col, 0.4));
+  }
+  // a track: a rounded belt with road wheels and links that move
+  function track(B, x0, x1, y, h, col, f) {
+    const id = part(B);
+    cap(B, x0 + h / 2, y, x1 - h / 2, y, h / 2, h / 2, shade(col, -0.35), id, { bias: 0.05 });
+    const n = Math.max(3, Math.round((x1 - x0) / (h * 0.95)));
+    for (let i = 0; i < n; i++) {
+      const cx = x0 + h / 2 + ((x1 - x0 - h) * i) / (n - 1);
+      ell(B, cx, y, h * 0.32, h * 0.32, shade(col, 0.05), part(B), { bias: 0.3, noOL: true });
+    }
+    for (let x = x0 + 1 + (f % 3); x < x1 - 1; x += 3) {
+      dot(B, x, y - h / 2 + 0.6, shade(col, -0.6));
+      dot(B, x, y + h / 2 - 0.6, shade(col, -0.6));
+    }
+  }
+  // four legs that move in a gallop or a walk
+  function legs4(B, xs, top, foot, r, col, f, gait) {
+    const id = part(B);
+    xs.forEach((x, i) => {
+      const ph = ((f + (i % 2 ? 2 : 0) + (i > 1 ? 1 : 0)) % 4) / 4;
+      const sw = Math.sin(ph * Math.PI * 2) * gait;
+      const lift = Math.max(0, Math.cos(ph * Math.PI * 2)) * gait * 0.35;
+      cap(B, x, top, x + sw * 0.5, (top + foot) / 2, r, r * 0.85, i % 2 ? shade(col, -0.15) : col, id);
+      cap(B, x + sw * 0.5, (top + foot) / 2, x + sw, foot - lift, r * 0.85, r * 0.7, i % 2 ? shade(col, -0.15) : col, id);
+      ell(B, x + sw + 0.6, foot - lift + 0.4, r * 0.95, r * 0.55, shade(col, -0.45), part(B));
+    });
+  }
+  function horse(B, ox, oy, col, cloth, team, f) {
+    // body centred near (ox+24, oy+30), facing right
+    legs4(B, [ox + 15, ox + 31, ox + 18, ox + 34], oy + 32, oy + 48, 1.6, col, f, 4);
+    const b = part(B);
+    poly(B, [[ox + 4, oy + 24], [ox + 2, oy + 33], [ox + 6, oy + 30]], shade(col, -0.45), b); // tail
+    ell(B, ox + 24, oy + 30, 13, 7, col, b, { bias: 0.2 });
+    poly(B, [[ox + 32, oy + 28], [ox + 36, oy + 16], [ox + 42, oy + 12], [ox + 44, oy + 18], [ox + 38, oy + 30]], col, b, { gain: 0.6 });
+    ell(B, ox + 45, oy + 15, 5.6, 3.2, col, b, { bias: 0.2 });
+    poly(B, [[ox + 40, oy + 10], [ox + 41, oy + 6.5], [ox + 43, oy + 10.5]], col, b);
+    cap(B, ox + 35, oy + 14, ox + 41, oy + 9, 1.2, 1, shade(col, -0.5), part(B));
+    dot(B, ox + 46, oy + 13.5, '#141418');
+    if (cloth) {
+      poly(B, [[ox + 15, oy + 23], [ox + 33, oy + 23], [ox + 35, oy + 34], [ox + 13, oy + 34]], cloth, part(B), { gain: 0.6 });
+      for (let x = ox + 14; x < ox + 35; x++) dot(B, x, oy + 34, team);
+    }
+  }
+  // the rider or crew: a dressed base-body frame, cut at the waist
+  function crew(look, anim, i) {
+    const A = ANIM[anim];
+    const fa = frames[A.row + ':' + A.f[i % A.f.length]];
+    const px = dress(fa, look, anim);
+    const cut = Math.round((look.male ? masculine(fa) : fa).waist) + 1;
+    return { px, cut, hx: fa.hx };
+  }
+  function vehicle(kind, look, side, sp, anim, f) {
+    const [w, h] = VSIZE[kind];
+    const B = newBuf(w, h);
+    const team = side === 'a' ? '#5aa8e0' : '#e05a4a';
+    const body = sp.body || '#777777';
+    const fire = anim === 'fire';
+    let seat = null; // where a rider sits: [x of their centre, y of their waist]
+    const steel = '#9aa0a8';
+    const wood = '#7a5232';
+    switch (kind) {
+      case 'wolf': {
+        const one = (x, y, col, ff) => {
+          legs4(B, [x - 5, x + 5, x - 3, x + 7], y + 2, y + 10, 1.2, col, ff, 3);
+          const id = part(B);
+          ell(B, x, y, 8.5, 4.6, col, id, { bias: 0.2 });
+          ell(B, x + 6.5, y - 0.6, 4.4, 4.2, col, id, { bias: 0.25 });
+          cap(B, x - 8, y - 1, x - 13, y - 4 + (ff % 2), 1.5, 0.6, col, id);
+          ell(B, x + 11, y - 4, 3.6, 3, col, id, { bias: 0.2 });
+          poly(B, [[x + 13, y - 5.2], [x + 17.5, y - 3.6], [x + 13.4, y - 1.8]], col, id);
+          poly(B, [[x + 9.5, y - 6], [x + 10.4, y - 10], [x + 12.4, y - 6.2]], col, id);
+          dot(B, x + 12.3, y - 4.6, '#ffe86a');
+          dot(B, x + 17, y - 3.6, '#141418');
+          for (let i = -6; i < 6; i += 3) dot(B, x + i, y + 3.3, lift(rgb(col), 0.3));
+          dot(B, x + 8, y - 2, team);
+          dot(B, x + 8, y - 1, team);
+        };
+        one(17, 13, shade(body, -0.15), f + 1);
+        one(24, 19, body, f);
+        break;
+      }
+      case 'mammoth': {
+        legs4(B, [15, 37, 19, 41], 40, 55, 3.6, body, f, 2.5);
+        const id = part(B);
+        ell(B, 28, 32, 19, 13.5, body, id, { bias: 0.2 });
+        ell(B, 46, 27, 8.5, 9.5, body, id, { bias: 0.2 });
+        ell(B, 41, 27, 4.5, 7, shade(body, -0.15), part(B));
+        const tr = part(B);
+        cap(B, 52, 30, 56, 40, 2.4, 1.8, body, tr);
+        cap(B, 56, 40, 53, 48 - (f % 2), 1.8, 1.3, body, tr);
+        const tu = part(B);
+        cap(B, 50, 34, 58, 38, 1.4, 1.2, '#efe6d0', tu, { bias: 0.4 });
+        cap(B, 58, 38, 61, 31, 1.2, 0.6, '#efe6d0', tu, { bias: 0.4 });
+        dot(B, 49, 24, '#141418');
+        for (let i = 0; i < 14; i++) dot(B, 14 + ((i * 7) % 30), 24 + ((i * 5) % 16), shade(body, -0.3));
+        poly(B, [[18, 18], [34, 17], [36, 24], [16, 25]], sp.howdah || '#8a6a3a', part(B), { gain: 0.6 });
+        for (let x = 17; x < 36; x++) dot(B, x, 24, team);
+        seat = [26, 21];
+        break;
+      }
+      case 'elephant': {
+        legs4(B, [16, 36, 20, 40], 40, 55, 3.4, body, f, 2.5);
+        const id = part(B);
+        ell(B, 28, 32, 18, 12.5, body, id, { bias: 0.2 });
+        ell(B, 46, 26, 8, 9, body, id, { bias: 0.2 });
+        ell(B, 41, 27, 5.5, 8, shade(body, -0.12), part(B), { bias: 0.1 });
+        const tr = part(B);
+        cap(B, 52, 29, 55, 41, 2.2, 1.6, body, tr);
+        cap(B, 55, 41, 52, 50, 1.6, 1.2, body, tr);
+        cap(B, 50, 33, 56, 35, 1.1, 0.7, '#efe6d0', part(B), { bias: 0.4 });
+        dot(B, 49, 23, '#141418');
+        const hw = part(B);
+        poly(B, [[17, 14], [37, 14], [38, 22], [16, 22]], sp.howdah || '#b3261e', hw, { gain: 0.6 });
+        for (let x = 16; x < 38; x++) dot(B, x, 22, team);
+        for (let x = 18; x < 37; x += 3) dot(B, x, 17, '#d9b45a');
+        seat = [26, 17];
+        break;
+      }
+      case 'ram': {
+        const wd = part(B);
+        poly(B, [[3, 31], [29, 9], [55, 31]], shade(wood, -0.15), wd, { gain: 0.7 });
+        for (let y = 14; y < 31; y += 4) for (let x = 6; x < 53; x++) if ((x + y) % 7 === 0) dot(B, x, y, shade(wood, -0.4));
+        const lg = part(B);
+        const push = fire ? 4 : 0;
+        cap(B, 2 + push, 26, 50 + push, 26, 2.6, 2.6, wood, lg);
+        ell(B, 52 + push, 26, 3.4, 3.4, steel, part(B), { bias: 0.3 });
+        wheel(B, 13, 34, 5, wood, f, part(B));
+        wheel(B, 43, 34, 5, wood, f, part(B));
+        poly(B, [[26, 9], [32, 9], [32, 4], [26, 4]], team, part(B), { gain: 0.5 });
+        break;
+      }
+      case 'chariot': {
+        horse(B, 18, -4, sp.horse || '#6a4426', null, team, f);
+        const ch = part(B);
+        cap(B, 18, 32, 34, 30, 0.8, 0.8, wood, ch);
+        poly(B, [[4, 22], [20, 22], [22, 34], [4, 34]], body, ch, { gain: 0.6 });
+        for (let x = 5; x < 21; x++) dot(B, x, 22, '#d9b45a');
+        wheel(B, 12, 37, 8, wood, f, part(B));
+        seat = [12, 26];
+        break;
+      }
+      case 'rider': {
+        horse(B, 2, 0, sp.horse || '#6a4426', sp.cloth || null, team, f);
+        seat = [24, 25];
+        break;
+      }
+      case 'catapult': {
+        const fr = part(B);
+        cap(B, 5, 31, 47, 31, 1.6, 1.6, wood, fr);
+        cap(B, 26, 31, 26, 16, 1.6, 1.4, wood, fr);
+        cap(B, 18, 31, 26, 17, 1.2, 1.2, shade(wood, -0.2), fr);
+        const arm = part(B);
+        const ex = fire ? 38 : 7;
+        const ey = fire ? 4 : 19;
+        cap(B, 26, 20, ex, ey, 1.2, 1, shade(wood, 0.1), arm);
+        ell(B, ex, ey - 1, 3, 2.2, shade(wood, -0.2), part(B));
+        if (!fire) ell(B, ex, ey - 2.5, 2, 2, '#8a7a6a', part(B), { bias: 0.3 });
+        wheel(B, 12, 35, 5, wood, 0, part(B));
+        wheel(B, 40, 35, 5, wood, 0, part(B));
+        dot(B, 26, 14, team);
+        dot(B, 26, 13, team);
+        break;
+      }
+      case 'trebuchet': {
+        const fr = part(B);
+        cap(B, 12, 58, 26, 16, 1.5, 1.2, wood, fr);
+        cap(B, 40, 58, 26, 16, 1.5, 1.2, wood, fr);
+        cap(B, 6, 58, 48, 58, 1.6, 1.6, shade(wood, -0.2), fr);
+        const arm = part(B);
+        const lx = fire ? 48 : 6;
+        const ly = fire ? 2 : 42;
+        const cx = fire ? 18 : 38;
+        const cy = fire ? 32 : 22;
+        cap(B, cx, cy, lx, ly, 1.3, 0.9, shade(wood, 0.15), arm);
+        poly(B, [[cx - 4, cy], [cx + 4, cy], [cx + 4.5, cy + 8], [cx - 4.5, cy + 8]], '#5a5a62', part(B), { gain: 0.6 });
+        ell(B, 26, 16.5, 1.8, 1.8, steel, part(B));
+        if (!fire) ell(B, lx, ly + 4, 2.2, 2.2, '#8a7a6a', part(B), { bias: 0.3 });
+        poly(B, [[24, 10], [30, 10], [30, 5], [24, 5]], team, part(B), { gain: 0.5 });
+        cap(B, 24, 15, 24, 5, 0.4, 0.4, wood, part(B));
+        break;
+      }
+      case 'cannon': {
+        const rc = fire ? -3 : 0;
+        const cr = part(B);
+        poly(B, [[8 + rc, 26], [26 + rc, 20], [30 + rc, 24], [12 + rc, 30]], wood, cr, { gain: 0.6 });
+        const br = part(B);
+        cap(B, 16 + rc, 20, 44 + rc, 16, 3.4, 2.6, body, br, { bias: 0.3 });
+        ell(B, 45 + rc, 15.8, 1.6, 2.6, shade(body, -0.3), part(B));
+        for (const x of [24, 34]) cap(B, x + rc, 21.5 - (x - 16) * 0.14, x + rc, 15.5 - (x - 16) * 0.14, 0.5, 0.5, shade(body, 0.3), part(B));
+        wheel(B, 22 + rc, 26, 7, sp.wheel || '#6a4426', f, part(B));
+        cap(B, 6 + rc, 30, 6 + rc, 18, 0.4, 0.4, wood, part(B));
+        poly(B, [[6 + rc, 18], [12 + rc, 19.5], [6 + rc, 21.5]], team, part(B));
+        if (fire) {
+          ell(B, 49, 15, 3, 2.6, '#ffe08a', part(B), { bias: 0.6, noOL: true });
+          ell(B, 46, 12, 3, 2.4, '#cfcfcf', part(B), { noOL: true });
+        }
+        break;
+      }
+      case 'landship': {
+        const tr = part(B);
+        poly(B, [[3, 28], [14, 7], [58, 7], [71, 28], [62, 38], [10, 38]], shade(body, -0.4), tr, { gain: 0.5 });
+        poly(B, [[7, 27], [16, 10], [56, 10], [66, 27], [60, 34], [12, 34]], body, part(B), { gain: 0.7 });
+        for (let i = 0; i < 26; i++) {
+          const t = ((i + (f % 2) * 0.5) / 26) * Math.PI * 2;
+          dot(B, 37 + Math.cos(t) * 33, 23 + Math.sin(t) * 13.5, shade(body, -0.65));
+        }
+        for (let x = 18; x < 56; x += 4) dot(B, x, 12, shade(body, 0.35));
+        poly(B, [[30, 17], [44, 17], [45, 29], [29, 29]], shade(body, -0.1), part(B), { gain: 0.6 });
+        cap(B, 44, 22, 54 + (fire ? -2 : 0), 22, 1.2, 1.2, '#3a3a40', part(B));
+        for (let x = 18; x < 56; x++) dot(B, x, 15, team);
+        if (fire) ell(B, 57, 22, 2.4, 2, '#ffe08a', part(B), { noOL: true, bias: 0.6 });
+        break;
+      }
+      case 'car': {
+        const jeep = sp.jeep;
+        wheel(B, 14, 33, 5.5, '#2a2a2e', f, part(B));
+        wheel(B, 44, 33, 5.5, '#2a2a2e', f, part(B));
+        const hl = part(B);
+        if (jeep) {
+          poly(B, [[5, 29], [8, 22], [50, 21], [55, 26], [54, 31], [6, 32]], body, hl, { gain: 0.6 });
+          cap(B, 36, 21, 39, 13, 0.7, 0.7, '#4a4a50', part(B));
+          cap(B, 20, 22, 22, 12, 0.6, 0.6, '#3a3a40', part(B));
+          cap(B, 22, 12, 34 + (fire ? -1.5 : 0), 11, 0.9, 0.9, '#2a2a30', part(B));
+          seat = [20, 23];
+        } else {
+          poly(B, [[5, 28], [9, 17], [44, 16], [53, 22], [55, 29], [6, 31]], body, hl, { gain: 0.7 });
+          ell(B, 27, 14, 8, 4.6, shade(body, 0.05), part(B), { clip: (x, y) => y < 16, bias: 0.25 });
+          cap(B, 33, 12, 46 + (fire ? -2 : 0), 11, 1, 1, '#3a3a40', part(B));
+          for (let x = 12; x < 44; x += 6) dot(B, x, 20, shade(body, 0.35));
+          poly(B, [[38, 19], [46, 19], [48, 23], [38, 23]], '#9ad8ff', part(B), { tone: 1 });
+        }
+        for (let x = 9; x < 50; x++) dot(B, x, 26, team);
+        if (fire) ell(B, jeep ? 36 : 49, jeep ? 11 : 11, 2.2, 1.8, '#ffe08a', part(B), { noOL: true, bias: 0.6 });
+        break;
+      }
+      case 'tank': {
+        track(B, 5, 64, 32, 9, body, f);
+        const hl = part(B);
+        poly(B, [[5, 27], [11, 19], [58, 19], [66, 25], [62, 29], [8, 29]], body, hl, { gain: 0.7 });
+        const rc = fire ? -3 : 0;
+        const long = sp.long ? 70 : 63;
+        cap(B, 44 + rc, 14, long + rc, 12.5, 1.6, 1.3, shade(body, -0.15), part(B));
+        ell(B, 34, 15, 12, 6, shade(body, 0.08), part(B), { clip: (x, y) => y < 19, bias: 0.25 });
+        poly(B, [[30, 9], [37, 9], [37, 11], [30, 11]], shade(body, -0.25), part(B));
+        for (let x = 24; x < 46; x++) dot(B, x, 16, team);
+        for (let x = 14; x < 58; x += 6) dot(B, x, 22, shade(body, 0.35));
+        if (fire) {
+          ell(B, long + 2, 12.4, 3, 2.4, '#ffe08a', part(B), { noOL: true, bias: 0.6 });
+          ell(B, long - 1, 9, 3, 2.2, '#d0d0d0', part(B), { noOL: true });
+        }
+        break;
+      }
+      case 'plane': {
+        const jet = sp.jet || sp.scifi;
+        const fu = part(B);
+        cap(B, 6, 16, 56, 15, 4.8, 2.6, body, fu, { bias: 0.25 });
+        poly(B, [[4, 15], [9, 3], [15, 13]], body, fu, { gain: 0.6 });
+        poly(B, [[22, 17], [40, 17], [30, 28], [18, 28]], shade(body, -0.12), part(B), { gain: 0.6 });
+        ell(B, 41, 11.5, 6, 3, sp.scifi ? '#2ee6ff' : '#9ad8ff', part(B), { bias: 0.5, clip: (x, y) => y < 13 });
+        ell(B, 27, 22.5, 2.4, 2.4, team, part(B), { bias: 0.3, noOL: true });
+        dot(B, 27, 22.5, '#f4f0ea');
+        if (jet) {
+          ell(B, 3, 16, 3 + (f % 2), 2, sp.scifi ? '#2ee6ff' : '#ffb060', part(B), { noOL: true, bias: 0.6 });
+        } else {
+          ell(B, 59, 15, 1.4, 1.4, '#3a3a40', part(B));
+          if (f % 2) cap(B, 59, 6, 59, 24, 0.5, 0.5, '#cfcfcf', part(B), { noOL: true });
+          else cap(B, 57, 11, 61, 19, 0.5, 0.5, '#cfcfcf', part(B), { noOL: true });
+        }
+        if (fire) ell(B, 63, 17, 2, 1.6, '#ffe08a', part(B), { noOL: true, bias: 0.6 });
+        break;
+      }
+      case 'bomber': {
+        const fu = part(B);
+        poly(B, [[3, 18], [36, 7], [70, 18], [62, 22], [36, 15], [10, 22]], body, fu, { gain: 0.6 });
+        ell(B, 42, 11, 5, 2.4, '#5a6a7a', part(B), { bias: 0.4 });
+        ell(B, 36, 18, 6, 1.6, team, part(B), { noOL: true, bias: 0.3 });
+        if (fire) ell(B, 36, 22, 2, 2.4, '#2a2a2a', part(B));
+        break;
+      }
+      case 'heli': {
+        const fu = part(B);
+        cap(B, 30, 20, 5, 15, 2.6, 1.3, body, fu);
+        ell(B, 41, 22, 14, 8.5, body, fu, { bias: 0.2 });
+        poly(B, [[47, 16], [55, 18], [56, 25], [48, 25]], '#9ad8ff', part(B), { bias: 0.5 });
+        cap(B, 28, 32, 52, 32, 0.8, 0.8, '#2a2a30', part(B));
+        cap(B, 33, 29, 32, 32, 0.6, 0.6, '#2a2a30', part(B));
+        cap(B, 47, 29, 48, 32, 0.6, 0.6, '#2a2a30', part(B));
+        cap(B, 36, 26, 50, 27, 1.4, 1.4, '#3a3a40', part(B));
+        cap(B, 41, 13, 41, 9, 0.8, 0.8, '#3a3a40', part(B));
+        const blade = f % 2 ? [6, 68] : [20, 60];
+        cap(B, blade[0], 8, blade[1], 8, 0.6, 0.6, '#cfcfcf', part(B), { noOL: true });
+        ell(B, 4, 13, f % 2 ? 1 : 3.2, f % 2 ? 3.2 : 1, '#cfcfcf', part(B), { noOL: true });
+        for (let x = 30; x < 52; x++) dot(B, x, 24, team);
+        if (fire) ell(B, 52, 27, 2.2, 1.8, '#ffb060', part(B), { noOL: true, bias: 0.6 });
+        break;
+      }
+      case 'drone': {
+        const sci = body === '#6a3a8a';
+        const id = part(B);
+        if (sci) {
+          poly(B, [[4, 15], [22, 9], [42, 15], [22, 21]], body, id, { gain: 0.6 });
+          ell(B, 22, 15, 4, 3, '#d08aff', part(B), { bias: 0.6 });
+        } else {
+          cap(B, 8, 10, 36, 10, 0.8, 0.8, '#3a3a40', id);
+          ell(B, 22, 15, 9, 4.6, body, id, { bias: 0.25 });
+          for (const x of [8, 36]) cap(B, x - (f % 2 ? 5 : 3), 7.5, x + (f % 2 ? 5 : 3), 7.5, 0.5, 0.5, '#cfcfcf', part(B), { noOL: true });
+          ell(B, 29, 16, 2, 2, '#141418', part(B));
+          dot(B, 29.5, 15.5, '#ff4a4a');
+        }
+        dot(B, 22, 19, team);
+        dot(B, 21, 19, team);
+        break;
+      }
+      case 'mech': {
+        const gl = sp.body === '#4a3a6a' ? '#d08aff' : '#ff4a4a';
+        const st = (f % 4) - 1.5;
+        const lg = part(B);
+        cap(B, 20, 38, 18 - st * 2, 50, 3, 2.6, shade(body, -0.15), lg);
+        cap(B, 18 - st * 2, 50, 19 - st * 2, 61, 2.6, 2.2, shade(body, -0.15), lg);
+        ell(B, 21 - st * 2, 62, 5, 2, shade(body, -0.4), part(B));
+        const lg2 = part(B);
+        cap(B, 32, 38, 34 + st * 2, 50, 3, 2.6, body, lg2);
+        cap(B, 34 + st * 2, 50, 35 + st * 2, 61, 2.6, 2.2, body, lg2);
+        ell(B, 37 + st * 2, 62, 5, 2, shade(body, -0.3), part(B));
+        const tor = part(B);
+        poly(B, [[13, 18], [41, 16], [44, 34], [12, 38]], body, tor, { gain: 0.7 });
+        ell(B, 14, 22, 6, 5, shade(body, 0.1), part(B), { bias: 0.3 });
+        poly(B, [[30, 21], [40, 20], [41, 26], [31, 27]], gl, part(B), { bias: 0.5, gain: 0.4 });
+        const rc = fire ? -2 : 0;
+        cap(B, 38 + rc, 29, 52 + rc, 29, 2.4, 2, '#3a3a40', part(B));
+        cap(B, 20, 16, 18, 8, 0.5, 0.5, '#3a3a40', part(B));
+        dot(B, 18, 7.5, team);
+        for (let x = 15; x < 40; x++) dot(B, x, 32, team);
+        if (fire) ell(B, 54, 29, 2.6, 2.2, gl, part(B), { noOL: true, bias: 0.6 });
+        break;
+      }
+      case 'hoverbike': {
+        ell(B, 31, 34, 20, 2.4, '#2ee6ff', part(B), { noOL: true, bias: 0.6 });
+        const bk = part(B);
+        poly(B, [[4, 27], [16, 19], [46, 19], [58, 23], [52, 29], [10, 31]], body, bk, { gain: 0.7 });
+        poly(B, [[38, 15], [48, 18], [46, 21], [37, 20]], '#9ad8ff', part(B), { bias: 0.5 });
+        cap(B, 46, 25, 58, 25, 0.8, 0.8, '#3a3a40', part(B));
+        for (let x = 10; x < 50; x++) dot(B, x, 26, team);
+        if (fire) ell(B, 60, 25, 2, 1.6, '#2ee6ff', part(B), { noOL: true, bias: 0.6 });
+        seat = [26, 21];
+        break;
+      }
+    }
+    const out = new Uint8ClampedArray(w * h * 4);
+    flatten(B, out, true);
+    BW = FW;
+    BH = FH;
+    return { out, w, h, seat };
+  }
+  const VCREW = { mammoth: 1, elephant: 1, chariot: 1, rider: 1, hoverbike: 1, car: 0 };
+  function vehicleCanvas(uid, side, anim, i, flip) {
+    const u = CW.UNIT[uid];
+    const sp = u.sp;
+    const kind = sp.k === 'mech' ? 'mech' : sp.k;
+    if (!VSIZE[kind]) return null;
+    const f = anim === 'move' ? i % 4 : 0;
+    const v = vehicle(kind, null, side, sp, anim, f);
+    const c = document.createElement('canvas');
+    c.width = v.w;
+    c.height = v.h;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    const img = g.createImageData(v.w, v.h);
+    img.data.set(v.out);
+    g.putImageData(img, 0, 0);
+    // the rider: the unit's dressed body, cut at the waist, with their lance or sabre
+    if (v.seat && (VCREW[kind] || (kind === 'car' && sp.jeep))) {
+      const look = unitLook(uid, side);
+      if (sp.k === 'rider') look.weapon = sp.w === 'lance' ? 'lance' : 'scimitar';
+      else if (kind === 'chariot') look.weapon = 'spear';
+      else if (kind === 'hoverbike' || kind === 'car') look.weapon = null;
+      else look.weapon = 'spear';
+      look.helm = sp.helm || look.helm;
+      const r = crew(look, anim === 'fire' ? 'thrust' : 'idle', anim === 'fire' ? 3 : 0);
+      const rc = document.createElement('canvas');
+      rc.width = FW;
+      rc.height = r.cut;
+      const rg = rc.getContext('2d');
+      const ri = rg.createImageData(FW, FH);
+      ri.data.set(r.px);
+      rg.putImageData(ri, 0, 0);
+      const bob = anim === 'move' && i % 2 ? 1 : 0;
+      g.drawImage(rc, Math.round(v.seat[0] - r.hx - 1.5), Math.round(v.seat[1] - r.cut + bob));
+    }
+    if (!flip) return c;
+    const m = document.createElement('canvas');
+    m.width = v.w;
+    m.height = v.h;
+    const mg = m.getContext('2d', { willReadFrequently: true });
+    mg.translate(v.w, 0);
+    mg.scale(-1, 1);
+    mg.drawImage(c, 0, 0);
+    return m;
+  }
+  const vcache = new Map();
+  CW.vehicleFrame = function (uid, side, anim, i, flip) {
+    if (!ready) return null;
+    const key = uid + side + anim + (anim === 'move' ? i % 4 : 0) + (flip ? 'f' : '');
+    let c = vcache.get(key);
+    if (c === undefined) {
+      c = vehicleCanvas(uid, side, anim, i, flip);
+      vcache.set(key, c);
+    }
+    return c;
+  };
+  CW.hasVehicle = (uid) => !!VSIZE[CW.UNIT[uid].sp.k];
+
   // ---------------------------------------------------------------- cards and icons
   // unit icons: foot soldiers show their dressed base figure, everything else its own sprite
   const uurl = {};
@@ -1308,14 +1751,21 @@
     c.height = 52;
     const g = c.getContext('2d');
     const f = CW.usesBody(uid) ? frame('U', uid, 'a', '', 'idle', 0, false) : null;
+    const v = !f && CW.hasVehicle(uid) ? CW.vehicleFrame(uid, 'a', 'idle', 0, false) : null;
     if (f) g.drawImage(f, 2, 0);
-    else {
+    else if (v) {
+      const k = Math.min(1, 50 / v.width, 50 / v.height);
+      g.imageSmoothingEnabled = false;
+      const fly = ['plane', 'bomber', 'drone', 'heli'].includes(CW.UNIT[uid].sp.k);
+      const top = fly ? (52 - v.height * k) / 2 : 52 - v.height * k - 1;
+      g.drawImage(v, Math.floor((52 - v.width * k) / 2), Math.floor(top), Math.round(v.width * k), Math.round(v.height * k));
+    } else {
       const sp = CW.unitSprite(uid, 'a');
       const k = Math.min(1, 50 / sp.c.width, 48 / sp.c.height);
       g.imageSmoothingEnabled = false;
       g.drawImage(sp.c, Math.floor((52 - sp.c.width * k) / 2), Math.floor((52 - sp.c.height * k) / 2), Math.round(sp.c.width * k), Math.round(sp.c.height * k));
     }
-    if (!f && CW.usesBody(uid)) return c.toDataURL();
+    if (!f && !v && (CW.usesBody(uid) || CW.hasVehicle(uid))) return c.toDataURL();
     return (uurl[uid] = c.toDataURL());
   };
 

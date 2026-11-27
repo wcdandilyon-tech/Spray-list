@@ -32,10 +32,22 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   Grant, Hitler, Stalin, Mussolini, Rommel, Zhukov, Mao, Khrushchev, Pol Pot, Idi Amin, Gandhi, Martin Luther King Jr.,
   Mandela, Obama, Putin, Kim Jong Un, Zelenskyy, Charlie Kirk and Donald Trump, plus original future rulers (a cyborg
   assassin, Robo Hitler, an android queen, a neon shogun, a space admiral, the Archon) and, once time shatters, the Devil, Santa Claus and God.
-- **Commanders on the front line.** Your commander and two partners fight in the battle as full-body sprites next to
-  their troops. If one falls, their attributes switch off for the rest of that battle.
-- **Leader attributes, not moves.** Every leader has three always-on attributes, each explained in plain words.
-  Your commander brings all three plus a class bonus; each of your two partners brings one.
+- **Commanders on the battlefield.** Your commander and two partners fight in the battle as full-body sprites. If one
+  falls, their attributes switch off for the rest of that battle.
+- **Front lines or behind the army.** Choose where each leader fights in the Commanders tab. Warriors, conquerors,
+  revolutionaries and defenders excel at the front (+20% attribute strength and +50% damage there); strategists, tyrants,
+  statesmen, peacemakers and orators excel commanding from behind (+20% attribute strength and a 30% faster special meter,
+  out of the fighting). Each leader starts where they excel.
+- **Special meters and special moves.** Each of your three leaders has a meter that fills when your army defeats an
+  enemy, by that unit's share of the enemy army: a heavy unit (4 capacity) is worth four infantry, so beating weak units
+  fills it slowly. The commander charges at the full rate, partners at 80%, and meters carry over between battles.
+  Tap a leader's chip to choose a special: their **signature special** (full meter, 25% stronger, unique to each of the
+  137 leaders) or their **class special** (60% of the meter). There are 12 kinds, from barrages, charges and snipes on
+  the enemy leader to rallies, fortify, mass heals, revives, stuns, terror, infernos, war tributes and reinforcements.
+  Auto specials fires a full signature after 6 seconds. Enemy leaders have a meter too and fire their signature at you.
+- **Leader attributes.** Every leader also has three always-on attributes, each explained in plain words.
+  Your commander brings all three plus a class bonus; each of your two partners brings one. The full list of leaders with
+  every attribute and special is in [LEADERS.md](LEADERS.md).
 - **War Council.** After every leader battle you draw a **random doctrine** (31 army-management bonuses such as
   Conscription for more army capacity, Supply Lines, Combined Arms, Cavalry School, Field Hospitals) and can
   reassign your commander and partners.
@@ -55,10 +67,11 @@ version, your stage moves to the matching era and you get a full army of that er
 | File | What's in it |
 | --- | --- |
 | `index.html` | Page layout and all styling |
-| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders and the 31 doctrines |
-| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
+| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders, their signature specials, the class specials and the 31 doctrines |
+| `LEADERS.md` | Every leader with their class, best position, attributes and special moves |
+| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader positions, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
-| `js/bodies.js` | The animated base figure (embedded sheet), body-part detection, and the dressing of every leader and foot soldier |
+| `js/bodies.js` | The animated base figure (embedded sheet), body-part detection, the dressing of every leader and foot soldier, and the vehicles, animals and riders |
 | `js/ui.js` | Battlefield rendering and its HUD overlay, the army builder, command deck, panels, dialogs, sound effects, autosave and offline progress |
 
 Balance knobs live in `CW.CFG` at the top of `js/engine.js` (enemy growth, era power, army capacity, recruit and training
@@ -84,14 +97,17 @@ recognisable: Napoleon's bicorne and sash, Churchill's cigar, Stalin's pipe, Mao
 round glasses, Lincoln's top hat and axe, Thatcher's handbag, Teddy Roosevelt's big stick, Leonidas's lambda shield and
 spear, Santa's sack, the Devil's tail. Soldiers wear their era's helmet or hat, their unit colours and a team-coloured
 scarf (blue for you, red for the enemy). Soldiers walk, strike, shoot or throw and cheer when they win; commanders stand
-on coloured rings and the enemy leader fights at double size. Vehicles, animals and riders keep their own sprites.
+on coloured rings and the enemy leader fights at double size. Vehicles, animals and riders are drawn in the same style
+(banded shading, soft outlines, team-coloured trim): wolves, mammoths and war elephants with their riders, chariots,
+horsemen carrying the era's rider, siege engines, cannons, landships, tanks, planes, helicopters, drones, hoverbikes and
+mechs. Each has moving frames (legs, wheels, tracks or rotors) and a firing frame, and leaves a wreck where it falls.
 
 The battlefield is a tilted top-down view: soldiers further away are drawn smaller and higher up. Sprites are prepared
 at a handful of fixed sizes so they grow in clean pixel steps as they move toward the camera instead of shimmering, and
 fallen soldiers are painted once onto the ground layer instead of being redrawn every frame. Shadows are pre-made at each
 size, and the HUD is a light page overlay rather than canvas text. The field is drawn on a fixed 768x432 pixel grid that the
 browser scales up, so the work per frame stays the same on any screen size. In headless Chromium (software drawing, no GPU),
-a late-game battle with about 350 animated soldiers on the field runs at about 300 fps, or about 45 to 55 fps with the CPU throttled 4x.
+a late-game battle with about 350 animated soldiers and vehicles on the field runs at about 60 fps with the CPU throttled 4x.
 
 The menus around the battlefield use a quiet, modern style (Manrope, graphite panels, one brass accent); the pixel art
 stays on the battlefield and the portraits.

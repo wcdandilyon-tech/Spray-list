@@ -168,8 +168,10 @@
       best: 1,
       farming: false,
       farmCount: 0,
-      auto: { push: true, build: true },
+      auto: { push: true, build: true, special: true },
       army: START_ARMY(),
+      meter: {}, // each leader's special meter, 0-100
+      pos: {}, // where each leader fights: 'front' or 'back'
       owned: START_ARMY(),
       uattr: {},
       unitLv: {},
@@ -243,7 +245,9 @@
     migrate(obj);
     const base = freshState(obj.main);
     S = Object.assign(base, obj);
-    S.auto = Object.assign({ push: true, build: true }, obj.auto || {});
+    S.auto = Object.assign({ push: true, build: true, special: true }, obj.auto || {});
+    S.meter = S.meter || {};
+    S.pos = S.pos || {};
     if (!S.seed) S.seed = (Math.random() * 1e9) | 0;
     infoCache = new Map();
     S.stats = Object.assign(base.stats, obj.stats || {});
@@ -566,6 +570,18 @@
   }
   const RANGED_W = { gun: 'bullet', rifle: 'bullet', mg: 'bullet', raygun: 'laser', staff: 'plasma', bow: 'arrow' };
   const commandIds = () => [S.main].concat(S.partners).filter(Boolean);
+  // ---- where a leader fights: at the front of the army, or commanding from behind it.
+  // Fighters (warriors, conquerors, revolutionaries, defenders) excel at the front; thinkers excel behind.
+  CW.prefPos = (lid) => (CW.FRONT_CLASSES.includes(LEADER[lid].cls) ? 'front' : 'back');
+  CW.leaderPos = (lid) => (S && S.pos && S.pos[lid]) || CW.prefPos(lid);
+  CW.posFits = (lid) => CW.leaderPos(lid) === CW.prefPos(lid);
+  CW.setPos = function (lid, pos) {
+    if (!S.roster[lid]) return false;
+    S.pos[lid] = pos === 'back' ? 'back' : 'front';
+    M = null;
+    emit('command');
+    return true;
+  };
   function heroStats(lid, isMain, ctx) {
     let dps = 0;
     let hp = 0;
@@ -581,12 +597,14 @@
     const r = S.roster[lid] || { lv: 1, stars: 0 };
     const b = (1 + 0.05 * (r.lv - 1)) * (1 + 0.1 * r.stars);
     const k = isMain ? 1.4 : 1;
-    return { hp: (hp / n) * CFG.heroHp * k * b * (1 + mods().heroHp), atk: (dps / n) * 1.2 * CFG.heroAtk * k * b, int: 1.2 };
+    const lead = CW.leaderPos(lid) === 'front' && CW.posFits(lid) ? 1.5 : 1;
+    return { hp: (hp / n) * CFG.heroHp * k * b * (1 + mods().heroHp), atk: (dps / n) * 1.2 * CFG.heroAtk * k * b * lead, int: 1.2 };
   }
   function mkHero(lid, i, st) {
     const w = CW.weaponOf(lid);
     return {
-      id: eid++, side: 'a', uid: null, lid, kind: 'hero', role: 'hero', trait: null, era: LEADER[lid].era, x: 100, z: [60, 32, 88][i],
+      id: eid++, side: 'a', uid: null, lid, kind: 'hero', role: 'hero', trait: null, era: LEADER[lid].era,
+      x: CW.leaderPos(lid) === 'back' ? 30 : 144, z: [60, 32, 88][i], hold: CW.leaderPos(lid) === 'back',
       hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, range: RANGED_W[w] ? 55 : 9, speed: 24, ua: {}, rad: 5,
       proj: RANGED_W[w] || null, splash: 0, air: false, cost: 0, t: Math.random() * 0.8, rt: 0, target: null, alive: true, stun: 0,
       struck: false, face: 1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: true, isBoss: false, main: i === 0,
@@ -730,9 +748,14 @@
       foes.push(boss);
       bossT = CFG.bossTime + mods().bossTime + (info.mystery ? 15 : 0);
     }
+    let aCap = 0;
+    let eCap = 0;
+    for (const q of allies) aCap += q.cost;
+    for (const q of foes) eCap += q.cost;
     B = {
       info, phase: 'deploy', pt: 1.2, time: 0, ft: 0, a: allies, e: foes, ents: allies.concat(foes), boss, bossT, bossTMax: bossT,
       proj: [], fx: [], sa: zeroSide(), se: zeroSide(), medT: 1, aliveA: allies.length, aliveE: foes.length,
+      g, aCap: Math.max(1, aCap), eCap: Math.max(1, eCap), buffs: [], bossMeter: boss ? 25 : 0, fullT: {},
     };
     sides();
     emit('stage', info);
@@ -846,6 +869,10 @@
     const dz = t.z - q.z;
     const d = Math.sqrt(dx * dx + dz * dz) || 0.001;
     q.face = dx >= 0 ? 1 : -1;
+    if (q.hold && d > q.range + 45) {
+      q.moving = false;
+      return;
+    }
     const reach = q.range + t.rad + q.rad * 0.5;
     if (d > reach) {
       const k = Math.min(q.speed * dt, d - reach * 0.9) / d;
@@ -958,8 +985,12 @@
   }
   CW.addGold = addGold;
 
-  function onDeath(q, src) {
+  function onDeath(q, src, bySpecial) {
     B.fx.push({ k: 'death', id: q.id, x: q.x, z: q.z, uid: q.uid, lid: q.lid, side: q.side, kind: q.kind, air: q.air, face: q.face });
+    if (!bySpecial) {
+      if (q.side === 'e' && !q.isBoss) gainMeter(q);
+      if (q.side === 'a' && B.boss && B.boss.alive) B.bossMeter = Math.min(100, B.bossMeter + (q.isHero ? 25 : (110 * q.cost) / B.aCap));
+    }
     if (q.isHero) {
       B.fx.push({ k: 'herofall', lid: q.lid });
       emit('heroFall', q.lid);
@@ -972,6 +1003,175 @@
       }
     }
   }
+
+  // ------------------------------------------------------------ special meters and special moves
+  // Every enemy your army defeats fills your leaders' meters by its share of the enemy army's strength: a heavy unit
+  // (4 capacity) is worth four times an infantryman, so beating weak units fills the meter slowly.
+  // The commander gets the full share, partners 80%, and a leader commanding from behind (where they excel) 30% more.
+  function gainMeter(q) {
+    const base = (95 * q.cost) / B.eCap;
+    commandIds().forEach((lid, i) => {
+      if (!heroAlive(lid)) return;
+      const k = (i === 0 ? 1 : 0.8) * (CW.leaderPos(lid) === 'back' && CW.posFits(lid) ? 1.3 : 1);
+      S.meter[lid] = Math.min(100, (S.meter[lid] || 0) + base * k);
+    });
+  }
+  CW.meter = (lid) => (S.meter && S.meter[lid]) || 0;
+  CW.bossMeter = () => (B ? B.bossMeter : 0);
+  // a leader's two specials: their signature move (full meter) and their class's move (60% of the meter)
+  CW.specials = function (lid) {
+    const r = S.roster[lid] || { stars: 0 };
+    const k = 1 + 0.05 * r.stars;
+    const sig = CW.SPECIAL[lid];
+    let cl = CW.CLASS_SPECIAL[LEADER[lid].cls];
+    if (cl[1] === sig[1]) cl = CW.CLASS_SPECIAL_ALT[LEADER[lid].cls];
+    return [
+      { name: sig[0], t: sig[1], cost: 100, k: 1.25 * k, sig: true },
+      { name: cl[0], t: cl[1], cost: 60, k },
+    ];
+  };
+  const big = (q) => q.isBoss || q.isHero;
+  // lose a share of maximum health directly
+  function hurtPct(t, frac, side) {
+    if (!t.alive) return;
+    t.hp -= t.maxHp * frac;
+    t.flash = 1;
+    if (t.hp <= 0) {
+      t.hp = 0;
+      t.alive = false;
+      onDeath(t, null, true);
+    }
+  }
+  function reinforce(side, k) {
+    const list = side === 'a' ? B.a : B.e;
+    let n = 0;
+    for (const q of list) if (q.kind === 'unit') n++;
+    n = Math.max(2, Math.round(n * 0.15 * k));
+    let uid = null;
+    let st = null;
+    if (side === 'a') {
+      const ctx = armyContext();
+      let bv = -1;
+      for (const id in S.army) {
+        const u = UNIT[id];
+        const v = unitStats(id, ctx);
+        const val = ((v.atk / v.int) * v.hp) / ROLES[u.role].cost;
+        if ((u.role === 'inf' ? 2 : 1) * val > bv) {
+          bv = (u.role === 'inf' ? 2 : 1) * val;
+          uid = id;
+          st = v;
+        }
+      }
+    } else {
+      const u = UNITS.find((x) => x.era === B.info.era && x.role === 'inf') || UNITS[0];
+      uid = u.id;
+      st = enemyStats(u, B.g);
+    }
+    if (!uid) return;
+    for (let i = 0; i < n; i++) {
+      const q = mkUnit(side, uid, st);
+      q.x = side === 'a' ? -8 - Math.random() * 14 : FX + 8 + Math.random() * 14;
+      q.z = 10 + Math.random() * 100;
+      q.face = side === 'a' ? 1 : -1;
+      list.push(q);
+      B.ents.push(q);
+    }
+  }
+  function runSpecial(sp, side, lid) {
+    const k = sp.k;
+    const mine = side === 'a' ? B.a : B.e;
+    const foes = side === 'a' ? B.e : B.a;
+    const live = foes.filter((q) => q.alive);
+    switch (sp.t) {
+      case 'barrage':
+        live.forEach((q) => hurtPct(q, (big(q) ? 0.06 : 0.3) * k, side));
+        break;
+      case 'charge': {
+        const s2 = live.slice().sort((a, b) => (side === 'a' ? a.x - b.x : b.x - a.x));
+        s2.slice(0, Math.max(1, Math.ceil(s2.length * 0.4))).forEach((q) => {
+          hurtPct(q, (big(q) ? 0.08 : 0.55) * k, side);
+          if (q.alive) q.stun = Math.max(q.stun, big(q) ? 0.6 : 1.5);
+        });
+        break;
+      }
+      case 'snipe': {
+        const lead = side === 'a' ? (B.boss && B.boss.alive ? B.boss : null) : foes.find((q) => q.isHero && q.main && q.alive) || foes.find((q) => q.isHero && q.alive);
+        if (lead) hurtPct(lead, (side === 'a' ? 0.22 : 0.45) * k, side);
+        else live.filter((q) => !big(q)).sort((a, b) => b.maxHp - a.maxHp).slice(0, 3).forEach((q) => hurtPct(q, 1, side));
+        break;
+      }
+      case 'rally':
+        B.buffs.push({ side, t: 8, s: { atk: 0.4 * k, spd: 0.25 * k } });
+        break;
+      case 'fortify':
+        B.buffs.push({ side, t: 8, s: { def: 0.5 } });
+        mine.forEach((q) => q.alive && (q.hp = Math.min(q.maxHp, q.hp + q.maxHp * 0.2 * k)));
+        break;
+      case 'heal':
+        mine.forEach((q) => q.alive && (q.hp = Math.min(q.maxHp, q.hp + q.maxHp * 0.45 * k)));
+        break;
+      case 'revive': {
+        const dead = mine.filter((q) => !q.alive && !q.isBoss);
+        dead.slice(0, Math.ceil(dead.length * Math.min(1, 0.35 * k))).forEach((q) => {
+          q.alive = true;
+          q.hp = q.maxHp * 0.5;
+          q.stun = 0;
+          q.burn = null;
+          B.fx.push({ k: 'revive', id: q.id });
+        });
+        break;
+      }
+      case 'stun':
+        live.forEach((q) => (q.stun = Math.max(q.stun, big(q) ? 1 : 3)));
+        break;
+      case 'terror':
+        B.buffs.push({ side, t: 8, s: { weak: 0.35 * k, expose: 0.35 * k } });
+        break;
+      case 'inferno':
+        live.forEach((q) => (q.burn = { dps: q.maxHp * (big(q) ? 0.015 : 0.06) * k, t: 6 }));
+        break;
+      case 'tribute':
+        if (side === 'a') addGold(bounty() * 40 * k);
+        else mine.forEach((q) => q.alive && (q.hp = Math.min(q.maxHp, q.hp + q.maxHp * 0.25)));
+        B.buffs.push({ side, t: 6, s: { atk: 0.2 } });
+        break;
+      case 'reinforce':
+        reinforce(side, k);
+        break;
+    }
+    B.fx.push({ k: 'special', side, lid, name: sp.name, t: sp.t });
+    emit('special', { side, lid, name: sp.name, t: sp.t });
+  }
+  // use one of a leader's specials (0 = signature, 1 = class special)
+  CW.useSpecial = function (lid, which) {
+    if (!B || B.phase !== 'fight' || !commandIds().includes(lid) || !heroAlive(lid)) return false;
+    const sp = CW.specials(lid)[which ? 1 : 0];
+    if (CW.meter(lid) < sp.cost) return false;
+    S.meter[lid] = CW.meter(lid) - sp.cost;
+    B.fullT[lid] = 0;
+    runSpecial(sp, 'a', lid);
+    return true;
+  };
+  const pcS = (v) => Math.round(v * 100) + '%';
+  const STXT = {
+    barrage: (k) => `Every enemy loses ${pcS(0.3 * k)} of their health (leaders ${pcS(0.06 * k)})`,
+    charge: (k) => `The nearest 40% of the enemy army loses ${pcS(Math.min(1, 0.55 * k))} health and is stunned`,
+    snipe: (k) => `The enemy leader loses ${pcS(0.22 * k)} of their health; with no leader there, the 3 toughest enemies fall`,
+    rally: (k) => `+${pcS(0.4 * k)} army damage and +${pcS(0.25 * k)} attack speed for 8 seconds`,
+    fortify: (k) => `Your army takes half damage for 8 seconds and heals ${pcS(0.2 * k)}`,
+    heal: (k) => `Your whole army heals ${pcS(Math.min(1, 0.45 * k))} of its health`,
+    revive: (k) => `${pcS(Math.min(1, 0.35 * k))} of your fallen soldiers get back up`,
+    stun: () => 'Every enemy is stunned for 3 seconds (leaders for 1)',
+    terror: (k) => `For 8 seconds enemies deal ${pcS(0.35 * k)} less damage and take ${pcS(0.35 * k)} more`,
+    inferno: (k) => `Every enemy burns away ${pcS(0.36 * k)} of their health over 6 seconds`,
+    tribute: (k) => `Gold worth ${Math.round(40 * k)} enemies, and +20% army damage for 6 seconds`,
+    reinforce: (k) => `Reinforcements: ${pcS(0.15 * k)} more soldiers of your best infantry join the battle`,
+  };
+  CW.specialText = (sp) => STXT[sp.t](sp.k);
+  CW.posText = (lid) =>
+    CW.prefPos(lid) === 'front'
+      ? 'Excels leading from the front: +20% attribute strength and +50% damage when placed at the front'
+      : 'Excels commanding from behind the army: +20% attribute strength and a 30% faster special meter when placed behind';
 
   // field medics patch up the most wounded soldiers near them once a second
   function medics() {
@@ -1014,6 +1214,19 @@
   function fight(dt) {
     const m = mods();
     B.ft += dt;
+    if (B.buffs.length) B.buffs = B.buffs.filter((b) => (b.t -= dt) > 0);
+    // a full meter left alone for a few seconds fires the signature special by itself (if auto-use is on)
+    for (const lid of commandIds()) {
+      if (CW.meter(lid) >= 100 && heroAlive(lid)) {
+        B.fullT[lid] = (B.fullT[lid] || 0) + dt;
+        if (S.auto.special && B.fullT[lid] >= 6) CW.useSpecial(lid, 0);
+      } else B.fullT[lid] = 0;
+    }
+    if (B.boss && B.boss.alive && B.bossMeter >= 100) {
+      B.bossMeter = 0;
+      const sp = CW.specials(B.boss.lid)[0];
+      runSpecial({ name: sp.name, t: sp.t, k: B.info.mystery ? 1.15 : 1 }, 'e', B.boss.lid);
+    }
     sides();
     const sa = B.sa;
     const se = B.se;
@@ -1235,7 +1448,8 @@
   CW.attrStrength = function (lid, role) {
     const m = mods();
     const r = S.roster[lid] || { stars: 0 };
-    return (1 + 0.1 * r.stars) * (role === 'main' ? 1 + m.attrMain : role === 'partner' ? 1 + m.attrPartner : 1);
+    const fit = S.roster[lid] && CW.posFits(lid) ? 1.2 : 1;
+    return (1 + 0.1 * r.stars) * fit * (role === 'main' ? 1 + m.attrMain : role === 'partner' ? 1 + m.attrPartner : 1);
   };
   function sides() {
     const a = zeroSide();
@@ -1248,6 +1462,10 @@
     if (B.boss && B.boss.alive) {
       const k = B.info.mystery ? 1.3 : B.info.echo ? 1.15 : 1;
       for (let j = 0; j < 3; j++) addStats(e, CW.attr(B.boss.lid, j).stats, k);
+    }
+    for (const b of B.buffs || []) {
+      const o = b.side === 'a' ? a : e;
+      for (const k in b.s) o[k] += b.s[k];
     }
     B.sa = a;
     B.se = e;

@@ -235,6 +235,19 @@
     return ['idle', 0];
   }
   const bodyOf = (q) => q._bd === undefined ? (q._bd = q.kind === 'unit' && CW.usesBody(q.uid)) : q._bd;
+  const vehOf = (q) => q._vh === undefined ? (q._vh = q.kind === 'unit' && !bodyOf(q) && CW.hasVehicle(q.uid)) : q._vh;
+  const vehK = (q) => 1 + ((UNIT[q.uid].size || 1) - 1) * 0.6;
+  // a vehicle, animal or rider's current frame: moving, firing or standing
+  function vehFrame(q, B, t) {
+    let an = 'idle';
+    let i = 0;
+    if (q._atk !== undefined && q._atk < ATK_T * 0.6) an = 'fire';
+    else if (stepping(B, q) || q.air) {
+      an = 'move';
+      i = Math.floor(t * 9 + q.id) % 4;
+    }
+    return CW.vehicleFrame(q.uid, q.side, an, i, q.face < 0);
+  }
 
   // ---- per-battle ground: the field plus everything that has fallen on it (bodies, wrecks, scorch marks)
   const ground = document.createElement('canvas');
@@ -260,6 +273,16 @@
     if (q.kind === 'unit' && bodyOf(q)) {
       const f = CW.unitFrame(q.uid, q.side, 'idle', 0, q.face < 0);
       img = f ? sizedBody(f, P.s * BODY_K) : null;
+    } else if (q.kind === 'unit' && vehOf(q)) {
+      const f = CW.vehicleFrame(q.uid, q.side, 'idle', 0, q.face < 0);
+      if (!f) return;
+      const v = sizedBody(f, P.s * BODY_K * vehK(q));
+      // vehicles leave a dark wreck where they stood (fliers crash where they fell)
+      const wreck = v._wreck || (v._wreck = CW.tinted(v, '#2a221e'));
+      gg.globalAlpha = 0.55;
+      gg.drawImage(wreck, Math.round(P.x * K - v.width / 2), Math.round(P.y * K - v.height + 2));
+      gg.globalAlpha = 1;
+      return;
     } else if (q.kind === 'unit') img = sized(unitImg(q).c, unitScale(q, P.s));
     else {
       const f = CW.leaderFrame(q.lid, q.side, q.isBoss ? groundOf.info.variant : '', 'idle', 0);
@@ -308,6 +331,7 @@
     const P = proj(q.x, q.z);
     if (q.isBoss || q.isHero) return { x: P.x, y: P.y - (q.isBoss ? 26 : 13), s: P.s };
     if (bodyOf(q)) return { x: P.x, y: P.y - 11 * P.s, s: P.s };
+    if (vehOf(q)) return { x: P.x, y: P.y - (q.air ? 30 : 12) * P.s, s: P.s };
     const h = q.air ? 30 : 7;
     return { x: P.x, y: P.y - h * P.s, s: P.s };
   }
@@ -368,11 +392,33 @@
         }
       } else if (e.k === 'herofall') {
         toast(short(e.lid) + ' is down', 'red');
-      }
+      } else if (e.k === 'special') showSpecial(e, B);
     }
     B.fx.length = 0;
   }
 
+  // a special move: its name across the field, a flash in its colour, and effects on whoever it touches
+  const SP_COL = { barrage: '#ffd23f', charge: '#ffb060', snipe: '#ff5a4a', rally: '#ffd23f', fortify: '#9ad8ff', heal: '#7dffb0', revive: '#7dffb0', stun: '#fff6a0', terror: '#b070ff', inferno: '#ff7a3a', tribute: '#ffd23f', reinforce: '#ffffff' };
+  const ON_FOES = new Set(['barrage', 'charge', 'snipe', 'stun', 'inferno', 'terror']);
+  let sbT = 0;
+  function showSpecial(e, B) {
+    const ally = e.side === 'a';
+    setText(hud.sbT, e.name);
+    setText(hud.sbS, ally ? LEADER[e.lid].name : 'Enemy ' + short(e.lid));
+    setClass(hud.sb, 'sbanner on' + (ally ? '' : ' foe'));
+    sbT = 1.8;
+    flashT = 0.9;
+    flashCol = SP_COL[e.t] || '#ffffff';
+    SFX.play(ally ? 'cast' : 'bosscast');
+    const targets = (ON_FOES.has(e.t) ? (ally ? B.e : B.a) : ally ? B.a : B.e).filter((q) => q.alive);
+    for (let i = 0; i < Math.min(28, targets.length); i++) {
+      const q = targets[Math.floor(Math.random() * targets.length)];
+      const c = chest(q);
+      if (ON_FOES.has(e.t)) boom(c.x, c.y, (e.t === 'snipe' ? 14 : 7) * c.s, SP_COL[e.t]);
+      else burst(c.x, c.y, 3, SP_COL[e.t], 'up');
+    }
+    if (e.t === 'barrage' || e.t === 'charge' || e.t === 'snipe') shake = Math.max(shake, 0.35);
+  }
   function R(x, y, w, h, col) {
     g.fillStyle = col;
     g.fillRect(q2(x), q2(y), q2(w), q2(h));
@@ -483,6 +529,7 @@
       blit(ring, P.x - ring.width / (2 * K), P.y - ring.height / (2 * K));
       g.globalAlpha = 1;
     } else if (bodyOf(q)) w = 13 * P.s;
+    else if (vehOf(q)) w = (CW.VSIZE[UNIT[q.uid].sp.k] || [40])[0] * 0.36 * vehK(q) * P.s;
     else w = (unitImg(q).w || 10) * 0.85 * (UNIT[q.uid].size || 1) * P.s;
     const c = shadowOf(Math.max(4, Math.round(w * K)));
     if (q.air) g.globalAlpha = 0.6;
@@ -509,6 +556,26 @@
         }
         if (q.stun > 0) stunStars(P.x, y + 2, t, 4 * P.s);
         if (q.burn && (q.id + Math.floor(t * 10)) % 3 === 0) R(P.x - 1 + Math.random() * 2, y + (img.height / K) * 0.4 - Math.random() * 3, 1, 1, '#ff9a3a');
+        return;
+      }
+    }
+    if (vehOf(q)) {
+      const f = vehFrame(q, B, t);
+      if (f) {
+        const img = sizedBody(f, P.s * BODY_K * vehK(q));
+        const k = img.width / f.width;
+        const bob = q.air ? -24 * P.s + Math.sin(t * 3 + q.id) * 1.2 : 0;
+        const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * (q.proj ? -0.8 : 2.5) * P.s * q.face : 0;
+        const x = P.x - (f.width / 2 / K) * k + lx;
+        const y = P.y - ((f.height - 2) / K) * k + bob + 0.5;
+        blit(img, x, y);
+        if (q.flash > 0.05) {
+          g.globalAlpha = q.flash * 0.8;
+          blit(whiteOf(img), x, y);
+          g.globalAlpha = 1;
+        }
+        if (q.stun > 0) stunStars(P.x, y + 2, t, 6 * P.s);
+        if (q.burn && (q.id + Math.floor(t * 10)) % 3 === 0) R(P.x - 2 + Math.random() * 4, y + (img.height / K) * 0.4 - Math.random() * 3, 1, 1, '#ff9a3a');
         return;
       }
     }
@@ -670,6 +737,7 @@
   const hud = {
     label: $('#hudLabel'), sub: $('#hudSub'), tug: $('#hudTug'), a: $('#hudA'), e: $('#hudE'), boss: $('#hudBoss'), bossName: $('#hudBossName'),
     time: $('#hudTime'), bossHp: $('#hudBossHp'), bossT: $('#hudBossT'), banner: $('#banner'), bt: $('#bannerT'), bs: $('#bannerS'),
+    bossSp: $('#hudBossSp'), sb: $('#sbanner'), sbT: $('#sbT'), sbS: $('#sbS'),
   };
   function setW(node, f) {
     const w = (Math.max(0, Math.min(1, f || 0)) * 100).toFixed(1) + '%';
@@ -695,6 +763,7 @@
       setText(hud.time, Math.max(0, Math.ceil(B.bossT)) + 's');
       setClass(hud.time, B.bossT < 10 ? 'low' : '');
       setW(hud.bossT, B.bossT / B.bossTMax);
+      setW(hud.bossSp, (B.bossMeter || 0) / 100);
     }
     let t = '';
     let sub = '';
@@ -731,6 +800,11 @@
     const st = S();
     if (!B || !st) return;
     if (B !== groundOf) newBattle(B);
+    if (ents.size < B.ents.length) for (const q of B.ents) ents.set(q.id, q);
+    if (sbT > 0) {
+      sbT -= dt;
+      if (sbT <= 0) setClass(hud.sb, 'sbanner');
+    }
     g.setTransform(K, 0, 0, K, 0, 0);
     g.imageSmoothingEnabled = false;
     g.globalAlpha = 1;
@@ -932,7 +1006,7 @@
     deckEls = null;
     el.deck.innerHTML = [st.main, st.partners[0], st.partners[1]]
       .filter(Boolean)
-      .map((lid, i) => `<button class="chip ${i === 0 ? 'main' : ''}" data-card="${lid}" title="${esc(LEADER[lid].name)}"><img class="px" src="${CW.headURL(lid)}" alt=""><span>${esc(short(lid))}<span class="hp${i === 0 ? ' main' : ''}"><i data-hp="${lid}"></i></span></span></button>`)
+      .map((lid, i) => `<button class="chip ${i === 0 ? 'main' : ''}" data-card="${lid}" title="${esc(LEADER[lid].name)}: tap for specials"><img class="px" src="${CW.headURL(lid)}" alt=""><span>${esc(short(lid))}<span class="hp${i === 0 ? ' main' : ''}"><i data-hp="${lid}"></i></span><span class="spm"><i data-sp="${lid}"></i></span></span></button>`)
       .join('');
     if (!el.sheet.hidden && tab === 'command') renderPanel();
   }
@@ -945,11 +1019,18 @@
       const r = st.roster[lid];
       const main = i === 0;
       const cl = CLASSES[L.cls];
-      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}" title="Tap for details"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small></div><ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul></div>`;
+      const pos = CW.leaderPos(lid);
+      const pref = CW.prefPos(lid);
+      const pb = (v, label) => `<button data-act="pos" data-id="${lid}" data-pos="${v}" aria-pressed="${pos === v}">${label}${pref === v ? '<span class="fit">★</span>' : ''}</button>`;
+      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small></div>
+        <div class="pos" role="group" aria-label="Where ${esc(short(lid))} fights">${pb('front', 'Front lines')}${pb('back', 'Behind the army')}</div>
+        <p class="excel">${esc(CW.posText(lid))}</p>
+        <ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul>
+        <ul class="sps">${CW.specials(lid).map((sp) => `<li><b>${esc(sp.name)}</b>${esc(CW.specialText(sp))}<em>${sp.sig ? 'signature' : 'class'} special, ${sp.cost}% meter</em></li>`).join('')}</ul></div>`;
     };
     return `<div class="phead"><h2>Commanders</h2>${st.council ? '<button class="btn blue" data-act="council">Change at the War Council</button>' : ''}</div>
       <div class="cards">${card(st.main, 0)}${card(st.partners[0], 1)}${card(st.partners[1], 2)}</div>
-      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. Swap them after any leader battle.</p>`;
+      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. ★ marks where a leader excels; positions apply from the next battle. Special meters fill as your soldiers defeat enemies (tougher enemies fill them faster); tap a leader under the battlefield to use one.</p>`;
   }
   let deckEls = null;
   function updateDeck() {
@@ -959,8 +1040,21 @@
       deckEls = {
         cards: Array.from(el.deck.querySelectorAll('[data-card]')).map((c) => ({ c, lid: c.dataset.card })),
         hps: Array.from(el.deck.querySelectorAll('[data-hp]')).map((i) => ({ i, lid: i.dataset.hp })),
+        sps: Array.from(el.deck.querySelectorAll('[data-sp]')).map((i) => ({ i, lid: i.dataset.sp })),
       };
     }
+    for (const m of deckEls.sps) {
+      const v = CW.meter(m.lid);
+      setW(m.i, v / 100);
+      const c = m.i.closest('.chip');
+      const st = v >= 100 ? 'ready' : v >= 60 ? 'half' : '';
+      if (c._st !== st) {
+        c.classList.remove('ready', 'half');
+        if (st) c.classList.add(st);
+        c._st = st;
+      }
+    }
+    if (spLid && !el.spop.hidden) updateSpecials();
     for (const c of deckEls.cards) {
       const down = !CW.heroAlive(c.lid);
       if (c.down !== down) {
@@ -980,10 +1074,63 @@
   }
   el.deck.addEventListener('click', (e) => {
     const c = e.target.closest('[data-card]');
-    if (c) openLeader(c.dataset.card);
+    if (!c) return;
+    SFX.ensure();
+    if (spLid === c.dataset.card && !el.spop.hidden) closeSpecials();
+    else openSpecials(c.dataset.card, c);
+  });
+  // ---- the special choice: a leader's signature move or their class move
+  el.spop = $('#spop');
+  let spLid = null;
+  function openSpecials(lid, chip) {
+    spLid = lid;
+    const sps = CW.specials(lid);
+    el.spop.innerHTML = `<h4>${esc(LEADER[lid].name)}<span data-spv></span></h4><div class="m"><i data-spm></i></div>
+      ${sps.map((sp, i) => `<button class="spb" data-spi="${i}"><b>${esc(sp.name)}<span>${sp.sig ? 'Signature' : 'Class'} · ${sp.cost}%</span></b><small>${esc(CW.specialText(sp))}</small></button>`).join('')}
+      <button class="more" data-more>Leader details</button>`;
+    el.spop.hidden = false;
+    const r = chip.getBoundingClientRect();
+    const w = el.spop.offsetWidth;
+    el.spop.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px';
+    el.spop.style.bottom = Math.max(12, innerHeight - r.top + 8) + 'px';
+    el.spop.style.top = 'auto';
+    updateSpecials();
+  }
+  function updateSpecials() {
+    const v = CW.meter(spLid);
+    const B = CW.battle();
+    const live = B && B.phase === 'fight' && CW.heroAlive(spLid);
+    setText(el.spop.querySelector('[data-spv]'), Math.floor(v) + '%');
+    setW(el.spop.querySelector('[data-spm]'), v / 100);
+    const sps = CW.specials(spLid);
+    el.spop.querySelectorAll('[data-spi]').forEach((b) => {
+      const dis = !live || v < sps[+b.dataset.spi].cost;
+      if (b.disabled !== dis) b.disabled = dis;
+    });
+  }
+  function closeSpecials() {
+    el.spop.hidden = true;
+    spLid = null;
+  }
+  el.spop.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-spi]');
+    if (b && spLid && CW.useSpecial(spLid, +b.dataset.spi)) {
+      closeSpecials();
+      return;
+    }
+    if (e.target.closest('[data-more]')) {
+      const lid = spLid;
+      closeSpecials();
+      openLeader(lid);
+    }
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (!el.spop.hidden && !e.target.closest('#spop') && !e.target.closest('.chip')) closeSpecials();
   });
 
   el.autoPush.addEventListener('change', () => CW.setAuto('push', el.autoPush.checked));
+  el.autoSpecial = $('#autoSpecial');
+  el.autoSpecial.addEventListener('change', () => CW.setAuto('special', el.autoSpecial.checked));
   el.challenge.addEventListener('click', () => {
     SFX.ensure();
     CW.challenge();
@@ -991,6 +1138,7 @@
   el.council.addEventListener('click', () => openCouncil());
   function syncControls() {
     el.autoPush.checked = S().auto.push;
+    el.autoSpecial.checked = S().auto.special !== false;
   }
 
   // ------------------------------------------------------------ panels
@@ -1045,7 +1193,7 @@
       base.push(ids.join(','), st.eraReached, st.buyMode, JSON.stringify(st.uattr), ids.map((id) => CW.uslots(id)).join(''));
     }
     if (tab === 'leaders') base.push(Object.entries(st.roster).map(([k, r]) => k + r.stars).join(','));
-    if (tab === 'command') base.push(deckSig, !!st.council);
+    if (tab === 'command') base.push(deckSig, !!st.council, JSON.stringify(st.pos));
     if (tab === 'doctrines') base.push(JSON.stringify(st.doctrines), !!st.council);
     if (tab === 'rift') base.push(st.runMax, Math.floor(Math.log10(st.shards + 1) * 20));
     if (tab === 'options') base.push(st.sound);
@@ -1250,6 +1398,9 @@
       updatePanel();
     } else if (act === 'inc' || act === 'dec') {
       if (!b.hasAttribute('data-hold') || e.detail === 0) armyStep(b);
+    } else if (act === 'pos') {
+      CW.setPos(b.dataset.id, b.dataset.pos);
+      renderPanel();
     } else if (act === 'recruit') {
       if (CW.recruit(b.dataset.id, st.buyMode === 'max' ? 'max' : st.buyMode)) SFX.play('buy');
       updatePanel();
@@ -1357,6 +1508,7 @@
       if (e.key === 'Escape') closeModal();
       return;
     }
+    if (!el.spop.hidden && e.key === 'Escape') return closeSpecials();
     if (!el.sheet.hidden && e.key === 'Escape') return closeSheet();
     if (e.key === ' ' && !e.target.closest('button')) {
       e.preventDefault();
@@ -1538,6 +1690,7 @@
       `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:128px;height:128px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === NERA ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
       <p class="bio">${esc(l.bio)}</p>
       <h3>Attributes · always on</h3><div class="sklist">${[0, 1, 2].map((i) => `<div class="sk"><em>${labels[i]}</em><b>${esc(CW.attr(id, i).name)}</b>: ${esc(CW.attrText(id, i, r ? CW.attrStrength(id, i === 1 && st.main !== id ? 'partner' : 'main') : 1))}</div>`).join('')}<div class="sk"><em>Commander bonus · ${esc(cl.name)}</em>${esc(cl.d)}</div></div>
+      <h3>Special moves · charged in battle</h3><div class="sklist">${CW.specials(id).map((sp) => `<div class="sk"><em>${sp.sig ? 'Signature special · full meter' : 'Class special · 60% of the meter'}</em><b>${esc(sp.name)}</b>: ${esc(CW.specialText(sp))}</div>`).join('')}<div class="sk"><em>Best position · ${CW.prefPos(id) === 'front' ? 'front lines' : 'behind the army'}</em>${esc(CW.posText(id))}</div></div>
       <p class="note">They work while this leader is standing. When you fight them, they power the enemy army instead.</p>
       <div class="acts">${r ? `<button class="btn" data-act="train" data-id="${id}" ${CW.trainCost(id) > st.gold ? 'disabled' : ''}>Train to Lv ${r.lv + 1} · ${fmt(CW.trainCost(id))}</button>` : ''}<button class="btn ghost" data-act="close">Close</button></div>`
     );
