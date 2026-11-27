@@ -1,4 +1,6 @@
-/* Chrono Command — detailed 32x32 pixel portraits and full-body battlefield sprites for every leader. */
+/* Chrono Command — 64x64 pixel portraits and full-body battlefield sprites for every leader.
+   Each figure is designed on a 32x32 grid, then upscaled with Scale2x and finished at 64x64
+   (edge lighting, cloth and hair texture, eye highlights, thin outlines). */
 (function (G) {
   'use strict';
   const CW = G.CW;
@@ -19,41 +21,49 @@
   }
   const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 
-  // dithered gradient background with a soft halo behind the head
+  // dithered gradient background with a soft halo behind the head, drawn natively at 64x64
+  const S64 = 64;
   function drawBg(g, bg, variant) {
-    const img = g.createImageData(N, N);
+    const img = g.createImageData(S64, S64);
     const d = img.data;
-    const pal = [shade(bg, 0.2), shade(bg, 0.08), bg, shade(bg, -0.14), shade(bg, -0.28), shade(bg, -0.44)].map(rgb);
-    for (let y = 0; y < N; y++)
-      for (let x = 0; x < N; x++) {
-        const dx = x - 15.5;
-        const dy = (y - 12) * 1.1;
-        let lv = (y / (N - 1)) * (pal.length - 1) - Math.max(0, (13 - Math.sqrt(dx * dx + dy * dy)) / 13) * 1.8;
-        lv = Math.max(0, Math.min(pal.length - 1, lv));
+    const pal = [shade(bg, 0.22), shade(bg, 0.12), shade(bg, 0.04), bg, shade(bg, -0.1), shade(bg, -0.2), shade(bg, -0.32), shade(bg, -0.45)].map(rgb);
+    const n = pal.length - 1;
+    for (let y = 0; y < S64; y++)
+      for (let x = 0; x < S64; x++) {
+        const dx = x - 31.5;
+        const dy = (y - 24) * 1.1;
+        let lv = (y / (S64 - 1)) * n - Math.max(0, (27 - Math.sqrt(dx * dx + dy * dy)) / 27) * 2.6;
+        lv = Math.max(0, Math.min(n, lv));
         const fl = Math.floor(lv);
-        const idx = Math.min(pal.length - 1, lv - fl > (BAYER[y % 4][x % 4] + 0.5) / 16 ? fl + 1 : fl);
+        const idx = Math.min(n, lv - fl > (BAYER[y % 4][x % 4] + 0.5) / 16 ? fl + 1 : fl);
         const c = pal[idx];
-        const i = (y * N + x) * 4;
+        const i = (y * S64 + x) * 4;
         d[i] = c[0];
         d[i + 1] = c[1];
         d[i + 2] = c[2];
         d[i + 3] = 255;
       }
     g.putImageData(img, 0, 0);
-    const P = (x, y, c) => {
-      g.fillStyle = c;
-      g.fillRect(x, y, 1, 1);
-    };
     if (variant === 'echo') {
       g.fillStyle = '#2ee6ff';
-      [[1, 4, 6], [24, 3, 7], [2, 19, 5], [26, 17, 5]].forEach(([x, y, w]) => g.fillRect(x, y, w, 1));
-      [[6, 4, 5], [24, 3, 6], [6, 19, 4], [26, 17, 6]].forEach(([x, y, h]) => g.fillRect(x, y, 1, h));
-      [[6, 9], [24, 9], [6, 23], [26, 23]].forEach(([x, y]) => P(x, y, '#aef8ff'));
+      [[2, 8, 12], [48, 6, 14], [4, 38, 10], [52, 34, 10]].forEach(([x, y, w]) => g.fillRect(x, y, w, 1));
+      [[13, 8, 10], [48, 6, 12], [13, 38, 8], [52, 34, 12]].forEach(([x, y, h]) => g.fillRect(x, y, 1, h));
+      g.fillStyle = '#aef8ff';
+      [[12, 17], [47, 17], [12, 45], [51, 45]].forEach(([x, y]) => g.fillRect(x, y, 3, 3));
     }
-    if (variant === 'mystery') [[3, 3], [27, 5], [5, 22], [28, 20], [9, 1], [22, 2], [2, 13], [29, 11]].forEach(([x, y], i) => P(x, y, i % 2 ? '#d08aff' : '#ffffff'));
-    // corner vignette
-    g.fillStyle = 'rgba(0,0,0,.28)';
-    [[0, 0], [31, 0], [0, 31], [31, 31], [1, 0], [0, 1], [30, 0], [31, 1]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+    if (variant === 'mystery')
+      [[6, 6], [54, 10], [10, 44], [56, 40], [18, 2], [44, 4], [4, 26], [58, 22]].forEach(([x, y], i) => {
+        g.fillStyle = i % 2 ? '#d08aff' : '#ffffff';
+        g.fillRect(x, y, 1, 1);
+        g.fillStyle = 'rgba(208,138,255,.5)';
+        g.fillRect(x - 1, y, 1, 1);
+        g.fillRect(x + 1, y, 1, 1);
+        g.fillRect(x, y - 1, 1, 1);
+        g.fillRect(x, y + 1, 1, 1);
+      });
+    g.fillStyle = 'rgba(0,0,0,.3)';
+    for (const [cx, cy, sx, sy] of [[0, 0, 1, 1], [63, 0, -1, 1], [0, 63, 1, -1], [63, 63, -1, -1]])
+      for (let k = 0; k < 4; k++) g.fillRect(sx > 0 ? cx : cx - (3 - k), cy + sy * k, 4 - k, 1);
   }
 
   // ------------------------------------------------------------ the figure (transparent layer)
@@ -1392,26 +1402,53 @@
   }
   CW.figure = figure;
 
+  // 64x64 version of a figure: Scale2x upscale, edge lighting, cloth and hair texture, eye highlights
+  function skinSet(p, variant) {
+    const sk = variant === 'echo' ? '#aeb8cc' : p.sk;
+    return new Set([sk, shade(sk, 0.14), shade(sk, -0.16), shade(sk, -0.34), WHITE].map(CW.u32));
+  }
+  function catchlights(c, pts) {
+    const g = c.getContext('2d');
+    for (const [x, y] of pts) {
+      const px = g.getImageData(x, y, 1, 1).data;
+      if (px[3] > 200 && px[0] + px[1] + px[2] < 200) {
+        g.fillStyle = 'rgba(255,255,255,.92)';
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+  const hiCache = {};
+  function hiFigure(id, variant) {
+    const key = id + '|' + (variant || '');
+    if (!hiCache[key]) {
+      const p = CW.LEADER[id].pt;
+      const hi = CW.edgeLight(CW.scale2x(figure(id, variant)), { skip: skinSet(p, variant), tex: 0.07, edgeSolid: true });
+      if ((p.head || 'human') === 'human' && !p.eyes) catchlights(hi, [[26, 26], [36, 26]]);
+      hiCache[key] = hi;
+    }
+    return hiCache[key];
+  }
+
   const QMARK = ['.###.', '#...#', '....#', '...#.', '..#..', '.....', '..#..'];
   const pcache = {};
   CW.portrait = function (id, variant) {
     const key = id + '|' + (variant || '');
     if (pcache[key]) return pcache[key];
     const L = CW.LEADER[id];
-    const c = canvas(N, N);
+    const c = canvas(64, 64);
     const g = c.getContext('2d');
     if (variant === 'mystery') {
       drawBg(g, '#2a1240', 'mystery');
-      g.drawImage(CW.outlined(CW.tinted(figure(id, ''), '#0a0710'), '#b070ff'), 0, 0);
+      g.drawImage(CW.outlined(CW.tinted(hiFigure(id, ''), '#0a0710'), '#b070ff'), 0, 0);
       g.fillStyle = '#e8d0ff';
-      QMARK.forEach((r, y) => r.split('').forEach((k, x) => k === '#' && g.fillRect(13 + x, 9 + y, 1, 1)));
+      QMARK.forEach((r, y) => r.split('').forEach((k, x) => k === '#' && g.fillRect(26 + x * 2, 18 + y * 2, 2, 2)));
     } else {
       drawBg(g, variant === 'echo' ? '#141a2e' : L.pt.bg, variant);
-      g.drawImage(CW.outlined(figure(id, variant), OUT), 0, 0);
+      g.drawImage(CW.outlined(hiFigure(id, variant), OUT), 0, 0);
     }
     g.fillStyle = 'rgba(0,0,0,.35)';
-    g.fillRect(0, 31, 32, 1);
-    g.fillRect(31, 0, 1, 32);
+    g.fillRect(0, 63, 64, 1);
+    g.fillRect(63, 0, 1, 64);
     pcache[key] = c;
     return c;
   };
@@ -1422,7 +1459,7 @@
     return urlCache[key];
   };
 
-  // ------------------------------------------------------------ full-body battlefield sprite (28x40 + outline)
+  // ------------------------------------------------------------ full-body battlefield sprite (30x42 on the field, 2x detail)
   const hcache = {};
   CW.heroSprite = function (id, side, variant) {
     const key = id + '|' + side + '|' + (variant || '');
@@ -1689,13 +1726,16 @@
     // the head, cut from the portrait figure (without its shoulders)
     g.drawImage(figure(id, variant, 'head'), 4, 0, 24, 32, 2, 0, 24, 32);
     g.setTransform(1, 0, 0, 1, 0, 0);
-    let fin = c;
+    // 2x detail (60x84 pixels shown at 30x42 on the field)
+    let fin = CW.edgeLight(CW.scale2x(c), { skip: skinSet(p, variant), tex: 0.05 });
+    if ((p.head || 'human') === 'human' && !p.eyes) catchlights(fin, [[24, 28], [34, 28]]);
     if (side === 'e') {
-      fin = canvas(30, 42);
-      const fg = fin.getContext('2d');
-      fg.translate(30, 0);
-      fg.scale(-1, 1);
-      fg.drawImage(c, 0, 0);
+      const m = canvas(60, 84);
+      const mg = m.getContext('2d');
+      mg.translate(60, 0);
+      mg.scale(-1, 1);
+      mg.drawImage(fin, 0, 0);
+      fin = m;
     }
     const out = CW.outlined(fin, OUT);
     const res = { c: out, w: 30, h: 42, flash: CW.tinted(out, '#ffffff'), shadow: CW.tinted(out, '#0a0710') };

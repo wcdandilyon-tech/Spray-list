@@ -40,8 +40,8 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 | `index.html` | Page layout and all styling |
 | `js/data.js` | Eras, unit types, traits, leader classes, all 87 leaders (bios, portrait recipes, skills, weapons) and the 30 doctrines |
 | `js/engine.js` | Battle simulation, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
-| `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the bitmap damage font, outline and tint helpers |
-| `js/portraits.js` | Detailed 32x32 leader portraits and full-body battlefield sprites for every leader |
+| `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
+| `js/portraits.js` | 64x64 leader portraits and full-body battlefield sprites for every leader |
 | `js/ui.js` | Battlefield rendering and animation, command deck, panels, dialogs, sound effects, autosave and offline progress |
 
 Balance knobs live in `CW.CFG` at the top of `js/engine.js` (enemy growth, era power, costs, boss strength, rift reward).
@@ -49,6 +49,19 @@ They were tuned with a headless bot: the first Time Rift usually comes after abo
 opens after about 3 to 4 hours with rifts, and progress keeps moving deeper from there.
 
 Saves are stored in the browser's `localStorage` on each device. Use **Options → Export save** to move a game between devices.
+
+## Art and performance
+
+Every leader is designed on a 32x32 grid, upscaled to 64x64 with Scale2x (a pixel-art upscaler that rounds off
+stair-steps without blurring), then finished with edge lighting, cloth and hair texture, eye highlights and a thin outline.
+Units, battlefield leaders and era backdrops get the same 2x treatment.
+
+The battlefield is drawn on a fixed 768x432 pixel grid that the browser scales up, so the work per frame stays the same
+on any screen size. Text and explosions are cached as images, the page is only touched when a value changes, drawing
+pauses while the battlefield is scrolled out of view, and portraits are built in the background during idle time.
+Movement is sub-pixel with eased lunges, march-ins, fades and health bars. On a 4x CPU-throttled browser,
+a busy late-game battle went from about 35 fps to over 200 fps unthrottled-equivalent headroom (95th-percentile
+frame time 47 ms down to about 8 ms).
 
 ## Publish it with GitHub Pages
 

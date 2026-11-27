@@ -30,6 +30,19 @@
     c.height = h;
     return c;
   }
+  // work canvases that get read back pixel by pixel are flagged for fast reads;
+  // finished sprites are copied onto plain canvases so they stay fast to draw every frame
+  function rcanvas(w, h) {
+    const c = canvas(w, h);
+    c.getContext('2d', { willReadFrequently: true });
+    return c;
+  }
+  CW.rcanvas = rcanvas;
+  CW.plain = function (src) {
+    const c = canvas(src.width, src.height);
+    c.getContext('2d').drawImage(src, 0, 0);
+    return c;
+  };
   function rnd(seed) {
     let s = seed % 2147483647;
     if (s <= 0) s += 2147483646;
@@ -42,7 +55,7 @@
     pad = pad || 0;
     const w = src.width + pad * 2;
     const h = src.height + pad * 2;
-    const c = canvas(w, h);
+    const c = rcanvas(w, h);
     const g = c.getContext('2d');
     g.drawImage(src, pad, pad);
     const img = g.getImageData(0, 0, w, h);
@@ -62,6 +75,103 @@
       a[i + 3] = 255;
     }
     g.putImageData(img, 0, 0);
+    return CW.plain(c);
+  };
+  // ---- Scale2x (EPX): doubles a pixel-art image, rounding off diagonal stair-steps without any blur
+  CW.scale2x = function (src) {
+    const w = src.width;
+    const h = src.height;
+    const s = new Uint32Array(src.getContext('2d').getImageData(0, 0, w, h).data.buffer);
+    for (let i = 0; i < s.length; i++) if (s[i] >>> 24 === 0) s[i] = 0;
+    const out = rcanvas(w * 2, h * 2);
+    const og = out.getContext('2d');
+    const od = og.createImageData(w * 2, h * 2);
+    const o = new Uint32Array(od.data.buffer);
+    const W2 = w * 2;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const P = s[y * w + x];
+        const A = y > 0 ? s[(y - 1) * w + x] : P;
+        const D = y < h - 1 ? s[(y + 1) * w + x] : P;
+        const C = x > 0 ? s[y * w + x - 1] : P;
+        const B = x < w - 1 ? s[y * w + x + 1] : P;
+        const i = y * 2 * W2 + x * 2;
+        o[i] = C === A && C !== D && A !== B ? A : P;
+        o[i + 1] = A === B && A !== C && B !== D ? B : P;
+        o[i + W2] = D === C && D !== B && C !== A ? C : P;
+        o[i + W2 + 1] = B === D && B !== A && D !== C ? D : P;
+      }
+    og.putImageData(od, 0, 0);
+    return out;
+  };
+  CW.u32 = (hex) => {
+    const [r, g, b] = hex2rgb(hex);
+    return ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0;
+  };
+  function adj(v, a) {
+    const f = (c) => Math.max(0, Math.min(255, Math.round(a < 0 ? c * (1 + a) : c + (255 - c) * a)));
+    return ((v & 0xff000000) | (f((v >>> 16) & 255) << 16) | (f((v >>> 8) & 255) << 8) | f(v & 255)) >>> 0;
+  }
+  // light from the top left: a bright rim on upper and left edges, shade on lower and right edges,
+  // and a faint weave texture inside large flat areas (cloth, hair, armour), skipping the colours in opts.skip
+  CW.edgeLight = function (c, opts) {
+    opts = opts || {};
+    const w = c.width;
+    const h = c.height;
+    const g = c.getContext('2d');
+    const img = g.getImageData(0, 0, w, h);
+    const d = new Uint32Array(img.data.buffer);
+    const src = d.slice();
+    const solid = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? !!opts.edgeSolid : src[y * w + x] >>> 24 > 40);
+    const rim = opts.rim === undefined ? 0.16 : opts.rim;
+    const sh = opts.shade === undefined ? -0.16 : opts.shade;
+    const tex = opts.tex || 0;
+    const skip = opts.skip;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        const v = src[i];
+        if (v >>> 24 <= 40) continue;
+        if (!solid(x, y - 1) || !solid(x - 1, y)) d[i] = adj(v, rim);
+        else if (!solid(x, y + 1) || !solid(x + 1, y)) d[i] = adj(v, sh);
+        else if (tex && !(skip && skip.has(v)) && x > 0 && y > 0 && x < w - 1 && y < h - 1 && src[i - 1] === v && src[i + 1] === v && src[i - w] === v && src[i + w] === v) {
+          const k = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+          if (k % 7 === 0) d[i] = adj(v, -tex);
+          else if (k % 11 === 0) d[i] = adj(v, tex * 0.7);
+        }
+      }
+    g.putImageData(img, 0, 0);
+    return c;
+  };
+  // cached renders of the pixel font, so damage numbers and labels cost one drawImage each
+  const tcache = new Map();
+  CW.textImg = function (str, col, scale, outline) {
+    scale = scale || 1;
+    const key = str + '|' + col + '|' + scale + '|' + (outline || '');
+    let c = tcache.get(key);
+    if (c) return c;
+    if (tcache.size > 600) tcache.clear();
+    const t = String(str).toUpperCase();
+    c = canvas(Math.max(1, t.length * 4 * scale + 2), 5 * scale + 2);
+    CW.bitText(c.getContext('2d'), t, 1, 1, col, scale, outline);
+    tcache.set(key, c);
+    return c;
+  };
+  // cached filled circles at 2x resolution for explosions
+  const dcache = new Map();
+  CW.disc = function (r, col) {
+    const R2 = Math.max(1, Math.round(r * 2));
+    const key = R2 + col;
+    let c = dcache.get(key);
+    if (c) return c;
+    c = canvas(R2 * 2 + 1, R2 * 2 + 1);
+    const g = c.getContext('2d');
+    g.fillStyle = col;
+    for (let y = -R2; y <= R2; y++) {
+      const w = Math.round(Math.sqrt(R2 * R2 - y * y));
+      g.fillRect(R2 - w, R2 + y, w * 2 + 1, 1);
+    }
+    dcache.set(key, c);
     return c;
   };
   CW.tinted = function (src, col) {
@@ -386,8 +496,9 @@
         const xx = side === 'a' ? x : w - 1 - x;
         g.fillRect(xx, y, 1, 1);
       }
-    const oc2 = CW.outlined(c, '#120e12', 1);
-    const out = { c: oc2, w: w + 2, h: h + 2, air: !!AIR[sp.k], multi: sp.k === 'soldier' };
+    // 2x detail: upscale, light the edges, then a thin outline at the new resolution
+    const oc2 = CW.outlined(CW.edgeLight(CW.scale2x(c), { rim: 0.2, shade: -0.18 }), '#120e12', 1);
+    const out = { c: oc2, w: oc2.width / 2, h: oc2.height / 2, air: !!AIR[sp.k], multi: sp.k === 'soldier' };
     out.flash = CW.tinted(oc2, '#ffffff');
     scache[key] = out;
     return out;
@@ -396,12 +507,12 @@
   CW.unitURL = function (uid) {
     if (!uurl[uid]) {
       const s = CW.unitSprite(uid, 'a');
-      const c = canvas(28, 22);
+      const c = canvas(56, 44);
       const g = c.getContext('2d');
       if (s.multi) {
-        g.drawImage(s.c, 1, 2);
-        g.drawImage(s.c, 12, 6);
-      } else g.drawImage(s.c, Math.floor((28 - s.w) / 2), Math.floor((22 - s.h) / 2));
+        g.drawImage(s.c, 2, 4);
+        g.drawImage(s.c, 24, 12);
+      } else g.drawImage(s.c, Math.floor((56 - s.c.width) / 2), Math.floor((44 - s.c.height) / 2));
       uurl[uid] = c.toDataURL();
     }
     return uurl[uid];
@@ -488,15 +599,15 @@
     return icache[name];
   };
 
-  // ------------------------------------------------------------ era backdrops (384x216)
+  // ------------------------------------------------------------ era backdrops (designed at 384x216, stored at 768x432)
   const bcache = {};
   CW.backdrop = function (era) {
     if (bcache[era]) return bcache[era];
     const c = canvas(W, H);
     const g = c.getContext('2d');
     SCENES[era](g, rnd(era * 977 + 13));
-    bcache[era] = c;
-    return c;
+    bcache[era] = CW.plain(CW.scale2x(c));
+    return bcache[era];
   };
   const GY = 122;
   function R(g, x, y, w, h, col) {

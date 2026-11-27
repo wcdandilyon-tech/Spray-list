@@ -146,53 +146,94 @@
   })();
 
   // ------------------------------------------------------------ canvas
+  // The field is drawn on a fixed 768x432 grid (2 device pixels per field unit), which matches the 2x-detail art.
+  // The browser scales that up, so each frame fills a small fixed number of pixels whatever the screen size.
   const cv = $('#cv');
   const screenEl = $('#screen');
-  const g = cv.getContext('2d');
-  let K = 2;
+  const K = 2;
+  cv.width = FW * K;
+  cv.height = FH * K;
+  const g = cv.getContext('2d', { alpha: false });
   function resize() {
     const r = screenEl.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    K = Math.max(1, Math.min(8, Math.ceil((r.width * dpr) / FW)));
-    if (cv.width !== FW * K) {
-      cv.width = FW * K;
-      cv.height = FH * K;
-    }
+    cv.style.imageRendering = r.width * (window.devicePixelRatio || 1) >= cv.width ? 'pixelated' : 'auto';
   }
   const ro = new ResizeObserver(resize);
   ro.observe(screenEl);
+  let fieldVisible = true;
+  try {
+    const io = new IntersectionObserver((es) => (fieldVisible = es[es.length - 1].isIntersecting));
+    io.observe(screenEl);
+  } catch (e) {}
+  const q2 = (v) => Math.round(v * K) / K; // snap to the device pixel grid: smooth motion, crisp pixels
+  const easeOut = (k) => 1 - (1 - k) * (1 - k);
+  const lungeOff = (q) => (q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) : 0);
+  const marchOff = (B, dist) => (B.phase === 'march' ? dist * Math.pow(Math.max(0, B.pt) / 0.8, 2) : 0);
 
+  // layout: positions are reused between frames instead of rebuilt
   const pos = new Map();
+  let posFrame = 0;
+  function setPos(sid, x, y, gy, w, side, sp, kind) {
+    let p = pos.get(sid);
+    if (!p) {
+      p = {};
+      pos.set(sid, p);
+    }
+    p.x = x;
+    p.y = y;
+    p.gy = gy;
+    p.w = w;
+    p.side = side;
+    p.sp = sp || null;
+    p.air = !!(sp && sp.air);
+    p.hero = kind === 'hero';
+    p.boss = kind === 'boss';
+    p.f = posFrame;
+  }
   const COLX = [126, 88, 50];
   const HERO_POS = [[162, 180], [154, 153], [154, 207]];
+  const front = [];
+  const back = [];
+  const cols = [[], [], []];
   function place(list, side) {
-    const front = [];
-    const back = [];
+    front.length = 0;
+    back.length = 0;
     for (const q of list) {
-      if (q.isBoss) continue;
+      if (q.isBoss) {
+        setPos(q.sid, 302, 184, 184, 60, side, null, 'boss');
+        continue;
+      }
       if (q.isHero) {
-        const [x, gy] = HERO_POS[Math.min(2, q.slot - 100)];
-        pos.set(q.sid, { x, y: gy, gy, w: 30, side, hero: true });
+        const hp = HERO_POS[Math.min(2, q.slot - 100)];
+        setPos(q.sid, hp[0], hp[1], hp[1], 30, side, null, 'hero');
         continue;
       }
       (q.role === 'rng' ? back : front).push(q);
     }
-    const cols = [[], [], []];
-    front.forEach((q, i) => (i < 6 ? cols[0] : cols[2]).push(q));
-    back.forEach((q, i) => (i < 6 ? cols[1] : cols[2]).push(q));
-    cols.forEach((col, ci) => {
+    cols[0].length = 0;
+    cols[1].length = 0;
+    cols[2].length = 0;
+    for (let i = 0; i < front.length; i++) (i < 6 ? cols[0] : cols[2]).push(front[i]);
+    for (let i = 0; i < back.length; i++) (i < 6 ? cols[1] : cols[2]).push(back[i]);
+    for (let ci = 0; ci < 3; ci++) {
+      const col = cols[ci];
       const n = col.length;
-      col.forEach((q, ri) => {
+      for (let ri = 0; ri < n; ri++) {
+        const q = col[ri];
         const sp = CW.unitSprite(q.uid, side);
         const gy = n === 1 ? 172 : Math.round(140 + ri * (64 / (n - 1)));
         const w = sp.multi ? 20 : sp.w;
         let x = COLX[ci] + (ri % 2 ? -5 : 0) - (sp.multi ? 0 : Math.max(0, sp.w - 20));
         if (side === 'e') x = FW - x - w;
-        pos.set(q.sid, { x, y: sp.air ? gy - 34 : gy, gy, w, sp, side, air: sp.air });
-      });
-    });
-    const boss = list.find((q) => q.isBoss);
-    if (boss) pos.set(boss.sid, { x: 302, y: 184, gy: 184, w: 60, side, boss: true });
+        setPos(q.sid, x, sp.air ? gy - 34 : gy, gy, w, side, sp, 'unit');
+      }
+    }
+  }
+  function layout(B) {
+    posFrame++;
+    place(B.allies, 'a');
+    place(B.enemies, 'e');
+    for (const [sid, p] of pos) if (p.f !== posFrame) pos.delete(sid);
   }
 
   const proj = [];
@@ -205,19 +246,19 @@
   const center = (p) => ({ x: p.x + p.w / 2, y: p.boss ? p.gy - 46 : p.hero ? p.gy - 22 : p.y - (p.sp ? p.sp.h / 2 + 2 : 8) });
 
   function num(x, y, txt, col, scale) {
-    if (nums.length > 36) nums.shift();
+    if (nums.length > 40) nums.shift();
     nums.push({ x, y, txt, col, scale: scale || 1, t: 0 });
   }
   function boom(x, y, r, col) {
-    if (booms.length > 40) booms.shift();
+    if (booms.length > 48) booms.shift();
     booms.push({ x, y, r: r || 6, t: 0, col: col || '#ffd23f' });
   }
   function burst(x, y, n, col, kind) {
     for (let i = 0; i < n; i++) {
-      if (parts.length > 220) parts.shift();
+      if (parts.length > 240) parts.shift();
       const a = Math.random() * Math.PI * 2;
-      const s = 20 + Math.random() * 40;
-      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - (kind === 'coin' ? 50 : 20), t: 0, life: 0.6 + Math.random() * 0.5, col, kind });
+      const sp = 20 + Math.random() * 40;
+      parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (kind === 'coin' ? 50 : 20), t: 0, life: 0.6 + Math.random() * 0.5, col, kind });
     }
   }
 
@@ -230,7 +271,7 @@
         if (!tp) continue;
         const fp = pos.get(e.from);
         const c = center(tp);
-        if (fp && e.role !== 'inf') {
+        if (fp && e.role !== 'inf' && e.role !== 'hero') {
           const f = center(fp);
           const kind = e.role === 'rng' ? 'bullet' : e.role === 'boss' ? 'orb' : 'shell';
           if (proj.length < 90 && !(e.sec && kind === 'bullet')) proj.push({ x0: f.x, y0: f.y, x1: c.x, y1: c.y, t: 0, d: kind === 'bullet' ? 0.16 : 0.34, kind, side: e.side });
@@ -258,29 +299,25 @@
         toast('+' + fmt(e.v) + ' gold', '');
         SFX.play('coin');
       } else if (e.k === 'cast') {
-        const L = LEADER[e.lid];
         toast(short(e.lid) + ': ' + e.name, 'blue');
         flashT = 1;
         flashCol = e.kinds.includes('strike') || e.kinds.includes('burn') ? '#ffb040' : e.kinds.includes('heal') || e.kinds.includes('revive') ? '#7ddc6a' : e.kinds.includes('stun') ? '#9ad8ff' : e.kinds.includes('gold') ? '#ffd23f' : '#ffffff';
-        if (e.kinds.includes('strike')) shake = 0.25;
-        if (e.kinds.includes('buff')) for (const q of CW.battle().allies) {
-          const p = pos.get(q.sid);
-          if (p && q.alive) burst(center(p).x, center(p).y, 3, '#ffd23f', 'up');
-        }
-        if (e.kinds.includes('heal') || e.kinds.includes('revive')) for (const q of CW.battle().allies) {
-          const p = pos.get(q.sid);
-          if (p && q.alive) burst(center(p).x, center(p).y, 4, '#7ddc6a', 'up');
-        }
+        if (e.kinds.includes('strike')) shake = Math.max(shake, 0.25);
+        const up = e.kinds.includes('heal') || e.kinds.includes('revive') ? '#7ddc6a' : e.kinds.includes('buff') ? '#ffd23f' : null;
+        if (up)
+          for (const q of B.allies) {
+            const p = pos.get(q.sid);
+            if (p && q.alive) burst(center(p).x, center(p).y, 3, up, 'up');
+          }
         SFX.play('cast');
-        if (L) void 0;
       } else if (e.k === 'bosscast') {
         toast(short(e.lid) + ' uses ' + e.name + '!', 'red');
-        shake = 0.4;
+        shake = Math.max(shake, 0.4);
         flashT = 0.8;
         flashCol = '#ff3a2a';
         SFX.play('bosscast');
       } else if (e.k === 'bossblast') {
-        for (const q of CW.battle().allies) {
+        for (const q of B.allies) {
           const p = pos.get(q.sid);
           if (p) boom(center(p).x, center(p).y, 7, '#ff5a3a');
         }
@@ -299,115 +336,164 @@
 
   function R(x, y, w, h, col) {
     g.fillStyle = col;
-    g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    g.fillRect(q2(x), q2(y), q2(w), q2(h));
+  }
+  // pixel-font text from the cache: one drawImage per label or number
+  function text(str, x, y, col, sc, align) {
+    const img = CW.textImg(str, col, sc || 1, '#0b0d08');
+    const w = img.width;
+    const ax = align === 'c' ? x - w / 2 : align === 'r' ? x - w : x;
+    g.drawImage(img, q2(ax - 1), q2(y - 1));
+    return w;
+  }
+  function spr(img, x, y, w, h) {
+    g.drawImage(img, q2(x), q2(y), w, h);
+  }
+
+  // per-squad animation state, owned by the renderer
+  function animate(q, dt) {
+    const f = q.maxHp > 0 ? Math.max(0, q.hp / q.maxHp) : 0;
+    if (q.hpS === undefined) {
+      q.hpS = f;
+      q.hpT = f;
+      q.vis = q.alive ? 1 : 0;
+    }
+    q.hpS += (f - q.hpS) * Math.min(1, dt * 14);
+    if (q.hpS >= q.hpT) q.hpT = q.hpS;
+    else q.hpT += (q.hpS - q.hpT) * Math.min(1, dt * 2.5);
+    q.vis = q.alive ? Math.min(1, q.vis + dt * 5) : Math.max(0, q.vis - dt * 3.2);
+    q.flash = Math.max(0, q.flash - dt * 5);
+    q.lunge = Math.max(0, q.lunge - dt * 5);
+  }
+  function hpBar(q, x, y, w, col) {
+    R(x - 0.5, y - 0.5, w + 1, 3, '#0b0d08');
+    if (q.hpT > q.hpS + 0.005) R(x + w * q.hpS, y, w * (q.hpT - q.hpS), 2, '#f4e8c8');
+    if (q.hpS > 0.002) {
+      R(x, y, Math.max(0.5, w * q.hpS), 2, col);
+      R(x, y, Math.max(0.5, w * q.hpS), 0.5, 'rgba(255,255,255,.35)');
+    }
+  }
+  function stunStars(c, y, t, r) {
+    const a = t * 8;
+    R(c + Math.cos(a) * r, y + Math.sin(a) * 2, 2, 2, '#ffe86a');
+    R(c + Math.cos(a + 3) * r, y + Math.sin(a + 3) * 2, 2, 2, '#ffe86a');
   }
 
   function drawSquad(q, p, t, B) {
     const sp = p.sp;
-    let ox = 0;
-    if (q.side === 'e' && B.phase === 'march') ox = Math.round((B.pt / 0.8) * 150);
-    if (q.lunge > 0) ox += (q.side === 'a' ? 1 : -1) * Math.round(q.lunge * (q.role === 'rng' ? 1 : 4));
-    if (!q.alive) {
-      if (q.side === 'a') {
-        R(p.x + 6, p.gy - 7, 3, 7, '#8a8a80');
-        R(p.x + 4, p.gy - 5, 7, 2, '#8a8a80');
-        R(p.x + 2, p.gy, 11, 1, 'rgba(0,0,0,.35)');
-      }
-      return;
+    const dir = q.side === 'a' ? 1 : -1;
+    const marching = q.side === 'e' && B.phase === 'march';
+    const ox = (q.side === 'e' ? marchOff(B, 150) : 0) + dir * lungeOff(q) * (q.role === 'rng' ? 1.5 : 5);
+    if (!q.alive && q.side === 'a' && q.vis < 0.6) {
+      g.globalAlpha = 1 - q.vis;
+      R(p.x + 6, p.gy - 7, 3, 7, '#8a8a80');
+      R(p.x + 4, p.gy - 5, 7, 2, '#8a8a80');
+      R(p.x + 6.5, p.gy - 6.5, 1, 6, '#a8a89c');
+      R(p.x + 2, p.gy, 11, 1, 'rgba(0,0,0,.35)');
+      g.globalAlpha = 1;
     }
-    const step = ((t * 2.4 + q.sid * 0.37) % 1) < 0.5 ? 0 : 1;
-    const img = q.flash > 0.45 ? sp.flash : sp.c;
+    if (q.vis <= 0.01) return;
+    const sink = q.alive ? 0 : (1 - q.vis) * 4;
+    g.globalAlpha = q.vis;
     if (sp.multi) {
       const n = Math.max(1, Math.ceil((3 * q.hp) / q.maxHp - 0.001));
       const offs = [[6, -5], [0, -2], [9, 0]];
       for (let i = 0; i < n; i++) {
-        const [dx, dy] = offs[i];
+        const dx = offs[i][0];
+        const dy = offs[i][1];
+        const bob = marching ? -Math.abs(Math.sin(t * 13 + i * 1.7)) * 1.5 : Math.sin(t * 3 + q.sid + i * 1.3) * 0.5;
         R(p.x + ox + dx + 1, p.gy + dy, 8, 1, 'rgba(0,0,0,.3)');
-        g.drawImage(img, p.x + ox + dx, p.gy - sp.h + dy - (i === 1 ? step : 0));
+        const x = p.x + ox + dx;
+        const y = p.gy - sp.h + dy + bob + sink + 0.5;
+        spr(sp.c, x, y, sp.w, sp.h);
+        if (q.flash > 0.05) {
+          g.globalAlpha = q.vis * q.flash;
+          spr(sp.flash, x, y, sp.w, sp.h);
+          g.globalAlpha = q.vis;
+        }
       }
     } else {
+      const bob = p.air ? Math.sin(t * 3 + q.sid) * 1.5 : marching ? -Math.abs(Math.sin(t * 9 + q.sid)) : 0;
       R(p.x + ox + 2, p.gy, sp.w - 4, 2, 'rgba(0,0,0,.3)');
-      g.drawImage(img, p.x + ox, p.y - sp.h - (p.air ? step : 0));
+      const y = p.y - sp.h + bob + sink + 0.5;
+      spr(sp.c, p.x + ox, y, sp.w, sp.h);
+      if (q.flash > 0.05) {
+        g.globalAlpha = q.vis * q.flash;
+        spr(sp.flash, p.x + ox, y, sp.w, sp.h);
+      }
     }
-    // health bar
-    const bw = 16;
-    const bx = Math.round(p.x + ox + (p.w - bw) / 2);
-    const by = p.gy + 3;
-    R(bx - 1, by - 1, bw + 2, 4, '#0b0d08');
-    R(bx, by, Math.max(1, Math.round((bw * q.hp) / q.maxHp)), 2, q.side === 'a' ? '#5ad1ff' : '#ff5a4a');
-    if (q.stun > 0) {
-      const a = t * 8;
-      const c = center(p);
-      R(c.x + Math.cos(a) * 6 + ox, p.y - (sp.h || 12) - 4 + Math.sin(a) * 2, 2, 2, '#ffe86a');
-      R(c.x + Math.cos(a + 3) * 6 + ox, p.y - (sp.h || 12) - 4 + Math.sin(a + 3) * 2, 2, 2, '#ffe86a');
-    }
+    g.globalAlpha = q.vis;
+    hpBar(q, p.x + ox + (p.w - 16) / 2, p.gy + 3, 16, q.side === 'a' ? '#5ad1ff' : '#ff5a4a');
+    g.globalAlpha = 1;
+    if (q.stun > 0 && q.alive) stunStars(center(p).x + ox, p.y - (sp.h || 12) - 4, t, 6);
   }
 
   // commanders and enemy leaders: full-body sprites on the field (the enemy leader is drawn twice as big)
   function drawHero(q, p, t, B) {
-    const isBoss = !!p.boss;
+    const isBoss = p.boss;
     const sc = isBoss ? 2 : 1;
     const info = B.info;
-    const spr = CW.heroSprite(q.lid, q.side, isBoss ? info.variant : '');
-    let ox = 0;
-    if (q.side === 'e' && B.phase === 'march') ox = Math.round((B.pt / 0.8) * (isBoss ? 40 : 150));
-    if (q.lunge > 0) ox += (q.side === 'a' ? 1 : -1) * Math.round(q.lunge * 4 * sc);
-    const bob = ((t * 2 + q.sid * 0.3) % 1) < 0.5 ? 0 : sc;
+    const hs = CW.heroSprite(q.lid, q.side, isBoss ? info.variant : '');
+    const dir = q.side === 'a' ? 1 : -1;
+    const marching = q.side === 'e' && B.phase === 'march';
+    const ox = (q.side === 'e' ? marchOff(B, isBoss ? 40 : 150) : 0) + dir * lungeOff(q) * 4 * sc;
+    const bob = marching ? -Math.abs(Math.sin(t * 8)) * 2 * sc : Math.sin(t * 2.6 + q.sid) * 0.75 * sc;
     const x = p.x + ox;
-    const y = p.gy - 41 * sc - bob;
+    const y = p.gy - 41 * sc + bob;
+    const W = 30 * sc;
+    const H = 42 * sc;
     if (!q.alive) {
       if (q.side === 'a') {
         g.globalAlpha = 0.3;
-        g.drawImage(spr.shadow, x, p.gy - 41);
+        spr(hs.shadow, p.x, p.gy - 41, 30, 42);
         g.globalAlpha = 1;
-        CW.bitText(g, 'DOWN', x + 7, p.gy - 50, '#ff8a7a', 1, '#0b0d08');
+        text('DOWN', p.x + 15, p.gy - 50, '#ff8a7a', 1, 'c');
+      } else if (q.vis > 0.01) {
+        g.globalAlpha = q.vis;
+        spr(hs.c, x, y + (1 - q.vis) * 8, W, H);
+        g.globalAlpha = 1;
       }
       return;
     }
     R(x + 4 * sc, p.gy, 22 * sc, 2, 'rgba(0,0,0,.35)');
-    if (isBoss) {
-      const aura = info.mystery ? '#d08aff' : info.chaos ? '#b070ff' : info.variant === 'echo' ? '#2ee6ff' : '#ff5a4a';
-      const au = CW.tinted(spr.c, aura);
-      g.globalAlpha = 0.45 + 0.25 * Math.sin(t * 5);
-      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) g.drawImage(au, x + dx * sc, y + dy * sc, 30 * sc, 42 * sc);
-      g.globalAlpha = 1;
-    } else if (q.main) {
-      g.globalAlpha = 0.35 + 0.2 * Math.sin(t * 4);
-      const au = CW.tinted(spr.c, '#ffd23f');
-      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1]]) g.drawImage(au, x + dx, y + dy);
+    if (isBoss || q.main) {
+      const aura = !isBoss ? '#ffd23f' : info.mystery ? '#d08aff' : info.chaos ? '#b070ff' : info.variant === 'echo' ? '#2ee6ff' : '#ff5a4a';
+      const au = CW.tinted(hs.c, aura);
+      g.globalAlpha = (isBoss ? 0.45 : 0.3) + 0.2 * Math.sin(t * 4.5);
+      const d = isBoss ? 1 : 0.5;
+      spr(au, x - d, y, W, H);
+      spr(au, x + d, y, W, H);
+      spr(au, x, y - d, W, H);
+      if (isBoss) spr(au, x, y + d, W, H);
       g.globalAlpha = 1;
     }
     const hidden = isBoss && info.mystery && B.phase === 'march';
-    const img = hidden ? spr.shadow : q.flash > 0.45 ? spr.flash : spr.c;
-    g.drawImage(img, x, y, 30 * sc, 42 * sc);
-    if (hidden) CW.bitText(g, '?', x + 24, y + 26, '#e8d0ff', 4, '#0b0d08');
-    if (!isBoss) {
-      const bw = 22;
-      const bx = x + 4;
-      const by = p.gy + 3;
-      R(bx - 1, by - 1, bw + 2, 4, '#0b0d08');
-      R(bx, by, Math.max(1, Math.round((bw * q.hp) / q.maxHp)), 2, q.main ? '#ffd23f' : '#5ad1ff');
+    spr(hidden ? hs.shadow : hs.c, x, y, W, H);
+    if (q.flash > 0.05 && !hidden) {
+      g.globalAlpha = q.flash;
+      spr(hs.flash, x, y, W, H);
+      g.globalAlpha = 1;
     }
-    if (q.stun > 0) {
-      const a = t * 8;
-      const c = center(p);
-      R(c.x + Math.cos(a) * 8 + ox, y - 4 + Math.sin(a) * 2, 2, 2, '#ffe86a');
-      R(c.x + Math.cos(a + 3) * 8 + ox, y - 4 + Math.sin(a + 3) * 2, 2, 2, '#ffe86a');
-    }
+    if (hidden) text('?', x + W / 2, y + 26, '#e8d0ff', 4, 'c');
+    if (!isBoss) hpBar(q, x + 4, p.gy + 3, 22, q.main ? '#ffd23f' : '#5ad1ff');
+    if (q.stun > 0) stunStars(x + W / 2, y - 4, t, 8 * sc);
   }
 
-  function drawCommander(st, t) {
-    const B = CW.battle();
-    const x = 6;
-    const y = 6;
+  function drawCommander(st) {
     const ids = [st.main].concat(st.partners);
-    ids.forEach((id, i) => {
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
       const sz = i ? 16 : 32;
-      const px = i ? x + 36 : x;
-      const py = i ? y + (i - 1) * 18 : y;
+      const px = i ? 42 : 6;
+      const py = i ? 6 + (i - 1) * 18 : 6;
       R(px - 2, py - 2, sz + 4, sz + 4, '#0b0d08');
       R(px - 1, py - 1, sz + 2, sz + 2, i ? '#5ad1ff' : '#ffd23f');
+      if (i) {
+        g.imageSmoothingEnabled = true;
+        g.imageSmoothingQuality = 'high';
+      }
       g.drawImage(CW.portrait(id), px, py, sz, sz);
+      g.imageSmoothingEnabled = false;
       if (!CW.heroAlive(id)) {
         g.globalAlpha = 0.65;
         R(px, py, sz, sz, '#0b0d08');
@@ -417,93 +503,113 @@
           R(px + sz - 2 - k, py + k, 2, 2, '#ff5a4a');
         }
       }
-    });
+    }
   }
 
-  function drawHud(B, st, t) {
+  function drawHud(B, st) {
     const info = B.info;
-    // wave / battle label, top centre
     const label = info.isBoss ? (info.mystery ? 'MYSTERY BOSS' : info.variant === 'echo' ? 'ECHO BATTLE' : 'LEADER BATTLE') : 'WAVE ' + B.wave + '/' + CW.CFG.waves;
-    CW.bitText(g, label, Math.round(FW / 2 - CW.bitWidth(label, 2) / 2), 6, info.isBoss ? '#ff8a7a' : '#ffffff', 2, '#0b0d08');
-    if (st.farming) CW.bitText(g, 'REGROUPING', Math.round(FW / 2 - CW.bitWidth('REGROUPING', 1) / 2), 19, '#ffd23f', 1, '#0b0d08');
+    text(label, FW / 2, 6, info.isBoss ? '#ff8a7a' : '#ffffff', 2, 'c');
+    if (st.farming) text('REGROUPING', FW / 2, 19, '#ffd23f', 1, 'c');
     if (B.boss) {
       const nm = info.mystery && B.phase === 'march' ? '???' : short(B.boss.lid).toUpperCase();
-      const w = CW.bitWidth(nm, 2);
-      CW.bitText(g, nm, FW - 8 - w, 6, '#ffffff', 2, '#0b0d08');
+      text(nm, FW - 8, 6, '#ffffff', 2, 'r');
       const bw = 130;
       const bx = FW - 8 - bw;
+      const bq = B.boss;
       R(bx - 1, 18, bw + 2, 7, '#0b0d08');
-      R(bx, 19, Math.max(0, Math.round((bw * B.boss.hp) / B.boss.maxHp)), 5, '#ff5a4a');
-      R(bx, 19, Math.max(0, Math.round((bw * B.boss.hp) / B.boss.maxHp)), 1, '#ff9a8a');
-      const tt = Math.max(0, Math.ceil(B.bossT)) + 'S';
-      CW.bitText(g, tt, FW - 8 - CW.bitWidth(tt, 2), 28, B.bossT < 10 ? '#ff5a4a' : '#ffd23f', 2, '#0b0d08');
-      R(bx, 30, Math.round((bw - 22) * (B.bossT / B.bossTMax)), 3, B.bossT < 10 ? '#ff5a4a' : '#ffd23f');
+      if (bq.hpT > bq.hpS + 0.003) R(bx + bw * bq.hpS, 19, bw * (bq.hpT - bq.hpS), 5, '#f4e8c8');
+      R(bx, 19, bw * Math.max(0, bq.hpS || 0), 5, '#ff5a4a');
+      R(bx, 19, bw * Math.max(0, bq.hpS || 0), 1, '#ff9a8a');
+      const low = B.bossT < 10;
+      text(Math.max(0, Math.ceil(B.bossT)) + 'S', FW - 8, 28, low ? '#ff5a4a' : '#ffd23f', 2, 'r');
+      R(bx, 30, (bw - 22) * Math.max(0, B.bossT / B.bossTMax), 3, low ? '#ff5a4a' : '#ffd23f');
     }
-    // big centre messages
-    const mid = (txt, col, sc, y) => CW.bitText(g, txt, Math.round(FW / 2 - CW.bitWidth(txt, sc) / 2), y, col, sc, '#0b0d08');
     if (B.phase === 'march' && B.wave === 1) {
       g.globalAlpha = Math.min(1, B.pt * 2);
       if (info.isBoss) {
-        mid('VS ' + (info.mystery ? '???' : short(info.bossId).toUpperCase()), info.mystery ? '#e8d0ff' : '#ff8a7a', 3, 60);
-        mid(fmtYear(info.yr), '#ffffff', 2, 82);
-      } else mid('STAGE ' + st.stage, '#ffffff', 3, 64);
+        text('VS ' + (info.mystery ? '???' : short(info.bossId).toUpperCase()), FW / 2, 60, info.mystery ? '#e8d0ff' : '#ff8a7a', 3, 'c');
+        text(fmtYear(info.yr), FW / 2, 82, '#ffffff', 2, 'c');
+      } else text('STAGE ' + st.stage, FW / 2, 64, '#ffffff', 3, 'c');
       g.globalAlpha = 1;
     }
     if (B.phase === 'victory') {
-      mid('VICTORY!', '#ffd23f', 4, 56);
-      if (B.reward) mid(B.reward.res === 'recruit' ? short(B.reward.lid).toUpperCase() + ' JOINS YOU' : B.reward.res === 'star' ? short(B.reward.lid).toUpperCase() + ' +1 STAR' : '+1 CHRONO SHARD', '#ffffff', 2, 84);
+      const k = Math.min(1, (1.6 - B.pt) * 4);
+      g.globalAlpha = k;
+      text('VICTORY!', FW / 2, 56 - (1 - k) * 6, '#ffd23f', 4, 'c');
+      if (B.reward) text(B.reward.res === 'recruit' ? short(B.reward.lid).toUpperCase() + ' JOINS YOU' : B.reward.res === 'star' ? short(B.reward.lid).toUpperCase() + ' +1 STAR' : '+1 CHRONO SHARD', FW / 2, 84, '#ffffff', 2, 'c');
+      g.globalAlpha = 1;
     }
     if (B.phase === 'defeat') {
-      mid(B.loseWhy === 'time' ? 'OUT OF TIME!' : 'RETREAT!', '#ff5a4a', 4, 56);
-      mid('REGROUP AND GROW STRONGER', '#ffffff', 1, 86);
+      text(B.loseWhy === 'time' ? 'OUT OF TIME!' : 'RETREAT!', FW / 2, 56, '#ff5a4a', 4, 'c');
+      text('REGROUP AND GROW STRONGER', FW / 2, 86, '#ffffff', 1, 'c');
     }
   }
 
+  const order = [];
   function render(dt, t) {
     const B = CW.battle();
     const st = S();
     if (!B || !st) return;
     g.setTransform(K, 0, 0, K, 0, 0);
     g.imageSmoothingEnabled = false;
+    g.globalAlpha = 1;
+    g.drawImage(CW.backdrop(B.info.era), 0, 0, FW, FH);
+    // ambient embers / neon motes drifting smoothly
+    if (B.info.era === 6 || B.info.era === 9) {
+      const c = B.info.era === 6 ? '#ffb060' : '#2ee6ff';
+      for (let i = 0; i < 16; i++) {
+        const x = (((i * 53 + t * (B.info.era === 6 ? 9 : 14)) % FW) + FW) % FW;
+        const y = (((i * 37 + t * (B.info.era === 6 ? -12 : 6)) % 110) + 110) % 110;
+        R(x, y, 1, 1, c);
+      }
+    }
+    // a light screen shake moves the fighters, not the scenery
     let sx = 0;
     let sy = 0;
     if (shake > 0) {
+      const k = Math.min(1, shake / 0.25);
+      sx = (Math.random() - 0.5) * 4 * k;
+      sy = (Math.random() - 0.5) * 3 * k;
       shake -= dt;
-      sx = Math.round((Math.random() - 0.5) * 4);
-      sy = Math.round((Math.random() - 0.5) * 3);
     }
     g.save();
-    g.translate(sx, sy);
-    g.drawImage(CW.backdrop(B.info.era), 0, 0);
-    // ambient embers / neon motes
-    if (B.info.era === 6 || B.info.era === 9) {
-      for (let i = 0; i < 14; i++) {
-        const x = (i * 53 + t * (B.info.era === 6 ? 9 : 14)) % FW;
-        const y = (i * 37 + t * (B.info.era === 6 ? -12 : 6)) % 110;
-        R(x, (y + 110) % 110, 1, 1, B.info.era === 6 ? '#ffb060' : '#2ee6ff');
-      }
-    }
-    drawCommander(st, t);
-    const all = B.allies.concat(B.enemies).filter((q) => pos.has(q.sid));
-    all.sort((a, b) => pos.get(a.sid).gy - pos.get(b.sid).gy);
-    for (const q of all) {
+    g.translate(q2(sx), q2(sy));
+    order.length = 0;
+    for (const q of B.allies) if (pos.has(q.sid)) order.push(q);
+    for (const q of B.enemies) if (pos.has(q.sid)) order.push(q);
+    order.sort((a, b) => pos.get(a.sid).gy - pos.get(b.sid).gy);
+    for (const q of order) {
+      animate(q, dt);
       const p = pos.get(q.sid);
       if (q.isBoss || q.isHero) drawHero(q, p, t, B);
       else drawSquad(q, p, t, B);
-      q.flash = Math.max(0, q.flash - dt * 6);
-      q.lunge = Math.max(0, q.lunge - dt * 7);
     }
-    // projectiles
+    // projectiles with short trails
     for (let i = proj.length - 1; i >= 0; i--) {
       const p = proj[i];
       p.t += dt;
       const k = Math.min(1, p.t / p.d);
+      const arc = p.kind === 'shell' ? Math.sin(k * Math.PI) * 18 : 0;
       const x = p.x0 + (p.x1 - p.x0) * k;
-      const y = p.y0 + (p.y1 - p.y0) * k - (p.kind === 'shell' ? Math.sin(k * Math.PI) * 18 : 0);
-      if (p.kind === 'bullet') R(x, y, 2, 1, p.side === 'a' ? '#fff6a0' : '#ffb0a0');
-      else if (p.kind === 'shell') R(x - 1, y - 1, 2, 2, '#2a2a2a');
-      else {
-        R(x - 2, y - 2, 4, 4, '#ff5a3a');
+      const y = p.y0 + (p.y1 - p.y0) * k - arc;
+      if (p.kind === 'bullet') {
+        const dx = p.x1 > p.x0 ? -1 : 1;
+        const col = p.side === 'a' ? '#fff6a0' : '#ffb0a0';
+        g.globalAlpha = 0.45;
+        R(x + dx * 3, y, 3, 0.5, col);
+        g.globalAlpha = 1;
+        R(x, y - 0.5, 2, 1, col);
+      } else if (p.kind === 'shell') {
+        const k0 = Math.max(0, k - 0.06);
+        g.globalAlpha = 0.4;
+        R(p.x0 + (p.x1 - p.x0) * k0 - 0.5, p.y0 + (p.y1 - p.y0) * k0 - Math.sin(k0 * Math.PI) * 18 - 0.5, 1, 1, '#bdbdbd');
+        g.globalAlpha = 1;
+        R(x - 1, y - 1, 2, 2, '#2a2a2a');
+        R(x - 1, y - 1, 1, 0.5, '#8a8a8a');
+      } else {
+        const d = CW.disc(2.5, '#ff5a3a');
+        spr(d, x - d.width / 4, y - d.height / 4, d.width / 2, d.height / 2);
         R(x - 1, y - 1, 2, 2, '#ffe0a0');
       }
       if (k >= 1) {
@@ -511,21 +617,20 @@
         proj.splice(i, 1);
       }
     }
-    // explosions
+    // explosions: cached discs that grow, change colour and fade
     for (let i = booms.length - 1; i >= 0; i--) {
       const b = booms[i];
       b.t += dt;
-      const k = b.t / 0.35;
+      const k = b.t / 0.38;
       if (k >= 1) {
         booms.splice(i, 1);
         continue;
       }
-      const r = Math.max(1, Math.round(b.r * (0.4 + k)));
-      const col = k < 0.3 ? '#ffffff' : k < 0.6 ? b.col : '#6a6a6a';
-      for (let yy = -r; yy <= r; yy++) {
-        const w = Math.round(Math.sqrt(r * r - yy * yy));
-        R(b.x - w, b.y + yy, w * 2, 1, col);
-      }
+      const r = Math.round(b.r * (0.4 + easeOut(k) * 0.9) * 2) / 2;
+      const d = CW.disc(r, k < 0.25 ? '#ffffff' : k < 0.6 ? b.col : '#6a6a6a');
+      g.globalAlpha = k > 0.6 ? (1 - k) / 0.4 : 1;
+      spr(d, b.x - d.width / 4, b.y - d.height / 4, d.width / 2, d.height / 2);
+      g.globalAlpha = 1;
     }
     // particles
     for (let i = parts.length - 1; i >= 0; i--) {
@@ -543,24 +648,30 @@
         p.x += p.vx * dt;
         p.y += p.vy * dt;
       }
-      R(p.x, p.y, 2, 2, p.col);
+      const f = p.t / p.life;
+      g.globalAlpha = f > 0.6 ? (1 - f) / 0.4 : 1;
+      R(p.x, p.y, 1.5, 1.5, p.col);
     }
-    // damage numbers
+    g.globalAlpha = 1;
+    // damage numbers: ease up, then fade
     for (let i = nums.length - 1; i >= 0; i--) {
       const n = nums[i];
       n.t += dt;
-      if (n.t > 0.9) {
+      if (n.t > 0.95) {
         nums.splice(i, 1);
         continue;
       }
-      const w = CW.bitWidth(n.txt, n.scale);
-      CW.bitText(g, n.txt, Math.round(n.x - w / 2), Math.round(n.y - n.t * 22), n.col, n.scale, '#0b0d08');
+      g.globalAlpha = n.t > 0.6 ? (0.95 - n.t) / 0.35 : 1;
+      text(n.txt, n.x, n.y - easeOut(Math.min(1, n.t / 0.6)) * 16, n.col, n.scale, 'c');
     }
+    g.globalAlpha = 1;
     g.restore();
-    drawHud(B, st, t);
+    drawCommander(st);
+    drawHud(B, st);
     if (flashT > 0) {
       g.globalAlpha = Math.min(0.3, flashT * 0.3);
-      R(0, 0, FW, FH, flashCol);
+      g.fillStyle = flashCol;
+      g.fillRect(0, 0, FW, FH);
       g.globalAlpha = 1;
       flashT -= dt * 3;
     }
@@ -579,7 +690,7 @@
     let target = null;
     for (const [sid, p] of pos) {
       if (p.side !== 'e') continue;
-      const top = p.boss ? p.gy - 84 : p.y - (p.sp ? p.sp.h : 12) - 6;
+      const top = p.boss ? p.gy - 84 : p.hero ? p.gy - 42 : p.y - (p.sp ? p.sp.h : 12) - 6;
       if (x >= p.x - 3 && x <= p.x + p.w + 3 && y >= top && y <= p.gy + 4) target = sid;
     }
     const dmg = CW.tap(target);
@@ -611,21 +722,31 @@
   $('#icoSword').src = CW.icon('sword');
   $('#icoClock').src = CW.icon('clock');
 
+  // only touch the page when something actually changed
+  function setText(node, v) {
+    if (node._v !== v) {
+      node._v = v;
+      node.textContent = v;
+    }
+  }
+  function setHidden(node, v) {
+    if (node.hidden !== v) node.hidden = v;
+  }
   let nextImgId = '';
   let revealed = 0;
   function updateHUD() {
     const st = S();
     const B = CW.battle();
     if (!st || !B) return;
-    el.gold.textContent = fmt(st.gold);
-    el.gps.textContent = fmt(st.gps || 0);
-    el.shards.textContent = fmt(st.shards);
-    el.dps.textContent = fmt(CW.armyDPS());
+    setText(el.gold, fmt(st.gold));
+    setText(el.gps, fmt(st.gps || 0));
+    setText(el.shards, fmt(st.shards));
+    setText(el.dps, fmt(CW.armyDPS()));
     const info = B.info;
     const era = ERAS[info.era];
-    el.era.textContent = (info.chaos ? 'Shattered Time · ' : '') + 'Era ' + era.roman + ' · ' + era.name;
-    el.year.textContent = fmtYear(info.yr);
-    el.stage.textContent = 'Stage ' + st.stage + (info.chaos ? ' · depth ' + info.depth : '') + (st.farming ? ' · regrouping' : '');
+    setText(el.era, (info.chaos ? 'Shattered Time · ' : '') + 'Era ' + era.roman + ' · ' + era.name);
+    setText(el.year, fmtYear(info.yr));
+    setText(el.stage, 'Stage ' + st.stage + (info.chaos ? ' · depth ' + info.depth : '') + (st.farming ? ' · regrouping' : ''));
     if (info.mystery && B.boss && B.phase === 'fight' && revealed !== B.boss.sid) {
       revealed = B.boss.sid;
       toast('The mystery boss is revealed: ' + LEADER[B.boss.lid].name + '!', 'red');
@@ -642,12 +763,13 @@
     }
     const bname = shown ? '???' : short(bi.bossId);
     const prog = info.isBoss ? 1 : (info.sub + (B.wave - 1) / CW.CFG.waves) / 2;
-    el.nextBar.style.width = 'calc((100% - 4px) * ' + prog.toFixed(3) + ')';
-    el.nextTxt.textContent = info.isBoss ? 'VS ' + bname : bname + ' in ' + (2 - info.sub) + (2 - info.sub === 1 ? ' stage' : ' stages');
-    el.challenge.hidden = !st.farming;
-    if (st.farming) el.challenge.textContent = 'Challenge ' + bname;
-    el.council.hidden = !st.council;
-    if (st.council) el.council.textContent = st.council.picks ? 'War Council (' + st.council.picks + ')' : 'War Council';
+    const pw = 'calc((100% - 4px) * ' + prog.toFixed(3) + ')';
+    if (el.nextBar._w !== pw) el.nextBar.style.width = el.nextBar._w = pw;
+    setText(el.nextTxt, info.isBoss ? 'VS ' + bname : bname + ' in ' + (2 - info.sub) + (2 - info.sub === 1 ? ' stage' : ' stages'));
+    setHidden(el.challenge, !st.farming);
+    if (st.farming) setText(el.challenge, 'Challenge ' + bname);
+    setHidden(el.council, !st.council);
+    if (st.council) setText(el.council, st.council.picks ? 'War Council (' + st.council.picks + ')' : 'War Council');
     const sig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars).join(',')].join('|');
     if (sig !== deckSig) renderDeck();
   }
@@ -670,25 +792,44 @@
       const pr = st.roster[e.lid];
       return `<div class="partner box notch"><img class="px" src="${CW.portraitURL(e.lid)}" alt=""><div class="who"><b>${esc(LEADER[e.lid].name)}</b><small>Partner · <span class="nw">Lv ${pr.lv}</span> ${stars(pr.stars)}</small><span class="hp"><i data-hp="${e.lid}"></i></span></div>${skillBtn(e)}</div>`;
     };
+    deckEls = null;
     el.deck.innerHTML = `<div class="lead box notch"><img class="px" src="${CW.portraitURL(st.main)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>Commander · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)} · ${esc(L.title)}</small><small>${esc(cl.name)}: ${esc(cl.d)}</small><span class="hp main"><i data-hp="${st.main}"></i></span></div><div class="skills">${list.filter((e) => e.main).map(skillBtn).join('')}</div></div>${partner(0)}${partner(1)}`;
   }
+  let deckEls = null;
   function updateDeck() {
     const B = CW.battle();
     if (!B) return;
-    el.deck.querySelectorAll('[data-skill]').forEach((b) => {
-      const k = b.dataset.skill;
-      const cd = B.cd[k] || 0;
-      const mx = B.cdMax[k] || 1;
-      b.style.setProperty('--cd', (cd / mx).toFixed(3));
-      const down = !CW.heroAlive(b.dataset.lid);
-      b.querySelector('.t').textContent = down ? 'DOWN' : cd > 0 ? Math.ceil(cd) + 's' : '';
-      b.classList.toggle('ready', cd <= 0 && !down);
-      b.classList.toggle('down', down);
-    });
-    el.deck.querySelectorAll('[data-hp]').forEach((i) => {
-      const h = B.allies.find((q) => q.isHero && q.lid === i.dataset.hp);
-      i.style.width = h ? ((100 * Math.max(0, h.hp)) / h.maxHp).toFixed(1) + '%' : '0';
-    });
+    if (!deckEls) {
+      deckEls = {
+        skills: Array.from(el.deck.querySelectorAll('[data-skill]')).map((b) => ({ b, k: b.dataset.skill, lid: b.dataset.lid, t: b.querySelector('.t') })),
+        hps: Array.from(el.deck.querySelectorAll('[data-hp]')).map((i) => ({ i, lid: i.dataset.hp })),
+      };
+    }
+    for (const s of deckEls.skills) {
+      const cd = B.cd[s.k] || 0;
+      const v = Math.round((cd / (B.cdMax[s.k] || 1)) * 200) / 200;
+      if (s.v !== v) {
+        s.v = v;
+        s.b.style.setProperty('--cd', v);
+      }
+      const down = !CW.heroAlive(s.lid);
+      setText(s.t, down ? 'DOWN' : cd > 0 ? Math.ceil(cd) + 's' : '');
+      const state = down ? 2 : cd <= 0 ? 1 : 0;
+      if (s.state !== state) {
+        s.state = state;
+        s.b.classList.toggle('ready', state === 1);
+        s.b.classList.toggle('down', state === 2);
+      }
+    }
+    for (const h of deckEls.hps) {
+      let hero = null;
+      for (const q of B.allies) if (q.isHero && q.lid === h.lid) hero = q;
+      const w = hero ? (Math.round((1000 * Math.max(0, hero.hpS === undefined ? hero.hp / hero.maxHp : hero.hpS)) / 2) / 5).toFixed(1) + '%' : '0';
+      if (h.w !== w) {
+        h.w = w;
+        h.i.style.width = w;
+      }
+    }
   }
   el.deck.addEventListener('click', (e) => {
     const b = e.target.closest('[data-skill]');
@@ -744,25 +885,26 @@
         let n = st.buyMode === 'max' ? CW.maxBuy(id) : st.buyMode;
         const showN = Math.max(1, n);
         const cost = CW.unitCost(id, showN);
-        b.textContent = '+' + showN + ' · ' + fmt(cost);
-        b.disabled = cost > st.gold;
+        setText(b, '+' + showN + ' · ' + fmt(cost));
+        const dis = cost > st.gold;
+        if (b.disabled !== dis) b.disabled = dis;
       });
       el.panel.querySelectorAll('[data-stat]').forEach((s) => {
         const id = s.dataset.stat;
         const sst = CW.squadStats(id);
-        s.textContent = 'Lv ' + CW.unitLevel(id) + ' · ATK ' + fmt(sst.atk) + ' · HP ' + fmt(sst.hp);
+        setText(s, 'Lv ' + CW.unitLevel(id) + ' · ATK ' + fmt(sst.atk) + ' · HP ' + fmt(sst.hp));
       });
-      el.panel.querySelectorAll('[data-slotlv]').forEach((s) => (s.textContent = 'Lv ' + CW.unitLevel(s.dataset.slotlv)));
+      el.panel.querySelectorAll('[data-slotlv]').forEach((s) => setText(s, 'Lv ' + CW.unitLevel(s.dataset.slotlv)));
     }
     if (tab === 'leaders') {
       el.panel.querySelectorAll('[data-lvl]').forEach((s) => {
         const r = st.roster[s.dataset.lvl];
-        if (r) s.textContent = 'Lv ' + r.lv + ' · train ' + fmt(CW.trainCost(s.dataset.lvl));
+        if (r) setText(s, 'Lv ' + r.lv + ' · train ' + fmt(CW.trainCost(s.dataset.lvl)));
       });
     }
     if (tab === 'rift') {
       const b = el.panel.querySelector('[data-rift]');
-      if (b) b.textContent = fmt(CW.riftShards());
+      if (b) setText(b, fmt(CW.riftShards()));
     }
   }
 
@@ -1160,14 +1302,14 @@
     const r = st.roster[id];
     const cl = CLASSES[l.cls];
     if (l.era === 10 && !r) {
-      showModal('leader', `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id, 'mystery')}" alt="" style="width:96px;height:96px"><div class="who"><h2>???</h2><small>A mystery from beyond the end of time</small></div></div><p class="bio">Someone, or something, waits where the timeline breaks. Finish the pathway all the way to the Future and keep going to find out who.</p><div class="acts"><button class="btn ghost" data-act="close">Close</button></div>`);
+      showModal('leader', `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id, 'mystery')}" alt="" style="width:128px;height:128px"><div class="who"><h2>???</h2><small>A mystery from beyond the end of time</small></div></div><p class="bio">Someone, or something, waits where the timeline breaks. Finish the pathway all the way to the Future and keep going to find out who.</p><div class="acts"><button class="btn ghost" data-act="close">Close</button></div>`);
       return;
     }
     const role = id === st.main ? 'Your commander' : st.partners.includes(id) ? 'Your partner' : r ? 'In reserve' : l.starter ? 'Starter' : 'Not yet defeated · Stage ' + CW.bossStageOf(id);
     const labels = ['Main skill', 'Skill 1 · also their partner skill', 'Skill 2'];
     showModal(
       'leader',
-      `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:96px;height:96px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === 10 ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
+      `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:128px;height:128px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === 10 ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
       <p class="bio">${esc(l.bio)}</p>
       <div class="sk"><em>As commander · ${esc(cl.name)}</em>${esc(cl.d)}</div>
       <h3>Skills</h3><div class="sklist">${l.skills.map((s, i) => `<div class="sk"><em>${labels[i]} · recharge ${s.cd}s</em><b>${esc(s.n)}</b>: ${esc(skillDesc(s).replace(/ Recharge.*$/, ''))}</div>`).join('')}</div>
@@ -1254,11 +1396,11 @@
     try {
       CW.advance(dt);
       const B = CW.battle();
-      pos.clear();
-      place(B.allies, 'a');
-      place(B.enemies, 'e');
-      consumeFx();
-      render(dt, now / 1000);
+      if (fieldVisible) {
+        layout(B);
+        consumeFx();
+        render(dt, now / 1000);
+      } else B.fx.length = 0;
       updateDeck();
       hudT += dt;
       if (hudT > 0.12) {
@@ -1309,6 +1451,17 @@
     updateHUD();
     lastT = performance.now();
     requestAnimationFrame(frame);
+    warmPortraits();
+  }
+  // build the 64x64 portraits a few at a time while the browser is idle, so opening Leaders never stalls
+  function warmPortraits() {
+    const queue = LEADERS.map((l) => l.id);
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(() => fn({ timeRemaining: () => 8 }), 60));
+    const work = (dl) => {
+      while (queue.length && dl.timeRemaining() > 4) CW.portraitURL(queue.shift());
+      if (queue.length) idle(work);
+    };
+    idle(work);
   }
   CW.ui = { save, toast, openCouncil };
   const hot = window.claude && window.claude.hot;
