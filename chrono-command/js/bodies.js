@@ -177,6 +177,74 @@
     return { tone, reg: r2, hx, hy, waist, hands, wh, legBottom: ly };
   }
 
+  // a male version of a frame: the bust is trimmed back to the line of the waist below it and the chest is
+  // re-shaded flat (light from the front, shadow on the far side), so men and male soldiers get a male body
+  function masculine(fa) {
+    if (fa.male) return fa.male;
+    const tone = fa.tone.slice();
+    const reg = fa.reg.slice();
+    const y0 = Math.ceil(fa.hy + 10.5);
+    const y1 = Math.floor(fa.hy + 18.5);
+    const edge = (y) => {
+      let r = -1;
+      for (let x = FW - 1; x >= 0; x--) {
+        const i = y * FW + x;
+        if (reg[i] === 3 && tone[i] >= 0) {
+          r = x;
+          break;
+        }
+      }
+      return r;
+    };
+    let ref = -1;
+    for (let y = y1 + 1; y <= y1 + 3 && y < FH; y++) ref = Math.max(ref, edge(y));
+    for (let y = y0; y <= y1; y++) {
+      if (ref > 0) {
+        // anything of the torso sticking out past the waist line goes, and the edge gets a fresh outline
+        let cut = false;
+        for (let x = ref + 1; x < FW; x++) {
+          const i = y * FW + x;
+          if (reg[i] === 3) {
+            tone[i] = -1;
+            reg[i] = 0;
+            cut = true;
+          }
+        }
+        const i = y * FW + ref;
+        if (cut && reg[i] === 3) tone[i] = 5;
+      }
+      let a = -1;
+      let b = -1;
+      for (let x = 0; x < FW; x++) {
+        const i = y * FW + x;
+        if (reg[i] === 3 && tone[i] >= 0 && tone[i] < 5) {
+          if (a < 0) a = x;
+          b = x;
+        }
+      }
+      if (a < 0) continue;
+      for (let x = a; x <= b; x++) {
+        const i = y * FW + x;
+        if (reg[i] !== 3 || tone[i] < 0 || tone[i] >= 5) continue;
+        const u = (x - a) / Math.max(1, b - a);
+        tone[i] = u < 0.14 ? 3 : u < 0.3 ? 2 : u > 0.94 ? 2 : 1;
+      }
+      // a soft line under the chest
+      if (y === y1 - 1) for (let x = a + Math.round((b - a) * 0.45); x < b; x++) if (reg[y * FW + x] === 3 && tone[y * FW + x] < 5) tone[y * FW + x] = 2;
+    }
+    // trimmed pixels that were outline of the bust and now float free are cleared
+    for (let y = y0; y <= y1; y++)
+      for (let x = 0; x < FW; x++) {
+        const i = y * FW + x;
+        if (tone[i] !== 5) continue;
+        let solid = 0;
+        for (const d of [-1, 1, -FW, FW]) if (tone[i + d] >= 0 && tone[i + d] < 5) solid++;
+        if (!solid) tone[i] = -1;
+      }
+    fa.male = Object.assign({}, fa, { tone, reg });
+    return fa.male;
+  }
+
   // ---------------------------------------------------------------- a small rasteriser for overlays, with a movable frame
   function Buf() {
     this.c = new Float32Array(FW * FH * 3);
@@ -504,10 +572,13 @@
         poly(B, [[-11, 0], [-9, -7], [-0.5, -14], [9, -7], [11, 0]], hc, H, { gain: 0.8, bias: 0.25 });
         if (hat === 'nasal') cap(B, 5.5, -1, 5.8, 6, 0.8, 0.8, hc, H);
         break;
-      case 'nemes':
-        poly(B, [[-11, 4], [-9, -7], [0, -10.5], [9, -7], [11, 0], [7, -1], [-4, -1], [-6, 9]], hc, H, { gain: 0.6 });
-        for (let y = -9; y < 9; y += 2) for (let x = -11; x <= 11; x++) dot(B, x + 0.5, y + 0.5, ha);
+      case 'nemes': {
+        // the striped royal headcloth: stripes only inside the cloth, never across the face
+        const NEM = [[-11, 4], [-9, -7], [0, -10.5], [9, -7], [11, 0], [7, -1], [-4, -1], [-6, 9]];
+        poly(B, NEM, hc, H, { gain: 0.6 });
+        for (let y = -9; y < 9; y += 2) poly(B, [[-12, y], [12, y], [12, y + 1], [-12, y + 1]], ha, H, { tone: 1, clip: (x, yy) => inside(NEM, x, yy) });
         break;
+      }
       case 'uraeus':
         cap(B, -9.5, -4, 9.5, -4.6, 0.8, 0.8, '#d9b45a', H, { bias: 0.4 });
         cap(B, 4, -5, 4.6, -8.6, 0.8, 0.6, '#d9b45a', H, { bias: 0.4 });
@@ -809,6 +880,7 @@
     const skin = echo ? '#aeb8cc' : p.sk || '#e2ad80';
     const hairC = p.hr || '#2a1a12';
     const look = outfitLook(p.out || 'suit', p.oc || '#555555', p.ac || '#d9b45a', skin, L.era);
+    if (p.fem && look.torso === skin) look.torso = p.out === 'collar' ? '#f2eee2' : p.oc || '#f2eee2';
     const w = CW.weaponOf(id);
     return Object.assign(look, {
       skin,
@@ -868,7 +940,8 @@
 
   // ---------------------------------------------------------------- dressing one frame
   const BARE = (L) => L.bareArms;
-  function dress(fa, L, anim) {
+  function dress(fa0, L, anim) {
+    const fa = L.male ? masculine(fa0) : fa0;
     const out = new Uint8ClampedArray(FW * FH * 4);
     const { tone, reg, hx, hy, waist, legBottom } = fa;
     const skinR = ramp(L.skin);
@@ -932,10 +1005,7 @@
           col = skirt ? L.skirt : y >= footFrom || r === 7 ? L.boots : L.bareLegs ? L.skin : L.pants;
         }
         const rr = col === L.skin ? skinR : ramp(col);
-        // a bare chest stays flat for men
-        let tt = t;
-        if (tt === 0 && L.male && r === 3) tt = 1;
-        c = pick(rr, tt);
+        c = pick(rr, t);
       }
       out[i * 4] = c[0];
       out[i * 4 + 1] = c[1];
