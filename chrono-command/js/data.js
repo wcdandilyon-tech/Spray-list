@@ -4,78 +4,153 @@
   const CW = (G.CW = G.CW || {});
 
   // ---------------------------------------------------------------- eras
+  // ground: the battlefield's two ground colours and its scattered decor
   CW.ERAS = [
-    { name: 'Bronze Age', span: [-10000, -480], roman: 'I' },
-    { name: 'Classical', span: [-480, 450], roman: 'II' },
-    { name: 'Medieval', span: [450, 1450], roman: 'III' },
-    { name: 'Gunpowder', span: [1450, 1750], roman: 'IV' },
-    { name: 'Revolution', span: [1750, 1860], roman: 'V' },
-    { name: 'Industrial', span: [1860, 1918], roman: 'VI' },
-    { name: 'World War', span: [1918, 1945], roman: 'VII' },
-    { name: 'Cold War', span: [1945, 1991], roman: 'VIII' },
-    { name: 'Modern', span: [1991, 2030], roman: 'IX' },
-    { name: 'Future', span: [2030, 2400], roman: 'X' },
+    { name: 'Stone Age', span: [-40000, -3000], roman: 'I', ground: ['#7a8a4a', '#68783e'], decor: 'grass' },
+    { name: 'Bronze Age', span: [-3000, -480], roman: 'II', ground: ['#e2b468', '#cf9c52'], decor: 'rock' },
+    { name: 'Classical', span: [-480, 450], roman: 'III', ground: ['#a8c060', '#8aa84a'], decor: 'grass' },
+    { name: 'Viking Age', span: [450, 1066], roman: 'IV', ground: ['#c8d2cc', '#aebcb4'], decor: 'snow' },
+    { name: 'Medieval', span: [1066, 1450], roman: 'V', ground: ['#5e8e3c', '#4c7a30'], decor: 'grass' },
+    { name: 'Gunpowder', span: [1450, 1750], roman: 'VI', ground: ['#7a8a4a', '#64743a'], decor: 'grass' },
+    { name: 'Revolution', span: [1750, 1860], roman: 'VII', ground: ['#7a9a4a', '#668a3a'], decor: 'grass' },
+    { name: 'Industrial', span: [1860, 1918], roman: 'VIII', ground: ['#5a4a32', '#4a3c28'], decor: 'crater' },
+    { name: 'World War', span: [1918, 1945], roman: 'IX', ground: ['#4a4438', '#3a352c'], decor: 'crater' },
+    { name: 'Cold War', span: [1945, 1991], roman: 'X', ground: ['#c8d2dc', '#aeb8c6'], decor: 'snow' },
+    { name: 'Modern', span: [1991, 2030], roman: 'XI', ground: ['#8a8478', '#76706a'], decor: 'rock' },
+    { name: 'Future', span: [2030, 2400], roman: 'XII', ground: ['#1a0a30', '#2a1248'], decor: 'neon' },
+    { name: 'Space Age', span: [2400, 3000], roman: 'XIII', ground: ['#8a8a92', '#74747e'], decor: 'crater' },
+    { name: 'Galactic Age', span: [3000, 4000], roman: 'XIV', ground: ['#2a3a5a', '#22304c'], decor: 'crystal' },
   ];
 
   // ---------------------------------------------------------------- roles
-  // Base stats before era power, levels and bonuses.
+  // Base stats of one soldier before era power, levels and bonuses. cost = army capacity it takes.
+  // range and speed are in battlefield units (the field is 360 wide and 120 deep).
   CW.ROLES = {
-    inf: { name: 'Infantry', hp: 120, atk: 10, int: 1.0 },
-    rng: { name: 'Ranged', hp: 70, atk: 13, int: 1.2 },
-    hvy: { name: 'Heavy', hp: 230, atk: 30, int: 2.2 },
+    inf: { name: 'Infantry', hp: 100, atk: 10, int: 1.0, range: 7, speed: 22, cost: 1, rad: 3 },
+    rng: { name: 'Ranged', hp: 60, atk: 11, int: 1.4, range: 75, speed: 20, cost: 1, rad: 3, proj: 'arrow' },
+    cav: { name: 'Cavalry', hp: 150, atk: 14, int: 0.9, range: 8, speed: 46, cost: 2, rad: 4 },
+    hvy: { name: 'Heavy', hp: 330, atk: 34, int: 2.4, range: 60, speed: 14, cost: 4, rad: 6, proj: 'shell', splash: 0.3 },
   };
 
-  // ---------------------------------------------------------------- traits
+  // ---------------------------------------------------------------- traits (every unit type has one built in)
   CW.TRAITS = {
-    guard: 'Guard: +30% HP and enemies must attack it first',
-    swift: 'Swift: attacks 35% faster',
-    charge: 'Charge: first strike of every wave deals 4x damage',
+    guard: 'Guard: +30% health and takes 15% less damage',
+    swift: 'Swift: attacks 35% faster and moves 20% faster',
+    charge: 'Charge: first strike of every battle deals 4x damage',
     armor: 'Armor: takes 30% less damage',
-    pierce: 'Pierce: every shot also hits a second enemy for 60%',
-    splash: 'Splash: also hits every other enemy for 35%',
-    rally: 'Rally: the whole army gets +6% ATK',
+    pierce: 'Pierce: every hit also strikes a second enemy for 60%',
+    splash: 'Splash: also hits nearby enemies for 35%',
+    rally: 'Rally: your whole army gets +6% damage',
     crit: 'Deadeye: +25% critical chance',
-    stun: 'Shock: 15% chance to stun the target for 1.2s',
+    stun: 'Shock: 15% chance to stun the target for 1 second',
     bossbane: 'Siegebreaker: +60% damage to enemy leaders',
-    snipe: 'Snipe: picks off the weakest enemy for +30% damage',
-    regen: 'Regen: heals 3% HP every second',
+    snipe: 'Snipe: +50% range and +30% damage',
+    regen: 'Regen: heals 3% health every second',
     drain: 'Drain: heals itself for 30% of damage dealt',
   };
 
+  // ---------------------------------------------------------------- unit attributes (equip up to 3 per unit type)
+  // Unlocked as you reach each era. A unit type gets a 2nd slot at level 10 and a 3rd at level 30.
+  const A = (id, name, era, d, fx) => ({ id, name, era, d, fx });
+  CW.UATTRS = [
+    A('sharp', 'Sharpened', 0, '+25% damage', { dmg: 0.25 }),
+    A('vet', 'Veteran', 0, '+30% health', { hp: 0.3 }),
+    A('fleet', 'Fleet-footed', 1, '+30% move speed and +15% attack speed', { move: 0.3, aspd: 0.15 }),
+    A('shield', 'Shield Wall', 1, 'Takes 25% less damage', { def: 0.25 }),
+    A('fire', 'Fire', 2, 'Hits set the target burning for 60% extra damage over 3 seconds', { burn: 0.6 }),
+    A('reach', 'Long Reach', 2, '+40% attack range', { range: 0.4 }),
+    A('berserk', 'Berserk', 3, '+60% damage while below half health', { berserk: 0.6 }),
+    A('chargeA', 'Charge', 3, 'First hit of every battle deals triple damage', { charge: 2 }),
+    A('pierceA', 'Piercing', 4, 'Each hit also strikes a second enemy for 60%', { pierce: 0.6 }),
+    A('precise', 'Precision', 4, '+20% chance of critical hits (double damage)', { crit: 0.2 }),
+    A('blast', 'Blast', 5, 'Hits also damage nearby enemies for 35%', { splash: 0.35 }),
+    A('shock', 'Shock', 6, '15% chance to stun the target for 1 second', { stun: 0.15 }),
+    A('drainA', 'Lifesteal', 7, 'Heals 25% of the damage it deals', { drain: 0.25 }),
+    A('medic', 'Field Medic', 8, 'Heals up to 6 nearby allies by 3% health every second', { medic: 0.03 }),
+    A('regenA', 'Regeneration', 9, 'Heals 3% health every second', { regen: 0.03 }),
+    A('loot', 'Plunder', 10, '+40% gold from its kills', { gold: 0.4 }),
+    A('reactive', 'Reactive Armor', 11, 'Takes 40% less damage from ranged attacks', { rdef: 0.4 }),
+    A('overclock', 'Overclocked', 12, '+35% attack speed', { aspd: 0.35 }),
+    A('phase', 'Phase Shift', 13, '25% chance to dodge any attack', { dodge: 0.25 }),
+  ];
+  CW.UATTR = {};
+  CW.UATTRS.forEach((a) => (CW.UATTR[a.id] = a));
+
   // ---------------------------------------------------------------- units
-  // sprite: kind + palette keys used by art.js
-  const U = (id, name, era, role, trait, sp) => ({ id, name, era, role, trait, sp });
+  // sp: sprite recipe for art.js. Extra fields override the role: range, speed, proj (projectile), air, size, splash.
+  const U = (id, name, era, role, trait, sp, ex) => Object.assign({ id, name, era, role, trait, sp }, ex || {});
+  const GUN = (r) => ({ range: r || 45, proj: 'bullet' });
   CW.UNITS = [
-    U('spearman', 'Spearman', 0, 'inf', 'guard', { k: 'soldier', w: 'spear', helm: '#b8863b', body: '#c9a26b', legs: '#7a5a34' }),
-    U('slinger', 'Slinger', 0, 'rng', 'swift', { k: 'soldier', w: 'sling', helm: '#6b4a2a', body: '#d8c49a', legs: '#7a5a34', cap: 1 }),
-    U('chariot', 'War Chariot', 0, 'hvy', 'charge', { k: 'chariot', body: '#9a6a34', horse: '#6a4426' }),
-    U('legionary', 'Legionary', 1, 'inf', 'armor', { k: 'soldier', w: 'sword', helm: '#c0c0c8', body: '#b3261e', legs: '#5a3a24', crest: '#b3261e', shield: '#b3261e' }),
-    U('archer', 'Composite Archer', 1, 'rng', 'pierce', { k: 'soldier', w: 'bow', helm: '#7a5a34', body: '#4a6a8a', legs: '#5a3a24', cap: 1 }),
-    U('elephant', 'War Elephant', 1, 'hvy', 'splash', { k: 'elephant', body: '#8a8a92', howdah: '#b3261e' }),
-    U('manatarms', 'Man-at-Arms', 2, 'inf', 'rally', { k: 'soldier', w: 'sword', helm: '#9aa0a8', body: '#8a8f98', legs: '#5a5f68', shield: '#2a4a8a' }),
-    U('longbow', 'Longbowman', 2, 'rng', 'crit', { k: 'soldier', w: 'bow', helm: '#3a5a2a', body: '#4a7a3a', legs: '#5a4a2a', cap: 1 }),
-    U('knight', 'Mounted Knight', 2, 'hvy', 'charge', { k: 'rider', w: 'lance', helm: '#c0c4cc', body: '#c0c4cc', horse: '#e8e4dc', cloth: '#2a4a8a' }),
-    U('samurai', 'Samurai', 3, 'inf', 'crit', { k: 'soldier', w: 'katana', helm: '#2a2a2a', body: '#8a1e1e', legs: '#3a2a2a', horn: '#e8c84a' }),
-    U('musketeer', 'Musketeer', 3, 'rng', 'stun', { k: 'soldier', w: 'musket', helm: '#3a2a1a', body: '#2a4a8a', legs: '#c9b48a', hat: 'wide' }),
-    U('cannon', 'Bronze Cannon', 3, 'hvy', 'bossbane', { k: 'cannon', body: '#c9973a', wheel: '#6a4426' }),
-    U('grenadier', 'Grenadier', 4, 'inf', 'splash', { k: 'soldier', w: 'grenade', helm: '#2a2a2a', body: '#b3261e', legs: '#e8e4dc', hat: 'tall' }),
-    U('rifleman', 'Rifleman', 4, 'rng', 'snipe', { k: 'soldier', w: 'rifle', helm: '#1a2a1a', body: '#2a5a3a', legs: '#2a3a2a', hat: 'tall' }),
-    U('cuirassier', 'Cuirassier', 4, 'hvy', 'armor', { k: 'rider', w: 'saber', helm: '#d8d8e0', body: '#d8d8e0', horse: '#3a2a1a', cloth: '#2a3f7a' }),
-    U('trench', 'Trench Infantry', 5, 'inf', 'guard', { k: 'soldier', w: 'rifle', helm: '#6a6a4a', body: '#7a7458', legs: '#5a5440', hat: 'brodie' }),
-    U('mgunner', 'Machine Gunner', 5, 'rng', 'swift', { k: 'soldier', w: 'mg', helm: '#5a5a4a', body: '#6a6a5a', legs: '#4a4a3a', hat: 'brodie' }),
-    U('landship', 'Landship Mk I', 5, 'hvy', 'armor', { k: 'landship', body: '#7a7458' }),
-    U('gi', 'Rifle Squad', 6, 'inf', 'rally', { k: 'soldier', w: 'rifle', helm: '#4a5a2a', body: '#6a7a3a', legs: '#5a6a34', hat: 'round' }),
-    U('sniper', 'Sniper', 6, 'rng', 'snipe', { k: 'soldier', w: 'longrifle', helm: '#3a4a2a', body: '#4a5a34', legs: '#3a4a2a', hat: 'round' }),
-    U('mtank', 'Medium Tank', 6, 'hvy', 'splash', { k: 'tank', body: '#5a6a3a', long: 0 }),
-    U('para', 'Paratrooper', 7, 'inf', 'charge', { k: 'soldier', w: 'smg', helm: '#7a1e2a', body: '#6a6a4a', legs: '#4a4a34', hat: 'beret' }),
-    U('heli', 'Attack Helicopter', 7, 'rng', 'pierce', { k: 'heli', body: '#4a5a3a' }),
-    U('mbt', 'Battle Tank', 7, 'hvy', 'bossbane', { k: 'tank', body: '#8a8460', long: 1 }),
-    U('sf', 'Special Forces', 8, 'inf', 'crit', { k: 'soldier', w: 'smg', helm: '#2a2a2a', body: '#3a3a40', legs: '#2a2a30', hat: 'ops' }),
-    U('drone', 'Combat Drone', 8, 'rng', 'swift', { k: 'drone', body: '#5a6070' }),
-    U('bomber', 'Stealth Bomber', 8, 'hvy', 'splash', { k: 'bomber', body: '#2a2c34' }),
-    U('powerarmor', 'Power Armor', 9, 'inf', 'regen', { k: 'soldier', w: 'laser', helm: '#c8ccd8', body: '#8a90a8', legs: '#5a6078', hat: 'visor' }),
-    U('lancer', 'Plasma Lancer', 9, 'rng', 'bossbane', { k: 'soldier', w: 'plasma', helm: '#2a2a3a', body: '#3a2a5a', legs: '#2a2040', hat: 'visor' }),
-    U('mech', 'Battle Mech', 9, 'hvy', 'drain', { k: 'mech', body: '#6a7088' }),
+    // I Stone Age
+    U('clubman', 'Club Warrior', 0, 'inf', 'guard', { k: 'soldier', w: 'club', helm: '#4a2a14', body: '#8a6a3a', legs: '#6a4a2a', cap: 1 }),
+    U('rockthrower', 'Rock Thrower', 0, 'rng', 'stun', { k: 'soldier', w: 'rock', helm: '#3a2a1a', body: '#9a7a4a', legs: '#6a4a2a', cap: 1 }, { proj: 'rock', range: 60 }),
+    U('mammoth', 'Mammoth Rider', 0, 'hvy', 'splash', { k: 'mammoth', body: '#6a4426', howdah: '#8a6a3a' }, { range: 11, proj: null, size: 1.15 }),
+    U('wolves', 'Wolf Pack', 0, 'cav', 'swift', { k: 'wolf', body: '#8a8a92' }),
+    // II Bronze Age
+    U('spearman', 'Spearman', 1, 'inf', 'guard', { k: 'soldier', w: 'spear', helm: '#b8863b', body: '#c9a26b', legs: '#7a5a34' }),
+    U('slinger', 'Slinger', 1, 'rng', 'swift', { k: 'soldier', w: 'sling', helm: '#6b4a2a', body: '#d8c49a', legs: '#7a5a34', cap: 1 }, { proj: 'rock', range: 65 }),
+    U('ram', 'Siege Ram', 1, 'hvy', 'bossbane', { k: 'ram', body: '#7a5a34' }, { range: 11, proj: null }),
+    U('chariot', 'War Chariot', 1, 'cav', 'charge', { k: 'chariot', body: '#9a6a34', horse: '#6a4426' }),
+    // III Classical
+    U('legionary', 'Legionary', 2, 'inf', 'armor', { k: 'soldier', w: 'sword', helm: '#c0c0c8', body: '#b3261e', legs: '#5a3a24', crest: '#b3261e', shield: '#b3261e' }),
+    U('archer', 'Composite Archer', 2, 'rng', 'pierce', { k: 'soldier', w: 'bow', helm: '#7a5a34', body: '#4a6a8a', legs: '#5a3a24', cap: 1 }),
+    U('elephant', 'War Elephant', 2, 'hvy', 'splash', { k: 'elephant', body: '#8a8a92', howdah: '#b3261e' }, { range: 11, proj: null, size: 1.05 }),
+    U('equites', 'Equites', 2, 'cav', 'charge', { k: 'rider', w: 'lance', helm: '#c0c0c8', body: '#b3261e', horse: '#6a4426', cloth: '#b3261e' }),
+    // IV Viking Age
+    U('raider', 'Viking Raider', 3, 'inf', 'drain', { k: 'soldier', w: 'axe', helm: '#9aa0a8', body: '#5a6a7a', legs: '#4a3a2a', shield: '#c8a040' }),
+    U('javelin', 'Javelin Thrower', 3, 'rng', 'crit', { k: 'soldier', w: 'javelin', helm: '#6a5a3a', body: '#7a5a3a', legs: '#4a3a2a', cap: 1 }, { proj: 'javelin', range: 55 }),
+    U('mangonel', 'Mangonel', 3, 'hvy', 'splash', { k: 'catapult', body: '#7a5a34' }, { range: 120, proj: 'boulder' }),
+    U('berserker', 'Berserker', 3, 'cav', 'charge', { k: 'soldier', w: 'axe', helm: '#6a4a2a', body: '#8a6a4a', legs: '#5a3a24', cap: 1 }, { speed: 40 }),
+    // V Medieval
+    U('manatarms', 'Man-at-Arms', 4, 'inf', 'rally', { k: 'soldier', w: 'sword', helm: '#9aa0a8', body: '#8a8f98', legs: '#5a5f68', shield: '#2a4a8a' }),
+    U('longbow', 'Longbowman', 4, 'rng', 'crit', { k: 'soldier', w: 'bow', helm: '#3a5a2a', body: '#4a7a3a', legs: '#5a4a2a', cap: 1 }, { range: 90 }),
+    U('trebuchet', 'Trebuchet', 4, 'hvy', 'bossbane', { k: 'trebuchet', body: '#6a4a2a' }, { range: 140, proj: 'boulder', size: 1.1 }),
+    U('knight', 'Mounted Knight', 4, 'cav', 'charge', { k: 'rider', w: 'lance', helm: '#c0c4cc', body: '#c0c4cc', horse: '#e8e4dc', cloth: '#2a4a8a' }),
+    // VI Gunpowder
+    U('samurai', 'Samurai', 5, 'inf', 'crit', { k: 'soldier', w: 'katana', helm: '#2a2a2a', body: '#8a1e1e', legs: '#3a2a2a', horn: '#e8c84a' }),
+    U('musketeer', 'Musketeer', 5, 'rng', 'stun', { k: 'soldier', w: 'musket', helm: '#3a2a1a', body: '#2a4a8a', legs: '#c9b48a', hat: 'wide' }, GUN(70)),
+    U('cannon', 'Bronze Cannon', 5, 'hvy', 'bossbane', { k: 'cannon', body: '#c9973a', wheel: '#6a4426' }, { range: 120 }),
+    U('cavalier', 'Cavalier', 5, 'cav', 'swift', { k: 'rider', w: 'saber', helm: '#2a2a2a', body: '#8a1e2b', horse: '#3a2a1a', cloth: '#d9b45a' }),
+    // VII Revolution
+    U('grenadier', 'Grenadier', 6, 'inf', 'splash', { k: 'soldier', w: 'grenade', helm: '#2a2a2a', body: '#b3261e', legs: '#e8e4dc', hat: 'tall' }, { range: 35, proj: 'grenade' }),
+    U('rifleman', 'Rifleman', 6, 'rng', 'snipe', { k: 'soldier', w: 'rifle', helm: '#1a2a1a', body: '#2a5a3a', legs: '#2a3a2a', hat: 'tall' }, GUN(80)),
+    U('artillery', 'Field Artillery', 6, 'hvy', 'splash', { k: 'cannon', body: '#5a5a62', wheel: '#3a2a1a' }, { range: 130 }),
+    U('cuirassier', 'Cuirassier', 6, 'cav', 'armor', { k: 'rider', w: 'saber', helm: '#d8d8e0', body: '#d8d8e0', horse: '#3a2a1a', cloth: '#2a3f7a' }),
+    // VIII Industrial
+    U('trench', 'Trench Infantry', 7, 'inf', 'guard', { k: 'soldier', w: 'rifle', helm: '#6a6a4a', body: '#7a7458', legs: '#5a5440', hat: 'brodie' }, GUN(45)),
+    U('mgunner', 'Machine Gunner', 7, 'rng', 'swift', { k: 'soldier', w: 'mg', helm: '#5a5a4a', body: '#6a6a5a', legs: '#4a4a3a', hat: 'brodie' }, GUN(65)),
+    U('landship', 'Landship Mk I', 7, 'hvy', 'armor', { k: 'landship', body: '#7a7458' }, { range: 70 }),
+    U('armoredcar', 'Armored Car', 7, 'cav', 'armor', { k: 'car', body: '#6a6a4a' }, GUN(45)),
+    // IX World War
+    U('gi', 'Rifle Squad', 8, 'inf', 'rally', { k: 'soldier', w: 'rifle', helm: '#4a5a2a', body: '#6a7a3a', legs: '#5a6a34', hat: 'round' }, GUN(50)),
+    U('sniper', 'Sniper', 8, 'rng', 'snipe', { k: 'soldier', w: 'longrifle', helm: '#3a4a2a', body: '#4a5a34', legs: '#3a4a2a', hat: 'round' }, GUN(100)),
+    U('mtank', 'Medium Tank', 8, 'hvy', 'splash', { k: 'tank', body: '#5a6a3a', long: 0 }, { range: 75 }),
+    U('fighter', 'Fighter Plane', 8, 'cav', 'swift', { k: 'plane', body: '#5a6a3a' }, { range: 50, proj: 'bullet', air: 1 }),
+    // X Cold War
+    U('para', 'Paratrooper', 9, 'inf', 'charge', { k: 'soldier', w: 'smg', helm: '#7a1e2a', body: '#6a6a4a', legs: '#4a4a34', hat: 'beret' }, GUN(45)),
+    U('heli', 'Attack Helicopter', 9, 'rng', 'pierce', { k: 'heli', body: '#4a5a3a' }, { proj: 'rocket', range: 80, air: 1 }),
+    U('mbt', 'Battle Tank', 9, 'hvy', 'bossbane', { k: 'tank', body: '#8a8460', long: 1 }, { range: 85 }),
+    U('jeep', 'Jeep Gunner', 9, 'cav', 'swift', { k: 'car', body: '#5a6a3a', jeep: 1 }, GUN(55)),
+    // XI Modern
+    U('sf', 'Special Forces', 10, 'inf', 'crit', { k: 'soldier', w: 'smg', helm: '#2a2a2a', body: '#3a3a40', legs: '#2a2a30', hat: 'ops' }, GUN(55)),
+    U('drone', 'Combat Drone', 10, 'rng', 'swift', { k: 'drone', body: '#5a6070' }, { proj: 'bullet', range: 80, air: 1 }),
+    U('bomber', 'Stealth Bomber', 10, 'hvy', 'splash', { k: 'bomber', body: '#2a2c34' }, { proj: 'bomb', range: 25, air: 1, speed: 30 }),
+    U('jet', 'Strike Jet', 10, 'cav', 'crit', { k: 'plane', body: '#7a8090', jet: 1 }, { range: 60, proj: 'rocket', air: 1 }),
+    // XII Future
+    U('powerarmor', 'Power Armor', 11, 'inf', 'regen', { k: 'soldier', w: 'laser', helm: '#c8ccd8', body: '#8a90a8', legs: '#5a6078', hat: 'visor' }, { range: 45, proj: 'laser' }),
+    U('lancer', 'Plasma Lancer', 11, 'rng', 'bossbane', { k: 'soldier', w: 'plasma', helm: '#2a2a3a', body: '#3a2a5a', legs: '#2a2040', hat: 'visor' }, { proj: 'plasma', range: 85 }),
+    U('mech', 'Battle Mech', 11, 'hvy', 'drain', { k: 'mech', body: '#6a7088' }, { proj: 'plasma', range: 65 }),
+    U('hoverbike', 'Hover Bike', 11, 'cav', 'swift', { k: 'hoverbike', body: '#3a4a6a' }, { range: 40, proj: 'laser' }),
+    // XIII Space Age
+    U('spacemarine', 'Space Marine', 12, 'inf', 'armor', { k: 'soldier', w: 'laser', helm: '#e8e4dc', body: '#c8ccd8', legs: '#8a90a8', hat: 'visor' }, { range: 50, proj: 'laser' }),
+    U('railgunner', 'Rail Gunner', 12, 'rng', 'pierce', { k: 'soldier', w: 'longrifle', helm: '#3a3a4a', body: '#4a5a7a', legs: '#2a3a5a', hat: 'visor' }, { range: 110, proj: 'laser' }),
+    U('walker', 'Orbital Walker', 12, 'hvy', 'splash', { k: 'mech', body: '#a8a090' }, { range: 80, proj: 'plasma', size: 1.3 }),
+    U('starfighter', 'Star Fighter', 12, 'cav', 'crit', { k: 'plane', body: '#c8ccd8', scifi: 1 }, { range: 60, proj: 'laser', air: 1 }),
+    // XIV Galactic Age
+    U('bladeknight', 'Plasma Blade Knight', 13, 'inf', 'drain', { k: 'soldier', w: 'blade', helm: '#2a1a3a', body: '#4a2a6a', legs: '#2a1a3a', hat: 'visor' }),
+    U('voidarcher', 'Void Archer', 13, 'rng', 'crit', { k: 'soldier', w: 'plasma', helm: '#1a1a2a', body: '#2a2a4a', legs: '#1a1a2a', cap: 1 }, { range: 95, proj: 'plasma' }),
+    U('titan', 'Titan Mech', 13, 'hvy', 'bossbane', { k: 'mech', body: '#4a3a6a' }, { range: 90, proj: 'plasma', size: 1.5 }),
+    U('warpdrone', 'Warp Drone', 13, 'cav', 'swift', { k: 'drone', body: '#6a3a8a' }, { range: 45, proj: 'laser', air: 1 }),
   ];
   CW.UNIT = {};
   CW.UNITS.forEach((u) => (CW.UNIT[u.id] = u));
@@ -658,6 +733,79 @@
     ult('Event Horizon', [['strike', 'all', 10]], 60),
     sk('Gravity Well', [['stun', 2], ['weaken', 0.3, 8]], 22),
     sk('Dark Star', [['burn', 12, 6]]));
+  // ---- eras were renumbered when the Stone, Viking, Space and Galactic ages were added
+  const REMAP = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 14];
+  LEADERS.forEach((l) => (l.era = REMAP[l.era]));
+  LEADERS.find((l) => l.id === 'caveman').era = 0;
+  ['attila', 'charlemagne', 'william'].forEach((id) => (LEADERS.find((l) => l.id === id).era = 3));
+
+  // ---- Era I: Stone Age
+  L('neanderthal', 'The Neanderthal Chief', 'c. 40,000 BC', -40000, 0, 'defender', 'Elder of the Ice Age',
+    'An Ice Age chieftain of the Neanderthals, the stocky, big-brained cousins of modern humans who lived across Europe and Asia for 300,000 years.',
+    { sk: '#c8946a', hr: '#5a3a20', hs: 'wild', fh: 'fullbeard', unibrow: 1, jaw: 1, nose: 1, out: 'pelt', oc: '#7a6a5a', ac: '#3a2a1a', bg: '#3a4a5a' },
+    ult('Ice Age Endurance', [['buff', 'def', 0.5, 10], ['heal', 0.3]]),
+    sk('Spear Ambush', [['strike', 'front', 7]]),
+    sk('Mammoth Hunt', [['gold', 20]]));
+  L('otzi', 'Otzi the Iceman', 'c. 3350–3105 BC', -3230, 0, 'warrior', 'The Man from the Ice',
+    'A Copper Age man whose naturally mummified body was found in an Alpine glacier in 1991, still carrying his copper axe, bow and arrows.',
+    { sk: '#d9a679', hr: '#4a2a14', hs: 'longwavy', fh: 'beard', hat: 'fur', hc: '#6a4a2a', ha: '#4a3a2a', out: 'pelt', oc: '#7a5a3a', ac: '#3a2a1a', bg: '#4a6a7a' },
+    ult('Copper Axe', [['strike', 'front', 8], ['buff', 'crit', 0.2, 8]]),
+    sk('Flint Arrows', [['strike', 'random', 6]]),
+    sk('Glacier Hardened', [['buff', 'def', 0.4, 8]]));
+
+  // ---- Era IV: Viking Age
+  L('ragnar', 'Ragnar Lodbrok', '9th century', 865, 3, 'conqueror', 'Legendary Viking King',
+    'Legendary Norse hero of the sagas, said to have raided England and France; his sons led the Great Heathen Army that invaded England in 865.',
+    { sk: '#f6d9bd', hr: '#d9b45a', hs: 'longwavy', fh: 'fullbeard', fc: '#d9b45a', hat: 'nasal', hc: '#8a8f98', out: 'mail', oc: '#6a6f78', ac: '#8a1e1e', bg: '#2a3a4a' },
+    ult('Great Heathen Army', [['strike', 'all', 5], ['buff', 'atk', 0.3, 8]]),
+    sk('Raid', [['gold', 20]]),
+    sk('Shield Wall', [['buff', 'def', 0.4, 8]]));
+  L('alfred', 'Alfred the Great', '849–899', 878, 3, 'defender', 'King of the Anglo-Saxons',
+    'King of Wessex who beat back the Viking invasions at Edington in 878 and laid the foundations of England.',
+    { sk: '#f2c9a0', hr: '#6b4426', hs: 'long', fh: 'beard', hat: 'crown', hc: '#d9b45a', out: 'robe', oc: '#2a4a8a', ac: '#d9b45a', bg: '#3a2a1a' },
+    ult('Burh Fortresses', [['buff', 'def', 0.5, 10], ['buff', 'atk', 0.2, 8]]),
+    sk('Battle of Edington', [['strike', 'front', 7]]),
+    sk('Wessex Levy', [['revive', 3, 0.5]]));
+  L('cnut', 'Cnut the Great', 'c. 995–1035', 1016, 3, 'statesman', 'King of the North Sea Empire',
+    'Danish prince who conquered England and ruled a North Sea empire of England, Denmark and Norway.',
+    { sk: '#f6d9bd', hr: '#d9b45a', hs: 'short', fh: 'beard', fc: '#d9b45a', hat: 'crown', hc: '#d9b45a', out: 'robe', oc: '#8a1e2b', ac: '#d9b45a', bg: '#1a3a4a' },
+    ult('North Sea Empire', [['gold', 30], ['buff', 'atk', 0.3, 10]]),
+    sk('Danegeld', [['gold', 22]]),
+    sk('Huscarls', [['buff', 'def', 0.35, 8]]));
+  L('harald', 'Harald Hardrada', '1015–1066', 1066, 3, 'warrior', 'The Last Viking King',
+    'King of Norway and former Byzantine guardsman who invaded England in 1066 and fell at Stamford Bridge, ending the Viking Age.',
+    { sk: '#f2c9a0', hr: '#d9b45a', hs: 'long', fh: 'longmustache', fc: '#d9b45a', hat: 'nasal', hc: '#9aa0a8', out: 'mail', oc: '#7a7f88', ac: '#2a4a8a', bg: '#2a2a3a' },
+    ult('Varangian Guard', [['buff', 'atk', 0.45, 10], ['buff', 'crit', 0.2, 10]]),
+    sk('Land-Waster Banner', [['strike', 'front', 8]]),
+    sk('Stamford Bridge', [['buff', 'def', 0.35, 8]]));
+
+  // ---- Era XIII: Space Age and Era XIV: Galactic Age (no history has been written here yet)
+  L('overmind', 'The Overmind', 'Online 2600', 2600, 12, 'strategist', 'Rogue Artificial Intelligence',
+    'A planet-spanning artificial intelligence that slipped its leash in the 27th century and now commands armies of machines.',
+    { sk: '#2ee6ff', head: 'screen', hc: '#3a3f4a', out: 'silver', oc: '#4a505c', ac: '#2ee6ff', bg: '#0a1a1a' },
+    ult('Total Calculation', [['buff', 'crit', 0.3, 10], ['buff', 'spd', 0.3, 10]]),
+    sk('Drone Swarm', [['strike', 'random', 7]]),
+    sk('Firewall', [['buff', 'def', 0.45, 8]]));
+  L('warlord', 'The Martian Warlord', 'Rules 2700', 2700, 12, 'tyrant', 'Conqueror of the Red Planet',
+    'Born in the domed cities of Mars, this ruthless general united the colonies by force and turned their guns on Earth.',
+    { sk: '#d8946a', hr: '#8a2a1a', hs: 'buzz', fh: 'stubble', hat: 'spacehelm', hc: '#9ad8ff', out: 'armor', oc: '#8a3a2a', ac: '#d9b45a', bg: '#4a1a0a' },
+    ult('Red Planet Rising', [['strike', 'all', 6], ['buff', 'atk', 0.3, 8]]),
+    sk('Orbital Strike', [['strike', 'boss', 10]]),
+    sk('Iron Dust', [['weaken', 0.3, 8]]));
+  L('empress', 'The Star Empress', 'Reigns 3200', 3200, 13, 'orator', 'Ruler of a Thousand Worlds',
+    'Crowned beside a dying star, she rules a galactic empire of a thousand worlds and is never seen without her crown of light.',
+    { sk: '#e8d8f0', hr: '#f4f0ff', hs: 'updo', fh: 'none', hat: 'tiara', hc: '#9ad8ff', out: 'void', oc: '#2a1a4a', ac: '#9ad8ff', fem: 1, bg: '#140a2a' },
+    ult('Imperial Decree', [['buff', 'atk', 0.4, 10], ['gold', 25]]),
+    sk('Starfleet', [['strike', 'all', 5]]),
+    sk('Crown of Light', [['heal', 0.35]]));
+  L('hive', 'The Hive Queen', 'Hatched 3500', 3500, 13, 'conqueror', 'Mother of the Swarm',
+    'The vast insect queen of a swarm that devours whole planets; every soldier in her army is one of her children.',
+    { sk: '#4a8a3a', head: 'insect', out: 'void', oc: '#1a2a12', ac: '#9adc5a', bg: '#0a1a0a' },
+    ult('Endless Swarm', [['revive', 9, 0.5], ['buff', 'spd', 0.3, 10]]),
+    sk('Acid Spit', [['burn', 8, 6]]),
+    sk('Chitin Armor', [['buff', 'def', 0.4, 8]]));
+
+  LEADERS.sort((a, b) => a.era - b.era || (a.starter === b.starter ? (a.yr || 0) - (b.yr || 0) : a.starter ? -1 : 1));
   CW.LEADERS = LEADERS;
   CW.LEADER = {};
   LEADERS.forEach((l) => (CW.LEADER[l.id] = l));
@@ -665,33 +813,34 @@
   // weapon each leader carries on the battlefield (default: sword, or a banner for statesmen, orators and peacemakers)
   CW.WPN = {
     castro: 'rifle', che: 'rifle', ho_chi_minh: 'rifle', chavez: 'rifle', tubman: 'rifle', polpot: 'rifle', kirk: 'mic', trump: 'flag',
-    caveman: 'club', devil: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
+    caveman: 'club', neanderthal: 'club', otzi: 'club', devil: 'trident', overmind: 'staff', warlord: 'gun', hive: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
   };
   CW.weaponOf = (id) => CW.WPN[id] || (['statesman', 'orator', 'peacemaker'].includes(CW.LEADER[id].cls) ? 'flag' : 'sword');
-  CW.MYSTERY = LEADERS.filter((l) => l.era === 10).map((l) => l.id);
+  CW.MYSTERY = LEADERS.filter((l) => l.era === CW.ERAS.length).map((l) => l.id);
 
   // Future era: echoes of the past rebuilt as war machines.
   CW.ECHO_POOL = ['alexander', 'caesar', 'genghis', 'napoleon', 'hitler', 'stalin', 'hannibal', 'attila', 'timur', 'qin',
     'wilhelm', 'mao', 'nobunaga', 'saladin', 'patton', 'churchill', 'shaka', 'ramesses'];
-  CW.FUTURE_POOL = ['exterminator', 'alien'].concat(CW.ECHO_POOL);
+  CW.FUTURE_POOL = ['exterminator', 'alien', 'overmind', 'warlord', 'empress', 'hive'].concat(CW.ECHO_POOL);
 
   // ---------------------------------------------------------------- doctrines (random army-management skills)
   // r: rarity 0 common, 1 rare, 2 epic ; max: stack limit
   const D = (id, name, r, max, d, fx) => ({ id, name, r, max, d, fx });
   CW.DOCTRINES = [
-    D('conscription', 'Conscription', 2, 2, '+1 army slot', { slots: 1 }),
+    D('conscription', 'Conscription', 2, 3, '+15% army capacity', { capPct: 0.15 }),
     D('drill', 'Drill Sergeants', 0, 5, 'Infantry +20% ATK and HP', { inf: 0.2 }),
     D('marksman', 'Marksman School', 0, 5, 'Ranged +20% ATK and HP', { rng: 0.2 }),
     D('armorworks', 'Armor Works', 0, 5, 'Heavy units +20% ATK and HP', { hvy: 0.2 }),
-    D('supply', 'Supply Lines', 1, 3, 'Army regenerates 1% HP every second', { regen: 0.01 }),
-    D('hospitals', 'Field Hospitals', 0, 3, '+25% healing between waves', { waveHeal: 0.25 }),
+    D('supply', 'Supply Lines', 1, 3, 'Your army moves 15% faster and attacks 8% faster', { move: 0.15, spd: 0.08 }),
+    D('hospitals', 'Field Hospitals', 0, 3, 'Your army has +20% health', { hp: 0.2 }),
+    D('cavalry', 'Cavalry School', 0, 5, 'Cavalry +20% ATK and HP', { cav: 0.2 }),
     D('warchest', 'War Chest', 0, 5, '+20% gold from all sources', { gold: 0.2 }),
     D('plunder', 'Spoils of Conquest', 1, 3, 'Leader battles pay +75% gold', { bossGold: 0.75 }),
     D('veterans', 'Veteran Corps', 1, 3, 'Unit upgrades cost 10% less', { cost: 0.1 }),
     D('logistics', 'Logistics Corps', 0, 5, '+12% attack speed', { spd: 0.12 }),
     D('academy', 'Officer Academy', 1, 3, 'Your leaders on the field have +40% health', { heroHp: 0.4 }),
-    D('combined', 'Combined Arms', 1, 3, '+15% ATK and HP while you field all three roles', { combined: 0.15 }),
-    D('pride', 'Era Pride', 1, 3, "+5% ATK for each squad from your commander's era", { pride: 0.05 }),
+    D('combined', 'Combined Arms', 1, 3, '+15% ATK and HP while your army fields three or more roles', { combined: 0.15 }),
+    D('pride', 'Era Pride', 1, 3, "+5% ATK for each unit type from your commander's era", { pride: 0.05 }),
     D('flanking', 'Flanking Maneuvers', 0, 4, '+7% critical chance', { crit: 0.07 }),
     D('ordnance', 'Heavy Ordnance', 1, 3, '+50% critical damage', { critDmg: 0.5 }),
     D('forts', 'Fortifications', 0, 4, 'Army takes 8% less damage', { def: 0.08 }),
@@ -703,12 +852,12 @@
     D('dilation', 'Time Dilation', 1, 3, '+10s on the leader battle clock', { bossTime: 10 }),
     D('salvage', 'Chrono Salvage', 2, 3, '+1 Chrono Shard for every leader defeated', { shardDrop: 1 }),
     D('quarter', 'Quartermaster', 1, 3, '+50% offline earnings', { offline: 0.5 }),
-    D('blitz', 'Blitz Doctrine', 1, 3, '+40% attack speed for the first 6s of each wave', { blitz: 0.4 }),
+    D('blitz', 'Blitz Doctrine', 1, 3, '+40% attack speed for the first 6 seconds of each battle', { blitz: 0.4 }),
     D('laststand', 'Last Stand', 1, 3, 'Squads under 35% HP deal +40% damage', { lastStand: 0.4 }),
-    D('shock', 'Shock Troops', 1, 3, "Each squad's first strike in a wave deals +150%", { firstStrike: 1.5 }),
+    D('shock', 'Shock Troops', 1, 3, "Each soldier's first strike in a battle deals +150%", { firstStrike: 1.5 }),
     D('bonds', 'War Bonds', 0, 5, '+15% gold and +5% ATK', { gold: 0.15, atk: 0.05 }),
     D('recon', 'Recon Patrols', 0, 3, 'Enemies have 8% less HP', { enemyHp: 0.08 }),
-    D('medics', 'Combat Medics', 1, 3, 'Fallen squads return with +25% more HP between waves', { reviveHp: 0.25 }),
+    D('medics', 'Combat Medics', 1, 3, 'Your army heals 1% health every second', { regen: 0.01 }),
   ];
   CW.DOC = {};
   CW.DOCTRINES.forEach((d) => (CW.DOC[d.id] = d));

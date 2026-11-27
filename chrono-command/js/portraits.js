@@ -113,6 +113,8 @@
     if (head === 'human') humanHead();
     else if (head === 'alien') alienHead();
     else if (head === 'hood') hoodHead();
+    else if (head === 'screen') screenHead();
+    else if (head === 'insect') insectHead();
     if (head === 'human') {
       topHair();
       facialHair();
@@ -279,6 +281,68 @@
       P(15, 17, skDD);
       P(16, 17, skDD);
       Hl(15, 16, 19, skDD);
+    }
+
+    function screenHead() {
+      const fr = hc;
+      const frD = shade(hc, -0.3);
+      const frL = shade(hc, 0.25);
+      R(14, 20, 4, headOnly ? 4 : 5, frD);
+      R(11, 23, 10, 1, fr);
+      R(7, 4, 18, 16, fr);
+      Hl(8, 23, 4, frL);
+      Vl(7, 5, 18, frL);
+      Vl(24, 5, 19, frD);
+      Hl(8, 24, 19, frD);
+      R(9, 6, 14, 11, '#06201e');
+      for (let y = 6; y < 17; y += 2) Hl(9, 22, y, '#0a2e2a');
+      const e = p.sk;
+      R(12, 9, 2, 2, e);
+      R(18, 9, 2, 2, e);
+      P(13, 9, '#ffffff');
+      P(19, 9, '#ffffff');
+      Hl(12, 19, 14, e);
+      P(11, 13, e);
+      P(20, 13, e);
+      Hl(10, 12, 11, shade(e, -0.4));
+      Hl(19, 21, 11, shade(e, -0.4));
+      R(20, 17, 2, 1, '#ff4a4a');
+      Vl(10, 1, 3, frD);
+      Vl(21, 1, 3, frD);
+      P(10, 0, '#ff4a4a');
+      P(21, 0, '#2ee6ff');
+    }
+
+    function insectHead() {
+      const c = sk;
+      const cD = shade(c, -0.3);
+      const cL = shade(c, 0.25);
+      R(14, 18, 4, headOnly ? 6 : 7, cD);
+      Hl(12, 19, 5, c);
+      Hl(10, 21, 6, c);
+      R(9, 7, 14, 8, c);
+      Hl(10, 21, 15, c);
+      Hl(11, 20, 16, c);
+      Hl(12, 19, 17, c);
+      Hl(13, 18, 18, c);
+      Vl(22, 7, 14, cD);
+      Hl(13, 18, 18, cD);
+      Hl(11, 16, 6, cL);
+      Vl(9, 8, 12, cL);
+      const E = '#d8ff4a';
+      const E2 = '#5a7a12';
+      R(10, 9, 5, 4, E2);
+      R(17, 9, 5, 4, E2);
+      for (let y = 9; y < 13; y++)
+        for (let x = 10; x < 22; x++) if ((x + y) % 2 === 0 && (x < 15 || x > 16)) P(x, y, E);
+      P(12, 19, cD);
+      P(13, 20, cD);
+      P(14, 21, cL);
+      P(19, 19, cD);
+      P(18, 20, cD);
+      P(17, 21, cL);
+      [[11, 4], [10, 3], [9, 2], [8, 1], [20, 4], [21, 3], [22, 2], [23, 1]].forEach(([x, y]) => P(x, y, cD));
+      Hl(13, 18, 14, cD);
     }
 
     function hoodHead() {
@@ -1069,6 +1133,20 @@
           [[20, 5], [21, 4], [21, 3], [22, 2]].forEach(([x, y]) => P(x, y, h2));
           break;
         }
+        case 'spacehelm':
+          g.globalAlpha = 0.3;
+          R(8, 2, 16, 19, hc);
+          g.globalAlpha = 1;
+          Hl(11, 20, 1, '#d8f0ff');
+          Hl(9, 22, 2, '#d8f0ff');
+          Vl(8, 3, 18, '#d8f0ff');
+          Vl(23, 3, 18, '#a8c8e0');
+          P(11, 3, '#ffffff');
+          P(10, 4, '#ffffff');
+          P(10, 5, '#ffffff');
+          Hl(9, 22, 21, '#8a8f98');
+          Hl(9, 22, 22, '#5a606c');
+          break;
         case 'shards':
           [[10, 3, 3], [14, 0, 5], [18, 1, 4], [21, 4, 3], [7, 5, 2], [24, 6, 2]].forEach(([x, y, h]) => {
             Vl(x, y, y + h - 1, hc);

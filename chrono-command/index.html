@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chrono Command</title>
-<meta name="description" content="An 8-bit idle war game: lead history's commanders and dictators on an endless campaign through time.">
+<meta name="description" content="An 8-bit idle war game and battle simulator: build armies across 14 eras and lead history's commanders on an endless campaign through time.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -138,7 +138,7 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .slot{background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge);padding:6px 4px 4px;text-align:center;font-size:16px;line-height:1}
 .slot img{width:56px;height:44px;display:block;margin:0 auto 3px}
 .slot.empty{color:var(--dim)}
-.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
 .ucard{background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge);padding:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center}
 .ucard.on{box-shadow:inset 0 0 0 2px var(--edge2),inset 4px 0 0 var(--ally)}
 .ucard img{width:56px;height:44px;grid-row:span 2;background:#2c3a22;box-shadow:inset 0 0 0 2px var(--shadow)}
@@ -148,8 +148,31 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .ucard .row{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 8px;margin-top:4px}
 .ucard .st{font-size:18px;white-space:nowrap}
 .ucard .btn{padding:8px 10px 7px;font-size:9px;white-space:nowrap;margin-left:auto}
+.ucard.on .cnt b{color:var(--brass)}
 .tag{font:8px "Press Start 2P",monospace;padding:3px 5px 2px;background:var(--shadow);color:var(--dim);white-space:nowrap}
-.tag.inf{color:#ffb060}.tag.rng{color:var(--good)}.tag.hvy{color:#ff8a8a}
+.tag.inf{color:#ffb060}.tag.rng{color:var(--good)}.tag.hvy{color:#ff8a8a}.tag.cav{color:#9ab8ff}
+.capline{display:flex;align-items:center;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+.capline span{font:9px "Press Start 2P",monospace;color:var(--dim)}
+.capbar{flex:1;min-width:120px;max-width:380px;height:14px;background:var(--shadow);box-shadow:inset 0 0 0 2px var(--edge);position:relative}
+.capbar i{position:absolute;inset:2px auto 2px 2px;background:var(--ally);max-width:calc(100% - 4px)}
+.capline b{font:11px "Press Start 2P",monospace;white-space:nowrap}
+.armyopts{display:flex;flex-wrap:wrap;align-items:center;gap:0 14px;margin-bottom:8px}
+.armyopts .note{margin:0}
+.cnt{grid-column:1/-1;display:flex;align-items:center;gap:6px;margin-top:4px}
+.cnt b{min-width:40px;text-align:center;font:12px "Press Start 2P",monospace;color:var(--ally)}
+.sq{border:0;cursor:pointer;width:34px;height:30px;background:var(--panel2);color:var(--ink);font:12px "Press Start 2P",monospace;box-shadow:inset 0 0 0 2px var(--edge2),0 3px 0 var(--shadow);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.sq.wide{width:auto;padding:0 10px;font-size:9px}
+.sq:active{transform:translateY(2px)}
+.sq:disabled{opacity:.4;cursor:not-allowed}
+.uas{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:4px}
+.ua{border:0;cursor:pointer;text-align:left;background:var(--panel2);box-shadow:inset 0 0 0 2px var(--edge);padding:5px 7px 6px;color:var(--ink);font-size:16px;line-height:1.05}
+.ua b{display:block;font:8px/1.6 "Press Start 2P",monospace;color:var(--brass)}
+.ua.empty{color:var(--dim)}.ua.empty b{color:var(--ally)}
+.ua.lock{cursor:default;opacity:.5}.ua.lock b{color:var(--dim)}
+.ua:not(:disabled):hover{box-shadow:inset 0 0 0 2px var(--brass)}
+.uachooser{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));max-height:min(420px,60dvh)}
+.uachooser .pick{grid-template-columns:minmax(0,1fr)}
+.pick small.hint{display:block;font-size:16px;line-height:1.05;margin-top:2px}
 .erahead{font:10px/1.5 "Press Start 2P",monospace;color:var(--dim);margin:18px 0 8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
 .lcard{border:0;cursor:pointer;text-align:left;background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge);padding:8px;display:grid;gap:4px;align-content:start;color:var(--ink)}
@@ -228,6 +251,8 @@ textarea{width:100%;min-height:90px;background:var(--shadow);border:0;box-shadow
   .starter img{grid-row:span 3;width:64px;height:64px}
   .partner{padding:10px}
   .ugrid{grid-template-columns:minmax(0,1fr)}
+  .ua span{display:none}
+  .ua b{font-size:7px;overflow-wrap:anywhere}
   .tab{padding:9px 10px 8px;font-size:9px}
   .dlg{padding:14px}
   .skill small{display:none}
@@ -251,7 +276,7 @@ textarea{width:100%;min-height:90px;background:var(--shadow);border:0;box-shadow
 
   <section class="cab notch" aria-label="Battlefield">
     <div class="strip">
-      <span class="era" id="eraName">Era I · Bronze Age</span>
+      <span class="era" id="eraName">Era I · Stone Age</span>
       <span class="yr" id="year">3000 BC</span>
       <span class="stg" id="stage">Stage 1</span>
       <div class="next" title="Progress to the next leader battle">

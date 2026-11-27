@@ -1,8 +1,10 @@
-/* Chrono Command — engine: state, battle simulation, economy, progression, saving. No DOM here. */
+/* Chrono Command — engine: state, battle simulator, army building, economy, progression, saving. No DOM here.
+   Each stage is one battle between two armies of individual soldiers on a 360 x 120 field. */
 (function (G) {
   'use strict';
   const CW = G.CW;
-  const { UNIT, UNITS, LEADER, LEADERS, ERAS, ROLES, CLASSES, DOC, DOCTRINES } = CW;
+  const { UNIT, UNITS, LEADER, LEADERS, ERAS, ROLES, CLASSES, DOC, DOCTRINES, UATTR, UATTRS } = CW;
+  const NERA = ERAS.length;
 
   // ------------------------------------------------------------ tuning
   const CFG = (CW.CFG = {
@@ -15,32 +17,45 @@
     eraCost: 2.9,
     enemyHp: 0.6,
     enemyAtk: 0.55,
-    bossHp: 15,
-    bossAtk: 1.6,
-    bounty: 1.25,
+    bossHp: 20,
+    bossAtk: 2,
+    bounty: 1.25, // gold per capacity point of enemy killed
+    winBonus: 3, // extra bounties for each won battle
     bossBounty: 30,
-    waves: 3,
     stagesPerBoss: 3,
-    bossTime: 40,
+    bossTime: 60,
+    battleTime: 90,
     trainBase: 40,
     trainGrowth: 1.3,
     riftBase: 5,
     riftGrowth: 1.04,
-    vet: 0.4, // new-era units start at this share of your best unit level
+    vet: 12, // new-era units start this many levels below your best unit
     chaos: 1.6, // extra enemy strength once time shatters
     mysteryHp: 2.2,
     mysteryAtk: 1.3,
-    heroAtk: 1.0, // commanders on the field, relative to an average squad
-    heroHp: 3.0,
+    heroAtk: 4, // commanders on the field, relative to an average soldier
+    heroHp: 6,
+    capBase: 14, // army capacity at the start
+    capPerEra: 6, // more capacity for every era reached
+    enemyCap: 1,
+    dt: 0.05,
   });
   CW.SAVE_KEY = 'chronoCommand.v1';
+  const FX = 360;
+  const FZ = 120;
+  CW.FX = FX;
+  CW.FZ = FZ;
+  const PSPEED = { arrow: 170, rock: 150, javelin: 160, bullet: 420, shell: 140, boulder: 110, grenade: 130, rocket: 220, laser: 900, plasma: 300, bomb: 120 };
+  CW.PSPEED = PSPEED;
 
   // ------------------------------------------------------------ campaign map
-  // The time pathway runs every era in order, from the Stone Age to the Future.
+  // The time pathway runs every era in order, from the Stone Age to the Galactic Age.
   // After it ends, time shatters: random eras, stronger foes and mystery bosses, forever.
   const BOSSES = [];
-  for (let e = 0; e < 9; e++) BOSSES.push(LEADERS.filter((l) => l.era === e && !l.starter).map((l) => l.id));
-  BOSSES.push(['exterminator', null, null, null, null, 'alien']); // nulls: echoes of the past, picked per run
+  for (let e = 0; e < 11; e++) BOSSES.push(LEADERS.filter((l) => l.era === e && !l.starter).map((l) => l.id));
+  BOSSES.push(['exterminator', null, null, null, null, 'alien']); // Future: nulls are echoes of the past
+  BOSSES.push(['overmind', null, 'warlord', null]); // Space Age
+  BOSSES.push(['empress', null, null, 'hive']); // Galactic Age
   const SPB = CFG.stagesPerBoss;
   const ERA_LEN = BOSSES.map((b) => b.length * SPB);
   const ERA_START = [];
@@ -62,9 +77,9 @@
     return h >>> 0;
   }
   const seed = () => (S && S.seed) || 1;
-  function echoFor(i) {
+  function echoFor(era, i) {
     const p = CW.ECHO_POOL;
-    return p[(hash(seed(), 99) + i * 5) % p.length];
+    return p[(hash(seed(), 99 + era) + i * 5) % p.length];
   }
   let infoCache = new Map();
   CW.stageInfo = function (stage) {
@@ -73,41 +88,41 @@
     if (stage <= PATH_LEN) {
       const s0 = stage - 1;
       let era = 0;
-      while (era < 9 && s0 >= ERA_START[era + 1]) era++;
+      while (era < NERA - 1 && s0 >= ERA_START[era + 1]) era++;
       const k = s0 - ERA_START[era];
       const bi = Math.floor(k / SPB);
       const sub = k % SPB;
-      const bossId = BOSSES[era][bi] || echoFor(bi);
+      const bossId = BOSSES[era][bi] || echoFor(era, bi);
       const isBoss = sub === SPB - 1;
       const L = LEADER[bossId];
       const span = ERAS[era].span;
-      const variant = era === 9 && L.era !== 9 ? 'echo' : '';
+      const variant = era >= 11 && L.era < 11 ? 'echo' : '';
       const yr = isBoss && !variant ? L.yr : Math.round(span[0] + ((span[1] - span[0]) * (k + 1)) / ERA_LEN[era]);
-      r = { stage, chaos: false, era, k, bi, sub, isBoss, bossId, yr, variant, echo: era === 9, mystery: false, eraStage: k + 1, eraLen: ERA_LEN[era] };
+      r = { stage, chaos: false, era, k, bi, sub, isBoss, bossId, yr, variant, echo: era >= 11, mystery: false };
     } else {
       const c = stage - PATH_LEN - 1;
       const seg = Math.floor(c / SPB);
       const sub = c % SPB;
-      const era = hash(seed(), seg * 3 + 1) % 10;
+      const era = hash(seed(), seg * 3 + 1) % NERA;
       const mystery = seg % 4 === 0;
       let bossId;
       if (mystery) bossId = CW.MYSTERY[hash(seed(), seg * 3 + 2) % CW.MYSTERY.length];
       else {
-        const pool = era < 9 ? BOSSES[era] : CW.FUTURE_POOL;
+        const pool = era < 11 ? BOSSES[era] : CW.FUTURE_POOL;
         bossId = pool[hash(seed(), seg * 3 + 2) % pool.length];
       }
       const L = LEADER[bossId];
       const span = ERAS[era].span;
-      const variant = !mystery && era === 9 && L.era !== 9 ? 'echo' : '';
+      const variant = !mystery && era >= 11 && L.era < 11 ? 'echo' : '';
       const isBoss = sub === SPB - 1;
       const yr = isBoss && L.yr != null && L.era === era ? L.yr : Math.round(span[0] + ((span[1] - span[0]) * (hash(seed(), c + 7) % 1000)) / 1000);
-      r = { stage, chaos: true, era, k: sub, bi: seg, sub, isBoss, bossId, yr, variant, echo: true, mystery, depth: seg + 1, eraStage: sub + 1, eraLen: SPB };
+      r = { stage, chaos: true, era, k: sub, bi: seg, sub, isBoss, bossId, yr, variant, echo: true, mystery, depth: seg + 1 };
     }
     infoCache.set(stage, r);
     return r;
   };
   CW.bossStageOf = function (id) {
-    for (let e = 0; e < 10; e++) {
+    for (let e = 0; e < NERA; e++) {
       const i = BOSSES[e].indexOf(id);
       if (i >= 0) return ERA_START[e] + i * SPB + SPB;
     }
@@ -130,10 +145,11 @@
 
   // ------------------------------------------------------------ state
   let S = null; // persistent
-  let B = null; // battle (runtime)
+  let B = null; // the current battle
   let M = null; // cached modifiers
   CW.state = () => S;
   CW.battle = () => B;
+  const START_ARMY = () => ({ clubman: 8, rockthrower: 4, wolves: 1 });
 
   function freshState(starter) {
     const starters = LEADERS.filter((l) => l.starter).map((l) => l.id);
@@ -141,7 +157,7 @@
     const roster = {};
     starters.forEach((id) => (roster[id] = { lv: 1, stars: 0 }));
     return {
-      v: 1,
+      v: 2,
       seed: (Math.random() * 1e9) | 0,
       gold: 0,
       shards: 0,
@@ -150,8 +166,9 @@
       best: 1,
       farming: false,
       farmCount: 0,
-      auto: { cast: true, push: true },
-      formation: ['spearman', 'spearman', 'slinger', 'chariot'],
+      auto: { push: true, build: true },
+      army: START_ARMY(),
+      uattr: {},
       unitLv: {},
       eraReached: 0,
       roster,
@@ -172,33 +189,67 @@
     infoCache = new Map();
     M = null;
     B = null;
-    startStage(true);
+    startBattle();
     emit('reset');
     return S;
   };
 
+  // saves from before the battle simulator (v1): squads and 10 eras
+  function migrate(o) {
+    if ((o.v || 1) >= 2) return;
+    const lens = [5, 7, 9, 7, 7, 9, 10, 13, 11, 6].map((n) => n * 3);
+    const oldEra = (st) => {
+      if (st > 252) return 99;
+      let a = 0;
+      for (let e = 0; e < 10; e++) {
+        if (st <= a + lens[e]) return e;
+        a += lens[e];
+      }
+      return 9;
+    };
+    const REMAP = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11];
+    const conv = (st) => {
+      const e = oldEra(st || 1);
+      return e === 99 ? PATH_LEN + 1 : ERA_START[REMAP[e]] + 1;
+    };
+    const chaos = oldEra(o.runMax || 1) === 99;
+    o.stage = conv(o.stage);
+    o.runMax = Math.max(o.stage, conv(o.runMax));
+    o.best = Math.max(o.runMax, conv(o.best));
+    o.eraReached = chaos ? NERA - 1 : REMAP[Math.min(9, o.eraReached || 0)];
+    o.army = {}; // rebuilt by auto-build on load: the old squad formation doesn't map onto capacity
+    delete o.formation;
+    o.uattr = {};
+    o.farming = false;
+    o.auto = { push: o.auto ? o.auto.push !== false : true, build: true };
+    o.v = 2;
+  }
+
   CW.load = function (obj) {
     if (!obj || typeof obj !== 'object' || !obj.roster || !obj.main) return false;
+    obj = JSON.parse(JSON.stringify(obj));
+    migrate(obj);
     const base = freshState(obj.main);
     S = Object.assign(base, obj);
-    S.auto = Object.assign({ cast: true, push: true }, obj.auto || {});
+    S.auto = Object.assign({ push: true, build: true }, obj.auto || {});
     if (!S.seed) S.seed = (Math.random() * 1e9) | 0;
     infoCache = new Map();
     S.stats = Object.assign(base.stats, obj.stats || {});
-    // sanitize references
     Object.keys(S.roster).forEach((id) => {
       if (!LEADER[id]) delete S.roster[id];
     });
     if (!S.roster[S.main]) S.main = Object.keys(S.roster)[0];
     S.partners = (S.partners || []).filter((p) => S.roster[p] && p !== S.main).slice(0, 2);
-    S.formation = (S.formation || []).map((u) => (UNIT[u] && UNIT[u].era <= S.eraReached ? u : null));
     Object.keys(S.doctrines).forEach((d) => {
       if (!DOC[d]) delete S.doctrines[d];
     });
+    S.army = S.army || {};
+    S.uattr = S.uattr || {};
     if (S.council && !Array.isArray(S.council.offers)) S.council = null;
     M = null;
     B = null;
-    startStage(true);
+    fixArmy();
+    startBattle();
     return true;
   };
 
@@ -211,17 +262,17 @@
   function mods() {
     if (M) return M;
     const m = {
-      atk: 0, hp: 0, spd: 0, crit: 0.05, critDmg: 0, def: 0, gold: 0, regen: 0, waveHeal: 0, bossGold: 0, cost: 0,
-      cdr: 0, pcdr: 0, skill: 0, attrMain: 0, attrPartner: 0, heroHp: 0, combined: 0, pride: 0, enemyAtk: 0, enemyHp: 0, bossDmg: 0, bossTime: 0, shardDrop: 0,
-      offline: 0, blitz: 0, lastStand: 0, firstStrike: 0, reviveHp: 0, slots: 0, inf: 0, rng: 0, hvy: 0,
+      atk: 0, hp: 0, spd: 0, crit: 0.05, critDmg: 0, def: 0, gold: 0, regen: 0, bossGold: 0, cost: 0, attrMain: 0, attrPartner: 0,
+      heroHp: 0, combined: 0, pride: 0, enemyAtk: 0, enemyHp: 0, bossDmg: 0, bossTime: 0, shardDrop: 0, offline: 0, blitz: 0,
+      lastStand: 0, firstStrike: 0, capPct: 0, move: 0, inf: 0, rng: 0, hvy: 0, cav: 0,
     };
     for (const id in S.doctrines) {
       const d = DOC[id];
       const n = S.doctrines[id];
-      for (const k in d.fx) m[k] += d.fx[k] * n;
+      for (const k in d.fx) if (k in m) m[k] += d.fx[k] * n;
     }
     const cl = CLASSES[LEADER[S.main].cls];
-    for (const k in cl.fx) m[k] += cl.fx[k];
+    for (const k in cl.fx) if (k in m) m[k] += cl.fx[k];
     m.lead = 0.03 * (S.roster[S.main].lv - 1);
     m.shard = 1 + 0.05 * S.shards;
     m.cost = Math.min(0.5, m.cost);
@@ -246,337 +297,568 @@
   }
   CW.bounty = bounty;
 
-  // ------------------------------------------------------------ army
-  CW.slotCount = () => Math.min(12, 4 + Math.min(6, S.eraReached) + mods().slots);
-  CW.unlockedUnits = () => UNITS.filter((u) => u.era <= S.eraReached);
+  // ------------------------------------------------------------ army building
   CW.unitLevel = (id) => S.unitLv[id] || 1;
+  CW.unlockedUnits = () => UNITS.filter((u) => u.era <= S.eraReached);
+  CW.capacity = () => Math.floor((CFG.capBase + CFG.capPerEra * S.eraReached) * (1 + mods().capPct));
+  const cpCost = (id) => ROLES[UNIT[id].role].cost;
+  CW.cpCost = cpCost;
+  CW.armyUsed = function () {
+    let n = 0;
+    for (const id in S.army) n += S.army[id] * cpCost(id);
+    return n;
+  };
+  CW.armySize = function () {
+    let n = 0;
+    for (const id in S.army) n += S.army[id];
+    return n;
+  };
+  function fixArmy() {
+    for (const id in S.army) if (!UNIT[id] || UNIT[id].era > S.eraReached || !(S.army[id] > 0)) delete S.army[id];
+    let over = CW.armyUsed() - CW.capacity();
+    const ids = Object.keys(S.army).sort((a, b) => cpCost(b) - cpCost(a));
+    for (const id of ids) {
+      while (over > 0 && S.army[id] > 0) {
+        S.army[id]--;
+        over -= cpCost(id);
+      }
+      if (!S.army[id]) delete S.army[id];
+    }
+    if (!Object.keys(S.army).length) CW.autoBuild();
+  }
+  // set how many soldiers of a unit type march into the next battle (limited by army capacity)
+  CW.setCount = function (id, n, keepAuto) {
+    if (!UNIT[id] || UNIT[id].era > S.eraReached) return false;
+    n = Math.max(0, Math.floor(n));
+    const cur = S.army[id] || 0;
+    const room = CW.capacity() - CW.armyUsed() + cur * cpCost(id);
+    n = Math.min(n, Math.floor(room / cpCost(id)));
+    if (n) S.army[id] = n;
+    else delete S.army[id];
+    if (!keepAuto) S.auto.build = false;
+    M = null;
+    emit('army');
+    return true;
+  };
+  // fill the capacity with the best unit of each role: about 40% infantry, 25% ranged, 15% cavalry, 20% heavy
+  CW.autoBuild = function () {
+    const cap = CW.capacity();
+    const ctx = { combo: true, pride: 0, rally: 0 };
+    const best = {};
+    for (const u of CW.unlockedUnits()) {
+      const st = unitStats(u.id, ctx);
+      const v = ((st.atk / st.int) * st.hp) / ROLES[u.role].cost;
+      if (!best[u.role] || v > best[u.role].v) best[u.role] = { id: u.id, v };
+    }
+    S.army = {};
+    let used = 0;
+    const share = { hvy: 0.2, cav: 0.15, rng: 0.25 };
+    for (const role in share) {
+      if (!best[role]) continue;
+      const n = Math.floor((cap * share[role]) / ROLES[role].cost);
+      if (n > 0) {
+        S.army[best[role].id] = n;
+        used += n * ROLES[role].cost;
+      }
+    }
+    if (best.inf) S.army[best.inf.id] = (S.army[best.inf.id] || 0) + Math.max(0, cap - used);
+    S.auto.build = true;
+    for (const id in S.army) autoEquip(id);
+    M = null;
+    emit('army');
+  };
+  // auto-build also fills empty attribute slots with a sensible pick for the unit's role (it never replaces your choices)
+  const UA_PREF = {
+    inf: ['sharp', 'shield', 'vet', 'berserk', 'drainA', 'regenA'],
+    rng: ['sharp', 'precise', 'reach', 'pierceA', 'overclock'],
+    cav: ['chargeA', 'sharp', 'fleet', 'vet'],
+    hvy: ['blast', 'sharp', 'vet', 'overclock'],
+  };
+  function autoEquip(id) {
+    const arr = (S.uattr[id] || []).slice();
+    const n = CW.uslots(id);
+    let changed = false;
+    for (let i = 0; i < n; i++) {
+      if (arr[i] && UATTR[arr[i]] && UATTR[arr[i]].era <= S.eraReached) continue;
+      const pick = UA_PREF[UNIT[id].role].find((a) => UATTR[a].era <= S.eraReached && !arr.includes(a));
+      if (pick) {
+        arr[i] = pick;
+        changed = true;
+      }
+    }
+    if (changed) S.uattr[id] = arr;
+  }
 
-  function fixFormation() {
-    const n = CW.slotCount();
-    const f = S.formation.slice(0, n);
-    while (f.length < n) f.push(null);
-    for (let i = 0; i < n; i++) if (!f[i]) f[i] = bestUnitFor(i);
-    S.formation = f;
+  // ---- unit attributes: equipped per unit type
+  CW.uslots = (id) => 1 + (CW.unitLevel(id) >= 10 ? 1 : 0) + (CW.unitLevel(id) >= 30 ? 1 : 0);
+  CW.unlockedUAttrs = () => UATTRS.filter((a) => a.era <= S.eraReached);
+  CW.equip = function (id, slot, aid) {
+    if (!UNIT[id] || slot < 0 || slot >= CW.uslots(id)) return false;
+    if (aid && (!UATTR[aid] || UATTR[aid].era > S.eraReached)) return false;
+    const arr = (S.uattr[id] || []).slice();
+    if (aid) {
+      const at = arr.indexOf(aid);
+      if (at >= 0 && at !== slot) arr[at] = arr[slot] || null;
+    }
+    arr[slot] = aid || null;
+    S.uattr[id] = arr;
+    dirty();
+    return true;
+  };
+  function uaStats(id) {
+    const out = {};
+    const arr = S.uattr[id] || [];
+    const n = CW.uslots(id);
+    for (let i = 0; i < n; i++) {
+      const a = UATTR[arr[i]];
+      if (a && a.era <= S.eraReached) for (const k in a.fx) out[k] = (out[k] || 0) + a.fx[k];
+    }
+    return out;
   }
-  function bestUnitFor(i) {
-    const roles = ['inf', 'rng', 'inf', 'hvy', 'rng', 'inf'];
-    const role = roles[i % roles.length];
-    const pool = CW.unlockedUnits().filter((u) => u.role === role);
-    pool.sort((a, b) => unitPower(b.id) - unitPower(a.id));
-    return pool[0].id;
-  }
-  function unitPower(id) {
-    const u = UNIT[id];
-    return eraPow(u.era) * lvlMult(CW.unitLevel(id));
-  }
-  CW.unitPower = unitPower;
 
   function armyContext() {
     const roles = new Set();
     let pride = 0;
     let rally = 0;
     const me = LEADER[S.main].era;
-    S.formation.forEach((id) => {
-      if (!id) return;
+    for (const id in S.army) {
       const u = UNIT[id];
       roles.add(u.role);
       if (u.era === me) pride++;
       if (u.trait === 'rally') rally++;
-    });
-    return { combo: roles.size === 3, pride, rally };
+    }
+    return { combo: roles.size >= 3, pride, rally };
   }
 
-  function squadStats(id, ctx) {
+  // stats of one soldier of a unit type, with levels, era power, doctrines, leader bonuses and equipped attributes
+  function unitStats(id, ctx) {
     const m = mods();
     const u = UNIT[id];
     const r = ROLES[u.role];
+    const ua = uaStats(id);
     const base = eraPow(u.era) * lvlMult(CW.unitLevel(id)) * m.shard;
-    let a = 1 + m.atk + m[u.role] + m.lead + m.pride * ctx.pride + 0.06 * ctx.rally;
-    let h = 1 + m.hp + m[u.role] + m.lead;
-    if (ctx.combo) {
-      a += m.combined;
-      h += m.combined;
-    }
+    const a = 1 + m.atk + m[u.role] + m.lead + m.pride * ctx.pride + 0.06 * ctx.rally + (ctx.combo ? m.combined : 0) + (ua.dmg || 0);
+    const h = 1 + m.hp + m[u.role] + m.lead + (ctx.combo ? m.combined : 0) + (ua.hp || 0);
     let hp = r.hp * base * h;
+    if (u.trait === 'guard') hp *= 1.3;
+    let int = r.int / (1 + (ua.aspd || 0));
+    if (u.trait === 'swift') int /= 1.35;
+    const range = (u.range !== undefined ? u.range : r.range) * (1 + (ua.range || 0)) * (u.trait === 'snipe' ? 1.5 : 1);
+    const speed = (u.speed || r.speed) * (1 + (ua.move || 0) + m.move) * (u.trait === 'swift' ? 1.2 : 1);
+    return { hp, atk: r.atk * base * a, int, range, speed, ua };
+  }
+  CW.unitStats = (id) => unitStats(id, armyContext());
+  function enemyStats(u, g) {
+    const r = ROLES[u.role];
+    let hp = r.hp * g * CFG.enemyHp * (1 - Math.min(0.5, mods().enemyHp));
     if (u.trait === 'guard') hp *= 1.3;
     let int = r.int;
     if (u.trait === 'swift') int /= 1.35;
-    return { hp, atk: r.atk * base * a, int };
-  }
-  CW.squadStats = (id) => squadStats(id, armyContext());
-
-  let sid = 1;
-  function mkSquad(side, id, st, slot) {
-    const u = UNIT[id];
     return {
-      sid: sid++, side, uid: id, role: u.role, trait: u.trait, era: u.era,
-      hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, t: Math.random() * st.int * 0.8,
-      alive: true, stun: 0, struck: false, isBoss: false, slot, flash: 0, lunge: 0,
+      hp, atk: r.atk * g * CFG.enemyAtk, int,
+      range: (u.range !== undefined ? u.range : r.range) * (u.trait === 'snipe' ? 1.5 : 1),
+      speed: (u.speed || r.speed) * (u.trait === 'swift' ? 1.2 : 1), ua: {},
     };
   }
 
-  // ---- commanders fight on the front line next to their troops
+  // ------------------------------------------------------------ battle entities
+  let eid = 1;
+  function mkUnit(side, id, st) {
+    const u = UNIT[id];
+    const r = ROLES[u.role];
+    return {
+      id: eid++, side, uid: id, lid: null, kind: 'unit', role: u.role, trait: u.trait, era: u.era, x: 0, z: 0,
+      hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, range: st.range, speed: st.speed, ua: st.ua,
+      rad: r.rad * (u.size || 1), proj: u.proj !== undefined ? u.proj : r.proj || null, splash: u.splash !== undefined ? u.splash : r.splash || 0,
+      air: !!u.air, cost: r.cost, t: Math.random() * st.int, rt: 0, target: null, alive: true, stun: 0, struck: false,
+      face: side === 'a' ? 1 : -1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: false, isBoss: false,
+    };
+  }
+  const RANGED_W = { gun: 'bullet', rifle: 'bullet', raygun: 'laser', staff: 'plasma' };
+  const commandIds = () => [S.main].concat(S.partners).filter(Boolean);
   function heroStats(lid, isMain, ctx) {
-    let a = 0;
-    let h = 0;
-    S.formation.forEach((id) => {
-      const st = squadStats(id, ctx);
-      a += st.atk / st.int;
-      h += st.hp;
-    });
-    a /= S.formation.length;
-    h /= S.formation.length;
+    let dps = 0;
+    let hp = 0;
+    let n = 0;
+    for (const id in S.army) {
+      const st = unitStats(id, ctx);
+      const c = S.army[id];
+      dps += (st.atk / st.int) * c;
+      hp += st.hp * c;
+      n += c;
+    }
+    n = Math.max(1, n);
     const r = S.roster[lid] || { lv: 1, stars: 0 };
     const b = (1 + 0.05 * (r.lv - 1)) * (1 + 0.1 * r.stars);
-    const m = isMain ? 1.4 : 1;
-    return { hp: h * CFG.heroHp * m * b * (1 + mods().heroHp), atk: a * 1.4 * CFG.heroAtk * m * b, int: 1.4 };
+    const k = isMain ? 1.4 : 1;
+    return { hp: (hp / n) * CFG.heroHp * k * b * (1 + mods().heroHp), atk: (dps / n) * 1.2 * CFG.heroAtk * k * b, int: 1.2 };
   }
-  CW.heroStats = (lid, isMain) => heroStats(lid, isMain, armyContext());
   function mkHero(lid, i, st) {
+    const w = CW.weaponOf(lid);
     return {
-      sid: sid++, side: 'a', uid: null, lid, role: 'hero', isHero: true, main: i === 0, trait: null, era: LEADER[lid].era,
-      hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, t: Math.random() * 0.8, alive: true, stun: 0, struck: false,
-      isBoss: false, slot: 100 + i, flash: 0, lunge: 0,
+      id: eid++, side: 'a', uid: null, lid, kind: 'hero', role: 'hero', trait: null, era: LEADER[lid].era, x: 100, z: [60, 42, 78][i],
+      hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, range: RANGED_W[w] ? 55 : 9, speed: 24, ua: {}, rad: 5,
+      proj: RANGED_W[w] || null, splash: 0, air: false, cost: 0, t: Math.random() * 0.8, rt: 0, target: null, alive: true, stun: 0,
+      struck: false, face: 1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: true, isBoss: false, main: i === 0,
     };
-  }
-  const commandIds = () => [S.main].concat(S.partners).filter(Boolean);
-
-  function buildAllies() {
-    fixFormation();
-    const ctx = armyContext();
-    B.allies = S.formation.map((id, i) => mkSquad('a', id, squadStats(id, ctx), i));
-    commandIds().forEach((lid, i) => B.allies.push(mkHero(lid, i, heroStats(lid, i === 0, ctx))));
-  }
-  function refreshAllies() {
-    if (!B) return;
-    fixFormation();
-    const ctx = armyContext();
-    const oldSq = B.allies.filter((q) => !q.isHero);
-    const oldH = B.allies.filter((q) => q.isHero);
-    let squads;
-    const same = oldSq.length === S.formation.length && oldSq.every((q, i) => q.uid === S.formation[i]);
-    if (!same) {
-      squads = S.formation.map((id, i) => mkSquad('a', id, squadStats(id, ctx), i));
-      squads.forEach((q, i) => {
-        const o = oldSq[i];
-        if (o && o.uid === q.uid) {
-          q.hp = o.alive ? q.maxHp * (o.hp / o.maxHp) : 0;
-          q.alive = o.alive;
-        }
-      });
-    } else {
-      squads = oldSq;
-      squads.forEach((q) => {
-        const st = squadStats(q.uid, ctx);
-        const ratio = q.maxHp > 0 ? q.hp / q.maxHp : 1;
-        q.maxHp = st.hp;
-        q.hp = q.alive ? st.hp * ratio : 0;
-        q.atk = st.atk;
-        q.int = st.int;
-      });
-    }
-    const heroes = commandIds().map((lid, i) => {
-      const st = heroStats(lid, i === 0, ctx);
-      const h = oldH.find((q) => q.lid === lid);
-      if (!h) return mkHero(lid, i, st);
-      const ratio = h.maxHp > 0 ? h.hp / h.maxHp : 1;
-      h.main = i === 0;
-      h.slot = 100 + i;
-      h.maxHp = st.hp;
-      h.hp = h.alive ? st.hp * ratio : 0;
-      h.atk = st.atk;
-      h.int = st.int;
-      return h;
-    });
-    B.allies = squads.concat(heroes);
   }
   function heroAlive(lid) {
     if (!B) return true;
-    for (const q of B.allies) if (q.isHero && q.lid === lid) return q.alive;
+    for (const q of B.a) if (q.isHero && q.lid === lid) return q.alive;
     return true;
   }
   CW.heroAlive = heroAlive;
 
-  // ------------------------------------------------------------ battle flow
-  function startStage(rebuild) {
-    const info = CW.stageInfo(S.stage);
-    if (!B || rebuild) {
-      B = {
-        allies: [], enemies: [], boss: null, phase: 'march', pt: 0.8, wave: 1, info,
-        fx: [], waveT: 0, bossT: 0, goldAcc: 0, gpsT: 0, time: 0, sa: zeroSide(), se: zeroSide(),
-      };
-      buildAllies();
+  // upgrades bought mid-battle reach the soldiers already fighting
+  function refreshAllies() {
+    if (!B) return;
+    const ctx = armyContext();
+    const cache = {};
+    for (const q of B.a) {
+      if (q.kind !== 'unit') continue;
+      const st = cache[q.uid] || (cache[q.uid] = unitStats(q.uid, ctx));
+      const ratio = q.maxHp > 0 ? q.hp / q.maxHp : 1;
+      q.maxHp = st.hp;
+      q.hp = q.alive ? st.hp * ratio : 0;
+      q.atk = st.atk;
+      q.int = st.int;
+      q.range = st.range;
+      q.speed = st.speed;
+      q.ua = st.ua;
     }
-    B.info = info;
-    B.wave = 1;
-    spawnWave();
-    sides();
-    emit('stage', info);
+    commandIds().forEach((lid, i) => {
+      const h = B.a.find((q) => q.isHero && q.lid === lid);
+      if (!h) return;
+      const st = heroStats(lid, i === 0, ctx);
+      const ratio = h.maxHp > 0 ? h.hp / h.maxHp : 1;
+      h.maxHp = st.hp;
+      h.hp = h.alive ? st.hp * ratio : 0;
+      h.atk = st.atk;
+    });
   }
 
-  function enemySquad(u, g, i) {
-    const m = mods();
-    const r = ROLES[u.role];
-    const st = { hp: r.hp * g * CFG.enemyHp * (1 - Math.min(0.5, m.enemyHp)), atk: r.atk * g * CFG.enemyAtk, int: r.int };
-    if (u.trait === 'guard') st.hp *= 1.3;
-    if (u.trait === 'swift') st.int /= 1.35;
-    return mkSquad('e', u.id, st, i);
+  // battle lines: infantry in front, heavy behind them, ranged at the back, cavalry on both flanks
+  function deploy(list, side) {
+    const groups = { inf: [], rng: [], cav: [], hvy: [] };
+    for (const q of list) groups[q.role].push(q);
+    const place = (arr, x0, zMin, zMax, colStep) => {
+      if (!arr.length) return;
+      const span = zMax - zMin;
+      const per = Math.max(1, Math.min(arr.length, Math.floor(span / 7) + 1));
+      arr.forEach((q, i) => {
+        const col = Math.floor(i / per);
+        const row = i % per;
+        const n = Math.min(per, arr.length - col * per);
+        const z = n === 1 ? (zMin + zMax) / 2 : zMin + (span * row) / (n - 1);
+        let x = x0 - col * colStep + (row % 2) * 2;
+        if (side === 'e') x = FX - x;
+        q.x = x + (Math.random() - 0.5) * 2;
+        q.z = z + (Math.random() - 0.5) * 2;
+        q.face = side === 'a' ? 1 : -1;
+      });
+    };
+    place(groups.inf, 122, 14, 106, 8);
+    place(groups.hvy, 88, 22, 98, 15);
+    place(groups.rng, 58, 12, 108, 7);
+    const half = Math.ceil(groups.cav.length / 2);
+    place(groups.cav.slice(0, half), 128, 3, 22, 10);
+    place(groups.cav.slice(half), 128, 98, 117, 10);
   }
 
-  function spawnWave() {
-    const info = B.info;
+  function enemyCap(info) {
+    const era = info.chaos ? NERA - 1 : info.era;
+    return Math.floor((CFG.capBase + CFG.capPerEra * era) * CFG.enemyCap * (info.chaos ? 1.15 : 1));
+  }
+  function enemyArmy(info, g) {
+    let cap = enemyCap(info);
+    if (info.isBoss) cap = Math.floor(cap * 0.6);
+    const byRole = {};
+    UNITS.forEach((u) => {
+      if (u.era === info.era) byRole[u.role] = u;
+    });
+    const share = { hvy: 0.18, cav: 0.14, rng: 0.28 };
+    const list = [];
+    let used = 0;
+    const add = (u, n) => {
+      const st = enemyStats(u, g);
+      for (let i = 0; i < n; i++) list.push(mkUnit('e', u.id, st));
+      used += n * ROLES[u.role].cost;
+    };
+    for (const role in share) {
+      const u = byRole[role];
+      if (!u) continue;
+      const n = Math.max(0, Math.round((cap * share[role] * (0.7 + Math.random() * 0.6)) / ROLES[role].cost));
+      add(u, Math.min(n, Math.floor((cap - used) / ROLES[role].cost)));
+    }
+    if (byRole.inf) add(byRole.inf, Math.max(1, cap - used));
+    return list;
+  }
+
+  let goldAcc = 0;
+  let gpsT = 0;
+  function startBattle() {
+    const info = CW.stageInfo(S.stage);
+    fixArmy();
+    const ctx = armyContext();
+    const allies = [];
+    for (const id in S.army) {
+      const st = unitStats(id, ctx);
+      for (let i = 0; i < S.army[id]; i++) allies.push(mkUnit('a', id, st));
+    }
+    deploy(allies, 'a');
+    commandIds().forEach((lid, i) => allies.push(mkHero(lid, i, heroStats(lid, i === 0, ctx))));
     let g = growth(S.stage);
     if (info.chaos) g *= CFG.chaos;
-    const pool = UNITS.filter((u) => u.era === info.era);
-    const pick = (role) => pool.find((u) => u.role === role);
-    const roll = () => {
-      const x = Math.random();
-      return x < 0.45 ? 'inf' : x < 0.8 ? 'rng' : 'hvy';
-    };
-    const list = [];
-    B.boss = null;
+    const foes = enemyArmy(info, g);
+    deploy(foes, 'e');
+    let boss = null;
+    let bossT = 0;
     if (info.isBoss) {
-      const n = 2 + Math.floor(info.era / 3);
-      for (let i = 0; i < n; i++) list.push(enemySquad(pick(i % 2 ? 'rng' : 'inf'), g, i));
       const lid = info.bossId;
       let treasury = 0;
       for (let j = 0; j < 3; j++) treasury += CW.attr(lid, j).stats.gold || 0;
       const hp = ROLES.hvy.hp * g * CFG.enemyHp * CFG.bossHp * (info.echo ? 1.25 : 1) * (info.mystery ? CFG.mysteryHp : 1) * Math.min(1, 0.55 + 0.03 * S.stage) * (1 + treasury * 0.5);
-      const boss = {
-        sid: sid++, side: 'e', uid: null, lid, role: 'boss', trait: null, era: info.era,
-        hp, maxHp: hp, atk: ROLES.hvy.atk * g * CFG.enemyAtk * CFG.bossAtk * (info.mystery ? CFG.mysteryAtk : 1), int: 1.6, t: 0,
-        alive: true, stun: 0, struck: false, isBoss: true, slot: 99, flash: 0, lunge: 0,
+      const w = CW.weaponOf(lid);
+      boss = {
+        id: eid++, side: 'e', uid: null, lid, kind: 'boss', role: 'boss', trait: null, era: info.era, x: FX - 70, z: 60,
+        hp, maxHp: hp, atk: ROLES.hvy.atk * g * CFG.enemyAtk * CFG.bossAtk * (info.mystery ? CFG.mysteryAtk : 1), int: 1.6,
+        range: RANGED_W[w] ? 60 : 13, speed: 16, ua: {}, rad: 10, proj: RANGED_W[w] || null, splash: 0.4, air: false, cost: 0,
+        t: 0, rt: 0, target: null, alive: true, stun: 0, struck: false, face: -1, moving: false, flash: 0, lunge: 0, burn: null,
+        revived: false, down: 0, isHero: false, isBoss: true,
       };
-      list.push(boss);
-      B.boss = boss;
-      B.bossT = CFG.bossTime + mods().bossTime + (info.mystery ? 15 : 0);
-      B.bossTMax = B.bossT;
-    } else {
-      const n = Math.min(9, 3 + Math.floor(info.era / 2) + (info.sub === 1 ? 1 : 0) + (B.wave === CFG.waves ? 1 : 0) + (info.chaos ? 1 : 0));
-      for (let i = 0; i < n; i++) list.push(enemySquad(pick(roll()), g, i));
+      foes.push(boss);
+      bossT = CFG.bossTime + mods().bossTime + (info.mystery ? 15 : 0);
     }
-    // front units first, ranged behind, boss at the very back
-    const order = { inf: 0, hvy: 1, rng: 2, boss: 3 };
-    list.sort((a, b) => order[a.role] - order[b.role]);
-    list.forEach((q, i) => (q.slot = i));
-    B.enemies = list;
-    B.phase = 'march';
-    B.pt = 0.8;
-    B.waveT = 0;
-    B.allies.forEach((q) => {
-      q.struck = false;
-    });
-    emit('wave', { wave: B.wave, info });
+    B = {
+      info, phase: 'deploy', pt: 1.2, time: 0, ft: 0, a: allies, e: foes, ents: allies.concat(foes), boss, bossT, bossTMax: bossT,
+      proj: [], fx: [], sa: zeroSide(), se: zeroSide(), medT: 1, aliveA: allies.length, aliveE: foes.length,
+    };
+    sides();
+    emit('stage', info);
   }
 
-  // ---- combat multipliers from both sides' attributes (B.sa = yours, B.se = the enemy leader's)
+  // ---- combat multipliers from both sides' leader attributes (B.sa = yours, B.se = the enemy leader's)
   const allyAtkMult = () => Math.max(0.2, 1 + Math.min(2, B.sa.atk) - Math.min(0.7, B.se.weak));
-  const allySpd = () => 1 + mods().spd + Math.min(1.5, B.sa.spd) + (B.waveT < 6 ? mods().blitz : 0);
+  const allySpd = () => 1 + mods().spd + Math.min(1.5, B.sa.spd) + (B.ft < 6 ? mods().blitz : 0);
   const allyTaken = () => (1 - Math.min(0.8, mods().def + B.sa.def)) * (1 + Math.min(1.5, B.se.expose));
   const enemyAtkMult = () => Math.max(0.2, 1 + B.se.atk - Math.min(0.7, B.sa.weak + mods().enemyAtk));
   const enemyTaken = () => (1 + Math.min(1.5, B.sa.expose)) * (1 - Math.min(0.7, B.se.def));
   const enemySpd = () => 1 + Math.min(1.5, B.se.spd);
 
-  function armyDPS(includeDead) {
+  function armyDPS() {
     let s = 0;
-    for (const q of B.allies) if (q.alive || includeDead) s += q.atk / q.int;
-    if (s === 0 && !includeDead) return armyDPS(true) * 0.5;
+    for (const q of B.a) if (q.alive) s += q.atk / q.int;
+    if (s === 0) for (const q of B.a) s += (q.atk / q.int) * 0.5;
     return s * allyAtkMult() * allySpd();
   }
   CW.armyDPS = () => (B ? armyDPS() : 0);
 
-  const aliveOf = (arr) => arr.filter((q) => q.alive);
-  function frontOf(arr) {
+  // ---- spatial grid for crowding
+  const CELL = 16;
+  const GC = Math.ceil((FX + 80) / CELL);
+  const GR = Math.ceil((FZ + 40) / CELL);
+  const grid = [];
+  for (let i = 0; i < GC * GR; i++) grid.push([]);
+  const cellX = (x) => Math.max(0, Math.min(GC - 1, Math.floor((x + 40) / CELL)));
+  const cellZ = (z) => Math.max(0, Math.min(GR - 1, Math.floor((z + 20) / CELL)));
+  function buildGrid() {
+    for (const c of grid) c.length = 0;
+    for (const q of B.ents) if (q.alive && !q.air) grid[cellX(q.x) + cellZ(q.z) * GC].push(q);
+  }
+  // soldiers don't stand inside each other: overlapping neighbours push apart
+  function separate() {
+    for (const q of B.ents) {
+      if (!q.alive || q.air) continue;
+      const cx = cellX(q.x);
+      const cz = cellZ(q.z);
+      for (let gz = cz - 1; gz <= cz + 1; gz++) {
+        if (gz < 0 || gz >= GR) continue;
+        for (let gx = cx - 1; gx <= cx + 1; gx++) {
+          if (gx < 0 || gx >= GC) continue;
+          for (const p of grid[gx + gz * GC]) {
+            if (p.id <= q.id || !p.alive) continue;
+            const dx = p.x - q.x;
+            const dz = p.z - q.z;
+            const min = (q.rad + p.rad) * 0.8;
+            const d2 = dx * dx + dz * dz;
+            if (d2 >= min * min) continue;
+            const d = Math.sqrt(d2) || 0.01;
+            const push = (min - d) / 2;
+            const nx = d2 ? dx / d : Math.random() - 0.5;
+            const nz = d2 ? dz / d : Math.random() - 0.5;
+            const wq = q.isBoss ? 0.1 : 1;
+            const wp = p.isBoss ? 0.1 : 1;
+            q.x -= nx * push * wq;
+            q.z -= nz * push * wq;
+            p.x += nx * push * wp;
+            p.z += nz * push * wp;
+          }
+        }
+      }
+      q.z = Math.max(2, Math.min(FZ - 2, q.z));
+      q.x = Math.max(-20, Math.min(FX + 20, q.x));
+    }
+  }
+  function nearestFoe(q) {
+    const foes = q.side === 'a' ? B.e : B.a;
     let best = null;
-    for (const q of arr) if (q.alive && !q.isBoss && (!best || q.slot < best.slot)) best = q;
-    if (best) return best;
-    for (const q of arr) if (q.alive) return q;
-    return null;
+    let bd = Infinity;
+    for (const f of foes) {
+      if (!f.alive) continue;
+      const dx = f.x - q.x;
+      const dz = (f.z - q.z) * 1.3;
+      const d = dx * dx + dz * dz;
+      if (d < bd) {
+        bd = d;
+        best = f;
+      }
+    }
+    return best;
+  }
+  function nearestTo(list, x, z, r, not) {
+    let best = null;
+    let bd = r * r;
+    for (const f of list) {
+      if (!f.alive || f === not) continue;
+      const d = (f.x - x) ** 2 + (f.z - z) ** 2;
+      if (d < bd) {
+        bd = d;
+        best = f;
+      }
+    }
+    return best;
   }
 
-  function pickTarget(att, foes) {
-    const alive = aliveOf(foes);
-    if (!alive.length) return null;
-    if (att.trait === 'snipe') {
-      let w = alive[0];
-      for (const q of alive) if (q.hp < w.hp) w = q;
-      return w;
+  // ---- one soldier's turn: pick the nearest enemy, march into range, attack
+  function think(q, dt, spd) {
+    q.rt -= dt;
+    let t = q.target;
+    if (!t || !t.alive || q.rt <= 0) {
+      t = q.target = nearestFoe(q);
+      q.rt = 0.3 + Math.random() * 0.25;
     }
-    const guards = alive.filter((q) => q.trait === 'guard');
-    if (att.role === 'rng') {
-      if (guards.length && Math.random() < 0.5) return guards[0];
-      return alive[(Math.random() * alive.length) | 0];
+    if (!t) {
+      q.moving = false;
+      return;
     }
-    if (guards.length) return guards[0];
-    return frontOf(foes);
+    const dx = t.x - q.x;
+    const dz = t.z - q.z;
+    const d = Math.sqrt(dx * dx + dz * dz) || 0.001;
+    q.face = dx >= 0 ? 1 : -1;
+    const reach = q.range + t.rad + q.rad * 0.5;
+    if (d > reach) {
+      const k = Math.min(q.speed * dt, d - reach * 0.9) / d;
+      q.x += dx * k;
+      q.z += dz * k;
+      q.moving = true;
+    } else {
+      q.moving = false;
+      q.t += dt * spd;
+      if (q.t >= q.int) {
+        q.t -= q.int;
+        attack(q, t, d);
+      }
+    }
   }
 
-  function attack(a) {
+  function attack(a, t, d) {
     const ally = a.side === 'a';
-    const foes = ally ? B.enemies : B.allies;
-    const t = pickTarget(a, foes);
-    if (!t) return;
     const m = mods();
     const sd = ally ? B.sa : B.se;
+    const ua = a.ua;
     let dmg = a.atk * (ally ? allyAtkMult() : enemyAtkMult());
-    if (a.role === 'rng') dmg *= 1 + sd.ranged;
     if (!a.struck) {
       a.struck = true;
       if (a.trait === 'charge') dmg *= 4;
+      if (ua.charge) dmg *= 1 + ua.charge;
       if (ally && m.firstStrike) dmg *= 1 + m.firstStrike;
     }
+    if (ua.berserk && a.hp < a.maxHp / 2) dmg *= 1 + ua.berserk;
     if (ally && m.lastStand && a.hp < a.maxHp * 0.35) dmg *= 1 + m.lastStand;
     if (a.trait === 'snipe') dmg *= 1.3;
-    const cc = (ally ? m.crit : 0.05) + sd.crit + (a.trait === 'crit' ? 0.25 : 0);
+    if (a.role === 'rng') dmg *= 1 + sd.ranged;
+    const cc = (ally ? m.crit : 0.05) + sd.crit + (a.trait === 'crit' ? 0.25 : 0) + (ua.crit || 0);
     const crit = Math.random() < cc;
     if (crit) dmg *= ally ? 2 + m.critDmg : 2;
     a.lunge = 1;
-    hit(a, t, dmg, crit, false);
-    if (a.trait === 'pierce') {
-      const o = aliveOf(foes).filter((q) => q !== t);
-      if (o.length) hit(a, o[(Math.random() * o.length) | 0], dmg * 0.6, false, true);
-    }
-    const sp = sd.splash + (a.trait === 'splash' ? 0.35 : 0) + (a.isBoss ? 0.3 : 0);
-    if (sp > 0) for (const q of foes) if (q.alive && q !== t) hit(a, q, dmg * sp, false, true);
-    const stn = sd.stun + (a.trait === 'stun' ? 0.15 : 0);
-    if (stn && t.alive && Math.random() < stn) t.stun = Math.max(t.stun, t.isBoss ? 0.6 : 1.1);
+    if (a.proj && d > 14) {
+      B.proj.push({
+        kind: a.proj, side: a.side, src: a, tgt: t, x0: a.x, z0: a.z, h0: a.air ? 24 : a.isBoss ? 30 : 7,
+        x1: t.x, z1: t.z, h1: t.air ? 24 : 5, t: 0, dur: Math.max(0.05, d / (PSPEED[a.proj] || 200)), dmg, crit,
+      });
+    } else land({ src: a, tgt: t, dmg, crit, x1: t.x, z1: t.z, side: a.side, melee: true });
   }
 
-  function dealTo(t, dmg, fromAlly, bossbane, quiet) {
+  function land(p) {
+    const a = p.src;
+    const ally = p.side === 'a';
+    const foes = ally ? B.e : B.a;
+    let t = p.tgt;
+    if (!t || !t.alive || (t.x - p.x1) ** 2 + (t.z - p.z1) ** 2 > 100) t = nearestTo(foes, p.x1, p.z1, 8);
+    const splash = (a.splash || 0) + (a.trait === 'splash' ? 0.35 : 0) + (a.ua.splash || 0) + (ally ? B.sa.splash : B.se.splash);
+    if (t) hit(a, t, p.dmg, p.crit, false);
+    if (splash > 0) {
+      const r = 11 + (a.role === 'hvy' ? 6 : 0) + (a.isBoss ? 8 : 0);
+      for (const f of foes) if (f.alive && f !== t && (f.x - p.x1) ** 2 + (f.z - p.z1) ** 2 < r * r) hit(a, f, p.dmg * splash, false, true);
+      if (a.role === 'hvy' || a.isBoss || splash >= 0.3) B.fx.push({ k: 'blast', x: p.x1, z: p.z1, r: r * 0.55, side: p.side });
+    }
+  }
+
+  function hit(a, t, dmg, crit, sec) {
+    const ally = a.side === 'a';
+    const done = dealTo(t, dmg, ally, a, false);
+    if (done <= 0) return;
+    const ua = a.ua;
+    if (a.alive) {
+      const dr = (a.trait === 'drain' ? 0.3 : 0) + (ua.drain || 0);
+      if (dr) a.hp = Math.min(a.maxHp, a.hp + done * dr);
+    }
+    if (!sec) {
+      const pr = (a.trait === 'pierce' ? 0.6 : 0) + (ua.pierce || 0);
+      if (pr) {
+        const o = nearestTo(ally ? B.e : B.a, t.x, t.z, 22, t);
+        if (o) hit(a, o, dmg * pr, false, true);
+      }
+      const stn = (ally ? B.sa.stun : B.se.stun) + (a.trait === 'stun' ? 0.15 : 0) + (ua.stun || 0);
+      if (stn && t.alive && Math.random() < stn) t.stun = Math.max(t.stun, t.isBoss ? 0.5 : 1);
+      if (ua.burn && t.alive) t.burn = { dps: (dmg * ua.burn) / 3, t: 3 };
+      if (B.fx.length < 400) B.fx.push({ k: 'hit', to: t.id, crit, dmg: done, side: a.side });
+    }
+  }
+
+  function dealTo(t, dmg, fromAlly, src, quiet) {
     const m = mods();
+    if (t.ua.dodge && Math.random() < t.ua.dodge) return 0;
     if (fromAlly) {
       dmg *= enemyTaken();
-      if (t.isBoss) dmg *= 1 + m.bossDmg + B.sa.boss + (bossbane ? 0.6 : 0);
+      if (t.isBoss) dmg *= 1 + m.bossDmg + B.sa.boss + (src && src.trait === 'bossbane' ? 0.6 : 0);
     } else {
       dmg *= allyTaken();
       if (t.isHero) dmg *= 1 + B.se.boss;
     }
     if (t.trait === 'armor') dmg *= 0.7;
+    if (t.trait === 'guard') dmg *= 0.85;
+    if (t.ua.def) dmg *= 1 - Math.min(0.7, t.ua.def);
+    if (t.ua.rdef && src && src.proj) dmg *= 1 - t.ua.rdef;
     t.hp -= dmg;
     if (!quiet) t.flash = 1;
     if (t.hp <= 0 && t.alive) {
       t.hp = 0;
       t.alive = false;
-      onDeath(t);
+      onDeath(t, src);
     }
     return dmg;
-  }
-
-  function hit(a, t, dmg, crit, secondary) {
-    const ally = a.side === 'a';
-    const done = dealTo(t, dmg, ally, a.trait === 'bossbane');
-    if (a.trait === 'drain' && a.alive) a.hp = Math.min(a.maxHp, a.hp + done * 0.3);
-    if (!secondary || B.fx.length < 120) B.fx.push({ k: 'hit', from: a.sid, to: t.sid, dmg: done, crit, role: a.isBoss ? 'boss' : a.role, side: a.side, sec: secondary });
   }
 
   function addGold(g) {
     S.gold += g;
     S.stats.gold += g;
-    B.goldAcc += g;
+    goldAcc += g;
   }
   CW.addGold = addGold;
 
-  function onDeath(q) {
+  function onDeath(q, src) {
+    B.fx.push({ k: 'death', id: q.id, x: q.x, z: q.z, uid: q.uid, lid: q.lid, side: q.side, kind: q.kind, air: q.air, face: q.face });
     if (q.isHero) {
       B.fx.push({ k: 'herofall', lid: q.lid });
       emit('heroFall', q.lid);
@@ -584,10 +866,21 @@
     if (q.side === 'e') {
       S.stats.kills++;
       if (!q.isBoss) {
-        const g = bounty();
-        addGold(g);
-        B.fx.push({ k: 'gold', to: q.sid, v: g });
+        addGold(bounty() * q.cost * (1 + ((src && src.ua && src.ua.gold) || 0)));
+        if (Math.random() < 0.35) B.fx.push({ k: 'gold', x: q.x, z: q.z });
       }
+    }
+  }
+
+  // field medics patch up the most wounded soldiers near them once a second
+  function medics() {
+    for (const q of B.ents) {
+      if (!q.alive || !q.ua.medic) continue;
+      const list = q.side === 'a' ? B.a : B.e;
+      const near = [];
+      for (const p of list) if (p.alive && p !== q && p.hp < p.maxHp && (p.x - q.x) ** 2 + (p.z - q.z) ** 2 < 900) near.push(p);
+      near.sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp);
+      for (let i = 0; i < Math.min(6, near.length); i++) near[i].hp = Math.min(near[i].maxHp, near[i].hp + near[i].maxHp * q.ua.medic);
     }
   }
 
@@ -595,185 +888,114 @@
   function step(dt) {
     S.stats.time += dt;
     B.time += dt;
-    B.gpsT += dt;
-    if (B.gpsT >= 10) {
-      const cur = B.goldAcc / B.gpsT;
+    gpsT += dt;
+    if (gpsT >= 10) {
+      const cur = goldAcc / gpsT;
       S.gps = S.gps ? S.gps * 0.6 + cur * 0.4 : cur;
-      B.goldAcc = 0;
-      B.gpsT = 0;
+      goldAcc = 0;
+      gpsT = 0;
     }
-    switch (B.phase) {
-      case 'march':
-        B.pt -= dt;
-        if (B.pt <= 0) B.phase = 'fight';
-        break;
-      case 'fight':
-        fight(dt);
-        break;
-      case 'clear':
-        B.pt -= dt;
-        if (B.pt <= 0) afterClear();
-        break;
-      case 'defeat':
-        B.pt -= dt;
-        if (B.pt <= 0) afterDefeat();
-        break;
-      case 'victory':
-        B.pt -= dt;
-        if (B.pt <= 0) afterVictory();
-        break;
+    if (B.phase === 'deploy') {
+      B.pt -= dt;
+      if (B.pt <= 0) B.phase = 'fight';
+    } else if (B.phase === 'fight') fight(dt);
+    else {
+      B.pt -= dt;
+      for (const p of B.proj) p.t += dt;
+      B.proj = B.proj.filter((p) => p.t < p.dur);
+      if (B.pt <= 0) {
+        if (B.phase === 'victory') afterVictory();
+        else afterDefeat();
+      }
     }
   }
 
   function fight(dt) {
     const m = mods();
-    B.waveT += dt;
+    B.ft += dt;
     sides();
     const sa = B.sa;
     const se = B.se;
+    buildGrid();
     const aSpd = allySpd();
     const eSpd = enemySpd();
-    const regen = m.regen + sa.regen;
-    for (const q of B.allies) {
+    for (const q of B.ents) {
+      const ally = q.side === 'a';
       if (!q.alive) {
-        // attribute: fallen squads get back up on their own
-        if (sa.revive) {
-          q.down = (q.down || 0) + dt;
-          if (q.down >= sa.revive) {
+        const rv = ally ? sa.revive : se.revive;
+        if (rv && !q.revived && !q.isBoss) {
+          q.down += dt;
+          if (q.down >= rv) {
             q.alive = true;
+            q.revived = true;
             q.hp = q.maxHp * 0.35;
             q.stun = 0;
-            q.down = 0;
+            q.burn = null;
+            B.fx.push({ k: 'revive', id: q.id });
           }
         }
         continue;
       }
-      const r = regen + (q.trait === 'regen' ? 0.03 : 0);
-      if (r) q.hp = Math.min(q.maxHp, q.hp + q.maxHp * r * dt);
+      const rg = (ally ? m.regen + sa.regen : se.regen) + (q.trait === 'regen' ? 0.03 : 0) + (q.ua.regen || 0);
+      if (rg) q.hp = Math.min(q.maxHp, q.hp + q.maxHp * rg * dt);
+      if (q.burn) {
+        q.burn.t -= dt;
+        dealTo(q, q.burn.dps * dt, !ally, null, true);
+        if (q.burn.t <= 0) q.burn = null;
+        if (!q.alive) continue;
+      }
       if (q.stun > 0) {
         q.stun -= dt;
-        continue;
-      }
-      q.t += dt * aSpd;
-      let n = 0;
-      while (q.t >= q.int && n++ < 4) {
-        q.t -= q.int;
-        attack(q);
+        q.moving = false;
+      } else think(q, dt, ally ? aSpd : eSpd);
+    }
+    separate();
+    B.medT -= dt;
+    if (B.medT <= 0) {
+      B.medT = 1;
+      medics();
+    }
+    for (let i = B.proj.length - 1; i >= 0; i--) {
+      const p = B.proj[i];
+      p.t += dt;
+      if (p.t >= p.dur) {
+        B.proj.splice(i, 1);
+        land(p);
       }
     }
-    for (const q of B.enemies) {
-      if (!q.alive) {
-        if (se.revive && !q.isBoss) {
-          q.down = (q.down || 0) + dt;
-          if (q.down >= se.revive) {
-            q.alive = true;
-            q.hp = q.maxHp * 0.35;
-            q.down = 0;
-          }
-        }
-        continue;
-      }
-      const r = se.regen + (q.trait === 'regen' ? 0.03 : 0);
-      if (r) q.hp = Math.min(q.maxHp, q.hp + q.maxHp * r * dt);
-      if (q.stun > 0) {
-        q.stun -= dt;
-        continue;
-      }
-      q.t += dt * eSpd;
-      let n = 0;
-      while (q.t >= q.int && n++ < 4) {
-        q.t -= q.int;
-        attack(q);
-      }
+    let aliveA = 0;
+    let aliveE = 0;
+    for (const q of B.a) if (q.alive) aliveA++;
+    for (const q of B.e) if (q.alive) aliveE++;
+    // leader attribute: burning, spread across the enemy army
+    if (sa.burn && aliveE) {
+      const d = (sa.burn * armyDPS() * dt) / aliveE;
+      for (const q of B.e) if (q.alive) dealTo(q, d, true, null, true);
     }
-    // attribute: burning
-    if (sa.burn) {
-      const d = sa.burn * armyDPS() * dt;
-      for (const q of B.enemies) if (q.alive) dealTo(q, d, true, false, true);
-    }
-    if (se.burn) {
+    if (se.burn && aliveA) {
       let eDps = 0;
-      for (const q of B.enemies) if (q.alive) eDps += q.atk / q.int;
-      const d = se.burn * eDps * enemyAtkMult() * dt;
-      for (const q of B.allies) if (q.alive) dealTo(q, d, false, false, true);
+      for (const q of B.e) if (q.alive) eDps += q.atk / q.int;
+      const d = (se.burn * eDps * enemyAtkMult() * dt) / aliveA;
+      for (const q of B.a) if (q.alive) dealTo(q, d, false, null, true);
     }
-    // leader battle clock
     if (B.boss && B.boss.alive) {
       B.bossT -= dt;
-      if (B.bossT <= 0) {
-        lose('time');
-        return;
-      }
+      if (B.bossT <= 0) return lose('time');
     }
-    if (!B.enemies.some((q) => q.alive)) {
-      if (B.info.isBoss) win();
-      else {
-        B.phase = 'clear';
-        B.pt = 0.6;
-      }
-      return;
-    }
-    if (!B.allies.some((q) => q.alive)) lose('wiped');
-  }
-
-  function healBetweenWaves() {
-    const m = mods();
-    const heal = 0.3 * (1 + m.waveHeal);
-    const rev = Math.min(1, 0.4 + m.reviveHp);
-    for (const q of B.allies) {
-      if (q.alive) q.hp = Math.min(q.maxHp, q.hp + q.maxHp * heal);
-      else {
-        q.alive = true;
-        q.hp = q.maxHp * rev;
-        q.stun = 0;
-      }
-      q.down = 0;
-    }
-  }
-
-  function afterClear() {
-    healBetweenWaves();
-    if (B.wave < CFG.waves) {
-      B.wave++;
-      spawnWave();
-    } else stageCleared();
-  }
-
-  function stageCleared() {
-    if (S.farming) {
-      S.farmCount++;
-      if (S.auto.push && S.farmCount >= 2) S.farming = false;
-    }
-    if (S.farming) startStage();
-    else advanceStage();
-  }
-
-  function advanceStage() {
-    S.stage++;
-    // skip boss stages already won in this run
-    while (S.stage < S.runMax && CW.stageInfo(S.stage).isBoss) S.stage++;
-    if (S.stage > S.runMax) S.runMax = S.stage;
-    if (S.stage > S.best) S.best = S.stage;
-    const info = CW.stageInfo(S.stage);
-    const reach = info.chaos ? 9 : info.era;
-    if (reach > S.eraReached) {
-      // veterans train the new recruits: fresh units start partway to your best unit level
-      const top = Math.max(1, ...Object.values(S.unitLv));
-      UNITS.forEach((u) => {
-        if (u.era > S.eraReached && u.era <= reach && !S.unitLv[u.id]) S.unitLv[u.id] = Math.max(1, Math.floor(top * CFG.vet));
-      });
-      S.eraReached = reach;
-      dirty();
-      fixFormation();
-      emit('era', info);
-    }
-    if (S.stage === PATH_LEN + 1) emit('chaos', info);
-    startStage();
+    aliveA = 0;
+    aliveE = 0;
+    for (const q of B.a) if (q.alive) aliveA++;
+    for (const q of B.e) if (q.alive) aliveE++;
+    B.aliveA = aliveA;
+    B.aliveE = aliveE;
+    if (!aliveE) return win();
+    if (!aliveA) return lose('wiped');
+    if (!B.boss && B.ft > CFG.battleTime) return aliveA >= aliveE ? win() : lose('time');
   }
 
   function lose(why) {
     B.phase = 'defeat';
-    B.pt = 1.4;
+    B.pt = 1.6;
     B.loseWhy = why;
     emit('defeat', { why, info: B.info });
   }
@@ -783,11 +1005,18 @@
     let t = S.stage - 1;
     while (t > 1 && CW.stageInfo(t).isBoss) t--;
     S.stage = Math.max(1, t);
-    startStage(true);
+    startBattle();
   }
 
   function win() {
     const m = mods();
+    B.phase = 'victory';
+    if (!B.info.isBoss) {
+      addGold(bounty() * CFG.winBonus);
+      B.pt = 1.1;
+      B.reward = null;
+      return;
+    }
     const lid = B.info.bossId;
     const g = bounty() * CFG.bossBounty * (1 + m.bossGold);
     addGold(g);
@@ -806,12 +1035,12 @@
     if (m.shardDrop) S.shards += m.shardDrop;
     S.stats.bosses++;
     B.reward = { lid, gold: g, res, echo: B.info.echo, mystery: B.info.mystery };
-    B.phase = 'victory';
-    B.pt = 1.6;
-    if (m.shardDrop || res === 'shard') dirty();
+    B.pt = 1.8;
+    if (m.shardDrop || res === 'shard') M = null;
     emit('victory', B.reward);
   }
   function afterVictory() {
+    if (!B.info.isBoss) return stageCleared();
     const lid = B.reward.lid;
     if (!S.council) S.council = { lid, picks: 1, offers: rollOffers(), rerolls: 0 };
     else {
@@ -819,8 +1048,38 @@
       S.council.lid = lid;
       if (!S.council.offers.length) S.council.offers = rollOffers();
     }
+    if (!S.council.offers.length) S.council.picks = 0; // every doctrine is maxed out
     advanceStage();
     emit('council', S.council);
+  }
+  function stageCleared() {
+    if (S.farming) {
+      S.farmCount++;
+      if (S.auto.push && S.farmCount >= 2) S.farming = false;
+    }
+    if (S.farming) startBattle();
+    else advanceStage();
+  }
+  function advanceStage() {
+    S.stage++;
+    while (S.stage < S.runMax && CW.stageInfo(S.stage).isBoss) S.stage++;
+    if (S.stage > S.runMax) S.runMax = S.stage;
+    if (S.stage > S.best) S.best = S.stage;
+    const info = CW.stageInfo(S.stage);
+    const reach = info.chaos ? NERA - 1 : info.era;
+    if (reach > S.eraReached) {
+      // veterans train the new recruits: fresh units start a few levels below your best unit
+      const top = Math.max(1, ...Object.values(S.unitLv));
+      UNITS.forEach((u) => {
+        if (u.era > S.eraReached && u.era <= reach && !S.unitLv[u.id]) S.unitLv[u.id] = Math.max(1, top - CFG.vet);
+      });
+      S.eraReached = reach;
+      M = null;
+      if (S.auto.build) CW.autoBuild();
+      emit('era', info);
+    }
+    if (S.stage === PATH_LEN + 1) emit('chaos', info);
+    startBattle();
   }
 
   // ------------------------------------------------------------ leader attributes
@@ -844,7 +1103,7 @@
       case 'cdr':
         return 'spd';
       default:
-        return f[0]; // revive, stun, expose, burn, gold
+        return f[0];
     }
   }
   const attrCache = {};
@@ -872,7 +1131,6 @@
       } else o[st] += stats[st] * k;
     }
   }
-  // how strong a leader's attributes are in a given role: stars add 10% each, doctrines and classes add more
   CW.attrStrength = function (lid, role) {
     const m = mods();
     const r = S.roster[lid] || { stars: 0 };
@@ -893,7 +1151,6 @@
     B.sa = a;
     B.se = e;
   }
-  // plain-language description of an attribute at strength k
   const pc = (v) => Math.round(v * 100) + '%';
   const ATXT = {
     atk: (v) => `+${pc(v)} army damage`,
@@ -901,13 +1158,13 @@
     crit: (v) => `+${pc(v)} chance of critical hits`,
     def: (v) => `your army takes ${pc(v)} less damage`,
     regen: (v) => `your army heals ${+(v * 100).toFixed(1)}% health every second`,
-    revive: (v) => `fallen squads get back up after ${Math.round(v)} seconds`,
+    revive: (v) => `fallen soldiers get back up once, after ${Math.round(v)} seconds`,
     stun: (v) => `${pc(v)} chance to stun on every hit`,
     weak: (v) => `enemies deal ${pc(v)} less damage`,
     expose: (v) => `enemies take ${pc(v)} more damage`,
-    burn: (v) => `every enemy burns for ${pc(v)} of your army's damage each second`,
+    burn: (v) => `the enemy army burns for ${pc(v)} of your army's damage each second`,
     gold: (v) => `+${pc(v)} gold`,
-    splash: (v) => `every hit also strikes all other enemies for ${pc(v)} damage`,
+    splash: (v) => `every hit also splashes nearby enemies for ${pc(v)} damage`,
     ranged: (v) => `+${pc(v)} damage from ranged units`,
     boss: (v) => `+${pc(v)} damage to enemy leaders`,
   };
@@ -920,18 +1177,23 @@
     return t.charAt(0).toUpperCase() + t.slice(1);
   };
 
-  // tap / click: a commander strike on the front enemy (or the one clicked)
-  CW.tap = function (targetSid) {
+  // ------------------------------------------------------------ the commander's own strike
+  // tap the battlefield: an explosion at that spot hurts every enemy within reach
+  CW.tap = function (wx, wz) {
     if (!B || B.phase !== 'fight') return 0;
-    let t = targetSid ? B.enemies.find((q) => q.sid === targetSid && q.alive) : null;
-    if (!t) t = frontOf(B.enemies);
-    if (!t) return 0;
+    if (wx === undefined) {
+      const f = nearestTo(B.e, 180, 60, 999);
+      if (!f) return 0;
+      wx = f.x;
+      wz = f.z;
+    }
     const r = S.roster[S.main];
-    const dmg = 0.25 * armyDPS() * (1 + 0.08 * (r.lv - 1));
-    const done = dealTo(t, dmg, true, false);
+    const dmg = 0.12 * armyDPS() * (1 + 0.08 * (r.lv - 1));
+    let total = 0;
+    for (const q of B.e) if (q.alive && (q.x - wx) ** 2 + (q.z - wz) ** 2 < 196) total += dealTo(q, dmg, true, null, false);
     S.stats.taps++;
-    B.fx.push({ k: 'tap', to: t.sid, dmg: done });
-    return done;
+    B.fx.push({ k: 'tap', x: wx, z: wz, dmg: total });
+    return total || 1;
   };
 
   // ------------------------------------------------------------ economy actions
@@ -941,7 +1203,6 @@
     const L = CW.unitLevel(id);
     const base = CFG.costBase * Math.pow(CFG.eraCost, u.era) * (1 - mods().cost);
     const r = CFG.costGrowth;
-    // geometric series from level L to L+n-1
     return (base * Math.pow(r, L - 1) * (Math.pow(r, n) - 1)) / (r - 1);
   };
   CW.maxBuy = function (id) {
@@ -960,6 +1221,7 @@
     if (c > S.gold) return false;
     S.gold -= c;
     S.unitLv[id] = CW.unitLevel(id) + n;
+    if (S.auto.build && S.army[id]) autoEquip(id);
     dirty();
     emit('buy', id);
     return true;
@@ -995,7 +1257,6 @@
     }
     return out;
   }
-  CW.canReorganize = () => !!S.council;
   CW.rerollCost = () => bounty() * 15 * Math.pow(2, S.council ? S.council.rerolls : 0);
   CW.councilReroll = function () {
     if (!S.council || !S.council.picks) return false;
@@ -1009,30 +1270,27 @@
   CW.councilPick = function (id) {
     const c = S.council;
     if (!c || !c.picks || !c.offers.includes(id)) return false;
+    const capBefore = CW.capacity();
     S.doctrines[id] = (S.doctrines[id] || 0) + 1;
     c.picks--;
     c.offers = c.picks ? rollOffers() : [];
+    if (!c.offers.length) c.picks = 0;
     dirty();
+    if (CW.capacity() > capBefore && S.auto.build) CW.autoBuild();
     emit('doctrine', id);
     return true;
   };
   CW.councilClose = function () {
     if (S.council && S.council.picks === 0) S.council = null;
   };
-  CW.setSlot = function (i, uid) {
-    if (!S.council || !UNIT[uid] || UNIT[uid].era > S.eraReached || i < 0 || i >= CW.slotCount()) return false;
-    S.formation[i] = uid;
-    dirty();
-    return true;
-  };
+  // pick your commander and partners; takes effect from the next battle
   CW.setCommand = function (main, p0, p1) {
-    if (!S.council) return false;
     const ids = [main, p0, p1].filter(Boolean);
     if (!ids.every((id) => S.roster[id]) || new Set(ids).size !== ids.length) return false;
     S.main = main;
     S.partners = [p0, p1].filter(Boolean);
     M = null;
-    dirty();
+    emit('command');
     return true;
   };
 
@@ -1045,6 +1303,7 @@
   };
   CW.setAuto = function (k, v) {
     S.auto[k] = !!v;
+    if (k === 'build' && v) CW.autoBuild();
   };
 
   // ------------------------------------------------------------ time rift (prestige)
@@ -1058,12 +1317,13 @@
     infoCache = new Map();
     Object.assign(S, {
       gold: 0, stage: 1, runMax: 1, farming: false, farmCount: 0, unitLv: {}, eraReached: 0, doctrines: {}, council: null,
-      formation: ['spearman', 'spearman', 'slinger', 'chariot'],
+      army: START_ARMY(), uattr: {},
     });
+    S.auto.build = true;
     Object.values(S.roster).forEach((r) => (r.lv = 1));
     M = null;
     B = null;
-    startStage(true);
+    startBattle();
     emit('rift', n);
     return n;
   };
@@ -1071,15 +1331,15 @@
   // ------------------------------------------------------------ time
   CW.advance = function (sec) {
     if (!S) return;
-    if (!B) startStage(true);
+    if (!B) startBattle();
     let t = Math.min(sec, 60);
-    const h = 0.05;
+    const h = CFG.dt;
     while (t > 0) {
       const d = Math.min(h, t);
       step(d);
       t -= d;
     }
-    if (B.fx.length > 400) B.fx.splice(0, B.fx.length - 400);
+    if (B.fx.length > 600) B.fx.splice(0, B.fx.length - 600);
   };
   CW.offlineGain = function (seconds) {
     const m = mods();
