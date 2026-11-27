@@ -800,7 +800,7 @@
     sk('Crown of Light', [['heal', 0.35]]));
   L('hive', 'The Hive Queen', 'Hatched 3500', 3500, 13, 'conqueror', 'Mother of the Swarm',
     'The vast insect queen of a swarm that devours whole planets; every soldier in her army is one of her children.',
-    { sk: '#4a8a3a', head: 'insect', out: 'void', oc: '#1a2a12', ac: '#9adc5a', bg: '#0a1a0a' },
+    { sk: '#4a8a3a', head: 'insect', fem: 1, out: 'void', oc: '#1a2a12', ac: '#9adc5a', bg: '#0a1a0a' },
     ult('Endless Swarm', [['revive', 9, 0.5], ['buff', 'spd', 0.3, 10]]),
     sk('Acid Spit', [['burn', 8, 6]]),
     sk('Chitin Armor', [['buff', 'def', 0.4, 8]]));
