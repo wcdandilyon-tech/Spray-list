@@ -59,9 +59,9 @@ Units, battlefield leaders and era backdrops get the same 2x treatment.
 The battlefield is drawn on a fixed 768x432 pixel grid that the browser scales up, so the work per frame stays the same
 on any screen size. Text and explosions are cached as images, the page is only touched when a value changes, drawing
 pauses while the battlefield is scrolled out of view, and portraits are built in the background during idle time.
-Movement is sub-pixel with eased lunges, march-ins, fades and health bars. On a 4x CPU-throttled browser,
-a busy late-game battle went from about 35 fps to over 200 fps unthrottled-equivalent headroom (95th-percentile
-frame time 47 ms down to about 8 ms).
+Movement is sub-pixel with eased lunges, march-ins, fades and health bars. Measured in Chromium with the CPU
+throttled 4x and the frame-rate cap off, a busy late-game battle went from about 35 fps to over 200 fps
+(95th-percentile frame time from 47 ms to about 8 ms).
 
 ## Publish it with GitHub Pages
 
