@@ -97,12 +97,16 @@ hits walls every few eras where it has to save up and train, reaches its first T
 and opens Shattered Time after about 10 to 11 hours.
 
 **Nib Nub, your guide.** Nib Nub is a small alien from very far away who does his best to teach you the game as you go.
-His tips are short and in plain words (written so a kid can follow them), and each one appears the first time something new
-matters: how to strike, what gold is for, room in your army, leader battles, losing, the War Council, special moves, front
+His lessons are little conversations in plain words (written so a kid can follow them), and each one plays once, the first
+time something new matters: how to strike, what gold is for, room in your army, leader battles, losing, the War Council, special moves, front
 or back, soldier skills, new eras, the Codex, Time Rifts, the end of the story, prestige and leaders in the ranks. His words
-type out as he talks, the button or bar he means glows, and **Show me** opens the right menu. Everything he has taught you
-is kept in **Nib Nub's Guide** (his face in the top corner), which fills in as you play. His tips can be turned off or
-started again in Settings; saves from before the guide skip the basics.
+type out as he talks, the button or bar he means glows, and **Show me** opens the right menu. A lesson counts as heard the
+moment he starts it, so he never repeats himself, and everything he has taught you is kept in **Nib Nub's Guide** (his face
+in the top corner). Between lessons he chats during battles in little bubbles: when a leader joins you or earns a star, at
+the start of leader battles and mystery fights, in each new era (with a joke for every era), after big specials on either
+side, after a loss, on a prestige or a Time Rift, and now and then with a friendly hint. Each set of lines is used in turn,
+so he doesn't say the same thing twice in a row. Lessons and chatter can each be turned off, or his lessons started again,
+in Settings; saves from before the guide skip the basics.
 
 The **Codex** only shows the leaders you have found so far, with a count of how many are still hidden in each era you have
 reached. Later eras and the mystery leaders stay secret until you get there.

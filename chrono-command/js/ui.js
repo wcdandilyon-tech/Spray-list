@@ -1417,7 +1417,7 @@
     if (tab === 'command') base.push(deckSig, !!st.council, JSON.stringify(st.pos), presSig(), [st.main].concat(st.partners).map((id) => { const gl = CW.prestigeGoal(id); return gl && gl.done ? 1 : 0; }).join(''));
     if (tab === 'doctrines') base.push(JSON.stringify(st.doctrines), !!st.council);
     if (tab === 'rift') base.push(st.runMax, Math.floor(Math.log10(st.shards + 1) * 20));
-    if (tab === 'options') base.push(st.sound, st.auto.push, st.auto.special, st.guide && st.guide.on);
+    if (tab === 'options') base.push(st.sound, st.auto.push, st.auto.special, st.guide && st.guide.on, st.guide && st.guide.chat);
     if (tab === 'guide') base.push(Object.keys(st.guide.seen).length, st.guide.on);
     return base.join('|');
   }
@@ -1670,7 +1670,8 @@
         <label class="tog"><input type="checkbox" data-act="autopush" ${st.auto.push ? 'checked' : ''}><span>Auto-advance<small>Push on to the next stage after each win; off keeps you farming this one</small></span></label>
         <label class="tog"><input type="checkbox" data-act="autospecial" ${st.auto.special !== false ? 'checked' : ''}><span>Auto specials<small>A charged special fires by itself after a few seconds</small></span></label>
         <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound</label>
-        <label class="tog"><input type="checkbox" data-act="tips" ${st.guide.on !== false ? 'checked' : ''}><span>Nib Nub's tips<small>Nib Nub explains each new thing the first time it happens. Every tip is kept in his Guide (his face in the top corner).</small></span></label>
+        <label class="tog"><input type="checkbox" data-act="tips" ${st.guide.on !== false ? 'checked' : ''}><span>Nib Nub teaches new things<small>He explains each new thing the first time it happens, and writes it all down in his Guide (his face in the top corner).</small></span></label>
+        <label class="tog"><input type="checkbox" data-act="chat" ${st.guide.chat !== false ? 'checked' : ''}><span>Nib Nub chats during battles<small>He reacts when leaders join you, new eras, big specials and more.</small></span></label>
       </div>
       <p><button class="btn ghost" data-act="guidereset">Start the guide again</button></p>
       <p><button class="btn ghost" data-act="save">Save now</button> <button class="btn ghost" data-act="export">Export save</button> <button class="btn ghost" data-act="import">Import save</button></p>
@@ -1706,7 +1707,7 @@
     } else if (act === 'uaslot') openUAttr(b.dataset.id, +b.dataset.i);
     else if (act === 'champ') openRanks();
     else if (act === 'guidereset') {
-      st.guide = { seen: {}, on: true };
+      st.guide = { seen: {}, on: true, chat: st.guide.chat };
       toast('Nib Nub will explain everything again', 'blue');
       renderPanel();
     }
@@ -1801,6 +1802,10 @@
     }
     if (e.target.dataset.act === 'tips') {
       S().guide.on = e.target.checked;
+      return;
+    }
+    if (e.target.dataset.act === 'chat') {
+      S().guide.chat = e.target.checked;
       return;
     }
     if (e.target.dataset.act === 'autobuild') {
@@ -2160,66 +2165,104 @@
   }
 
 
-  // ------------------------------------------------------------ the guide
-  // Short tips in plain words that appear the first time something matters, voiced by your commander. Each one is
-  // kept in the Guide page once seen, so the page fills up as you play. "Show me" opens the right menu.
+  // ------------------------------------------------------------ Nib Nub, the guide
+  // A small alien who teaches the game in plain words as you play (lessons) and talks about what happens (chatter).
   const B_ = () => CW.battle();
   const cheapestRecruit = () => Math.min(...CW.unlockedUnits().map((u) => CW.recruitCost(u.id, 1)));
   const anyReady = () => [S().main].concat(S().partners).some((id) => CW.heroAlive(id) && CW.meter(id) >= CW.special(id).cost);
   const prestigeReady = () => Object.keys(S().roster).find((id) => { const gl = CW.prestigeGoal(id); return gl && gl.done; });
+  // Nib Nub's lessons. Each one is a little conversation that plays once, the first time it matters; it counts as heard
+  // the moment he starts, so it never repeats (it stays in his Guide). d() gives the lines he says, one page at a time.
   const TIPS = [
-    { id: 'welcome', sec: 'Basics', t: 'Hello, Commander!', d: () => 'Greetings! I am Nib Nub. I came from very, very far away to help you. Your army fights all by itself. Your job is to make it stronger. Nib Nub will do his best to show you how!', when: () => true },
-    { id: 'tap', sec: 'Basics', t: 'Bonk them from the sky!', d: () => 'Tap anywhere on the battlefield and a strike falls on the enemy. Go on, tap! Nib Nub loves this part.', target: '#screen', when: () => B_().phase === 'fight', done: (st) => st.stats.taps > 0 },
-    { id: 'bars', sec: 'Basics', t: 'Who is winning?', d: () => 'See the bar at the top? Blue is your army. Red is the enemy. Beat all the red ones to win the stage. Easy peasy!', target: '.ov-l', when: (st) => st.stage >= 2 },
-    { id: 'gold', sec: 'Army', t: 'Shiny gold!', d: () => 'Every enemy you beat drops gold. Nib Nub says: spend it! Open Army and tap Recruit to get more soldiers.', target: '[data-sc="army"]', tab: 'army', when: (st) => (st.stage >= 2 || st.stats.kills >= 12) && st.gold >= cheapestRecruit() },
-    { id: 'room', sec: 'Army', t: 'Only so much room', d: () => 'Your army can only fit so many soldiers. Foot soldiers take 1 space, riders take 2 and big machines take 4. Every new era gives you more room.', target: '.capline', when: () => !el.sheet.hidden && tab === 'army' },
-    { id: 'train', sec: 'Army', t: 'Recruit or train?', d: () => 'Recruit buys one more soldier. Train +1 makes every soldier of that kind stronger. Both are good! Auto-build always sends your best soldiers into battle.', target: '.buys', when: (st) => !el.sheet.hidden && tab === 'army' && st.guide.seen.room },
-    { id: 'boss', sec: 'Leaders', t: 'A famous leader!', d: () => 'Ooh, a famous leader from history! Beat them before the timer runs out, and they will join your side.', target: '#hudBoss', when: () => B_().info.isBoss && !B_().info.mystery },
-    { id: 'lose', sec: 'Basics', t: 'Oops! That is okay', d: () => 'Nib Nub loses all the time! Your army steps back to an easier stage to earn more gold. Make it stronger, and it will try again by itself.', ev: 'defeat' },
-    { id: 'council', sec: 'Leaders', t: 'War Council', d: () => 'You won! Now pick one doctrine. It is a bonus for your whole army, and it lasts until your next Time Rift.', modal: 'council', when: (st) => !!st.council && modalKind === 'council' },
-    { id: 'special', sec: 'Leaders', t: 'Special move ready!', d: () => "When a leader's picture glows, their special move is ready! Tap the picture, then tap the special. Kaboom!", target: '#deck .chip.ready', when: anyReady, ev2: 'special' },
-    { id: 'team', sec: 'Leaders', t: 'Your team', d: () => 'You lead with one commander and two helpers called partners. Open Team to swap them. The commander gives the biggest bonus.', target: '[data-sc="command"]', tab: 'command', when: (st) => Object.keys(st.roster).length > 3 },
-    { id: 'position', sec: 'Leaders', t: 'Front or back?', d: () => "Some leaders are fighters. They like the front! Some are thinkers. They like to stay behind the army. In Team, a star shows each leader's best place.", target: '[data-sc="command"]', tab: 'command', when: (st) => st.guide.seen.team && st.stage >= 12 },
-    { id: 'skills', sec: 'Army', t: 'Soldier skills', d: () => 'Soldiers can learn skills, like Sharpened or Shield Wall! Open Army and tap + Equip. More slots open at level 10 and level 30.', target: '[data-sc="army"]', tab: 'army', when: (st) => st.stage >= 9 },
-    { id: 'era', sec: 'Army', t: 'Whoosh! A new era!', d: () => 'You travelled forward in time! New soldiers are ready to recruit. They cost more, so save up your gold.', target: '[data-sc="army"]', tab: 'army', ev: 'era' },
-    { id: 'codex', sec: 'Leaders', t: 'The Codex', d: () => 'Every leader you beat goes into the Codex. It is like a sticker book! Can you find them all? Nib Nub believes in you.', target: '[data-sc="leaders"]', tab: 'leaders', when: (st) => Object.keys(st.roster).length >= 5 },
-    { id: 'auto', sec: 'Basics', t: 'Auto buttons', d: () => 'In Settings you can turn off Auto-advance to stay on one stage and collect gold. You can also turn off Auto specials and fire them yourself.', target: '[data-sc="options"]', tab: 'options', when: (st) => st.stage >= 20 },
-    { id: 'rift', sec: 'Later', t: 'Time Rift', d: () => 'Stuck? Try a Time Rift! It sends you back to the start, but gives you Chrono Shards. Each shard makes everything 5% stronger, forever. You keep your leaders.', target: '[data-sc="rift"]', tab: 'rift', when: (st) => CW.riftShards() > 0 && (st.farming || st.stage >= 80) },
-    { id: 'afterrift', sec: 'Later', t: 'Back to the start!', d: () => 'Wheee! Your shards make you stronger now, so you will go further and faster this time.', ev: 'rift' },
-    { id: 'mystery', sec: 'Later', t: 'Mystery boss!', d: () => 'Nib Nub does not know who this is either! Mystery bosses are extra tough. Good luck!', target: '#hudBoss', when: () => B_().info.mystery },
-    { id: 'story', sec: 'Later', t: 'You beat the story!', d: () => 'You did it! Now time is broken. Eras come in a random order, and the enemies keep getting stronger, forever and ever.', when: (st) => st.best > CW.PATH_LEN },
-    { id: 'prestige', sec: 'Later', t: 'Leader prestige', d: () => 'Big news! Leaders can learn new special moves now. Each leader has a goal, like beating 666 enemies. Meet it, then tap Prestige.', target: '[data-sc="command"]', tab: 'command', when: () => CW.prestigeUnlocked() },
-    { id: 'ranks', sec: 'Later', t: 'Leaders in the ranks', d: () => 'Now leaders can fight as soldiers too! Open Army and add a leader to the front line.', target: '[data-sc="army"]', tab: 'army', when: () => CW.champUnlocked() },
-    { id: 'ready', sec: 'Later', t: 'Ready to prestige!', d: () => { const id = prestigeReady(); return (id ? LEADER[id].name : 'A leader') + ' met their goal! Open Team or the Codex and tap Prestige to unlock a new special.'; }, target: '[data-sc="command"]', tab: 'command', when: () => !!prestigeReady() },
+    { id: 'welcome', sec: 'Basics', t: 'Hello, Commander!', d: () => ['Greetings, Commander! I am Nib Nub. I come from a planet very, very far away.', 'My spaceship got lost in time, so now Nib Nub travels with you. I will do my best to help!', 'Here is the big secret: your army fights all by itself. Your job is to make it stronger.'], when: () => true },
+    { id: 'tap', sec: 'Basics', t: 'Bonk them from the sky!', d: () => ['Want to help in the fight? Tap anywhere on the battlefield and a strike falls on the enemy.', 'Go on, tap! Nib Nub loves this part.'], target: '#screen', when: () => B_().phase === 'fight', done: (st) => st.stats.taps > 0 },
+    { id: 'bars', sec: 'Basics', t: 'Who is winning?', d: () => ['See the bar at the top? Blue is your army. Red is the enemy.', 'Beat all the red ones to win the stage. Easy peasy!'], target: '.ov-l', when: (st) => st.stage >= 2 },
+    { id: 'gold', sec: 'Army', t: 'Shiny gold!', d: () => ['Shiny! Every enemy you beat drops gold.', 'Nib Nub says: spend it! Open Army and tap Recruit to get more soldiers.'], target: '[data-sc="army"]', tab: 'army', when: (st) => (st.stage >= 2 || st.stats.kills >= 12) && st.gold >= cheapestRecruit() },
+    { id: 'room', sec: 'Army', t: 'Only so much room', d: () => ['Your army can only fit so many soldiers.', 'Foot soldiers take 1 space, riders take 2 and big machines take 4. Every new era gives you more room.'], target: '.capline', when: () => !el.sheet.hidden && tab === 'army' },
+    { id: 'train', sec: 'Army', t: 'Recruit or train?', d: () => ['Recruit buys one more soldier. Train +1 makes every soldier of that kind stronger.', 'Both are good! And Auto-build always sends your best soldiers into battle.'], target: '.buys', when: (st) => !el.sheet.hidden && tab === 'army' && st.guide.seen.room },
+    { id: 'boss', sec: 'Leaders', t: 'A famous leader!', d: () => ['Ooh, a famous leader from history!', 'Beat them before the timer runs out, and they will join your side. Nib Nub is hiding behind you, just in case.'], target: '#hudBoss', when: () => B_().info.isBoss && !B_().info.mystery },
+    { id: 'lose', sec: 'Basics', t: 'Oops! That is okay', d: () => ['Oops! That is okay. Nib Nub loses all the time!', 'Your army steps back to an easier stage to earn more gold. Make it stronger, and it will try again by itself.'], ev: 'defeat' },
+    { id: 'council', sec: 'Leaders', t: 'War Council', d: () => ['You won! Welcome to the War Council.', 'Pick one doctrine. It is a bonus for your whole army, and it lasts until your next Time Rift.'], modal: 'council', when: (st) => !!st.council && modalKind === 'council' },
+    { id: 'special', sec: 'Leaders', t: 'Special move ready!', d: () => ["Look! When a leader's picture glows, their special move is ready.", 'Tap the picture, then tap the special. Kaboom!'], target: '#deck .chip.ready', when: anyReady, ev2: 'special' },
+    { id: 'team', sec: 'Leaders', t: 'Your team', d: () => ['You lead with one commander and two helpers called partners.', 'Open Team to swap them. The commander gives the biggest bonus.'], target: '[data-sc="command"]', tab: 'command', when: (st) => Object.keys(st.roster).length > 3 },
+    { id: 'position', sec: 'Leaders', t: 'Front or back?', d: () => ['Some leaders are fighters. They love the front!', "Some are thinkers. They like to stay behind the army. In Team, a star shows each leader's best place."], target: '[data-sc="command"]', tab: 'command', when: (st) => st.guide.seen.team && st.stage >= 12 },
+    { id: 'skills', sec: 'Army', t: 'Soldier skills', d: () => ['Soldiers can learn skills, like Sharpened or Shield Wall!', 'Open Army and tap + Equip. More slots open at level 10 and level 30.'], target: '[data-sc="army"]', tab: 'army', when: (st) => st.stage >= 9 },
+    { id: 'era', sec: 'Army', t: 'Whoosh! A new era!', d: () => ['Whoosh! We travelled forward in time!', 'New soldiers are ready to recruit. They cost more, so save up your gold.'], target: '[data-sc="army"]', tab: 'army', ev: 'era' },
+    { id: 'codex', sec: 'Leaders', t: 'The Codex', d: () => ['Every leader you beat goes into the Codex. It is like a sticker book!', 'Can you find them all? Nib Nub believes in you.'], target: '[data-sc="leaders"]', tab: 'leaders', when: (st) => Object.keys(st.roster).length >= 5 },
+    { id: 'auto', sec: 'Basics', t: 'Auto buttons', d: () => ['Psst! In Settings you can turn off Auto-advance to stay on one stage and collect gold.', 'You can also turn off Auto specials and fire them yourself.'], target: '[data-sc="options"]', tab: 'options', when: (st) => st.stage >= 20 },
+    { id: 'rift', sec: 'Later', t: 'Time Rift', d: () => ['Stuck? Try a Time Rift!', 'It sends you back to the start, but gives you Chrono Shards. Each shard makes everything 5% stronger, forever. And you keep your leaders!'], target: '[data-sc="rift"]', tab: 'rift', when: (st) => CW.riftShards() > 0 && (st.farming || st.stage >= 80) },
+    { id: 'afterrift', sec: 'Later', t: 'Back to the start!', d: () => ['Wheee! That tickled.', 'Your shards make you stronger now, so you will go further and faster this time.'], ev: 'rift' },
+    { id: 'mystery', sec: 'Later', t: 'Mystery boss!', d: () => ['A mystery boss! Nib Nub does not know who this is either.', 'Mystery bosses are extra tough. Good luck!'], target: '#hudBoss', when: () => B_().info.mystery },
+    { id: 'story', sec: 'Later', t: 'You beat the story!', d: () => ['You did it! You beat the whole story!', 'But uh oh, now time is broken. Eras come in a random order, and the enemies keep getting stronger, forever and ever.'], when: (st) => st.best > CW.PATH_LEN },
+    { id: 'prestige', sec: 'Later', t: 'Leader prestige', d: () => ['Big news! Leaders can learn new special moves now.', 'Each leader has a goal, like beating 666 enemies. Meet it, then tap Prestige.'], target: '[data-sc="command"]', tab: 'command', when: () => CW.prestigeUnlocked() },
+    { id: 'ranks', sec: 'Later', t: 'Leaders in the ranks', d: () => ['And another thing! Leaders can fight as soldiers too.', 'Open Army and add a leader to the front line.'], target: '[data-sc="army"]', tab: 'army', when: () => CW.champUnlocked() },
+    { id: 'ready', sec: 'Later', t: 'Ready to prestige!', d: () => { const id = prestigeReady(); return [(id ? LEADER[id].name : 'A leader') + ' met their goal!', 'Open Team or the Codex and tap Prestige to unlock a new special.']; }, target: '[data-sc="command"]', tab: 'command', when: () => !!prestigeReady() },
   ];
   const SECS = ['Basics', 'Army', 'Leaders', 'Later'];
+  const lines = (tip, st) => [].concat(tip.d(st));
+
+  // Nib Nub's chatter: things he says during battles. Each set is used in turn, so he doesn't repeat himself.
+  const CHAT = {
+    joins: ['{name} joins your side! Nib Nub is a little bit starstruck.', 'Wow, {name} is on our team now! Can Nib Nub get an autograph?', '{name} was tough! Now they fight for you.', 'Welcome to the team, {name}! Nib Nub made snacks.', 'Another one for the Codex! Hello, {name}.', '{name} says hello. Well, Nib Nub thinks that was a hello.'],
+    star: ['{name} again? They earned a shiny star!', 'Ding! {name} gets another star.', 'You beat {name} twice? You are getting really good at this!', 'Another star for {name}. They are going to need a bigger hat.'],
+    boss: ['Here comes {name}! Nib Nub is hiding behind you.', 'It is {name}, {title}! Be careful, Commander.', '{name} wants a fight. Let us give them one!', 'Watch the timer, Commander. {name} will not wait around!', 'Nib Nub read about {name} in a book once. Now they are right here!'],
+    mystery: ['Who is that?! Nib Nub cannot see!', 'Something strange is coming out of the broken time...', 'Nib Nub has a funny feeling about this one.'],
+    defeat: ['Ouch! Shake it off, Commander.', 'Nib Nub covered his eyes for that one.', 'Even the greatest leaders lose sometimes. Train up and try again!', 'Do not worry. More gold, more soldiers, more fun. We will get them next time!', 'Hmm. Maybe recruit a few more soldiers? Just an idea from Nib Nub.', 'That enemy was strong. But you will be stronger!'],
+    special: ['Kaboom! That was {sp}!', 'Nice {sp}, {name}!', '{sp}! Nib Nub did not see that coming.', "Ooh, sparkly. That was {name}'s {sp}.", 'Did you see that? {sp}! Again, again!'],
+    foeSpecial: ['Uh oh! {name} used {sp}!', 'Watch out, Commander! That was {sp}.', 'Hey, no fair, {name}!', '{sp}?! Nib Nub felt that one in his antennae.'],
+    prestige: ['{name} learned {sp}! Nib Nub is so proud.', 'New special for {name}: {sp}! Try it out!', '{name} is stronger than ever. And has a new trick: {sp}!'],
+    rift: ['Whoa, the Time Rift tickles!', 'Back to the beginning, but stronger. Nib Nub likes this plan.', 'Here we go again! Nib Nub packed a lunch this time.'],
+    eraAny: ['Welcome to the {era}! Nib Nub likes the view.', 'The {era}! Everything looks so different here.', 'Whoosh! We landed in the {era}. Mind the new enemies!'],
+    era: [
+      'Nib Nub saw a mammoth! It was bigger than his spaceship.',
+      'Pyramids! Nib Nub\'s people did not build them. Probably.',
+      'So many columns! Nib Nub counted to 47 and gave up.',
+      'Brrr! Nib Nub\'s antennae are freezing.',
+      'Castles! Nib Nub would like one with a moat, please.',
+      'Those cannons are LOUD. Nib Nub\'s ears are ringing. Wait, does Nib Nub have ears?',
+      'Everyone wants freedom in this era. Nib Nub approves!',
+      'Steam, smoke and machines! Nib Nub sneezed twice.',
+      'This era is very serious. Nib Nub will be brave for you.',
+      'Shh. Everyone is spying on everyone here. Nib Nub is spying too. On you! Just kidding.',
+      'Phones! Nib Nub tried to call home. Wrong number.',
+      'Neon lights everywhere! This looks a little bit like Nib Nub\'s home.',
+      'Space! Nib Nub feels right at home up here.',
+      'The Galactic Age! Somewhere out there is Nib Nub\'s planet. Wave hello!',
+    ],
+    hint: ['If you get stuck, train your best soldiers. It helps a lot!', 'Tap the battlefield where the enemies bunch up. More enemies, more bonk!', 'Nib Nub counted all the leaders in history. There are 137! Can you find them all?', 'Thinkers like to stay behind the army. Fighters love the front!', 'Soldiers far away look smaller. Nib Nub thinks that is magic.', "Nib Nub's favourite leader is... everyone! Shh, do not tell them.", 'Check the Army menu now and then. New soldiers might be waiting!', 'Do you hear that? That is the sound of winning.', 'Nib Nub once tried to ride a war elephant. It did not go well.', "A leader's picture glows when their special is ready. Tap it!", 'Forgot something? Tap Nib Nub in the top corner. He wrote everything down.', 'Big machines take 4 spaces in your army, but they hit really hard!', 'Every new era gives your army more room. Fill it up!'],
+  };
+  const chatUsed = {};
+  function pick(set) {
+    const list = CHAT[set];
+    const used = chatUsed[set] || (chatUsed[set] = []);
+    if (used.length >= list.length) used.length = 0;
+    const free = list.map((_, i) => i).filter((i) => !used.includes(i));
+    const i = free[Math.floor(Math.random() * free.length)];
+    used.push(i);
+    return list[i];
+  }
+  const fill = (txt, o) => txt.replace(/\{(\w+)\}/g, (_, k) => (o[k] !== undefined ? o[k] : ''));
+
   const guideEl = $('#guide');
   const gEvents = new Set();
-  let gCur = null;
+  let gCur = null; // { tip, lines, i } for a lesson, { chat: true } for chatter
   let gWait = 1.2;
+  let gHide = 0;
   let gLit = [];
-  function guideOn() {
-    const st = S();
-    return st && st.guide && st.guide.on !== false;
-  }
+  let chatQ = null;
+  let chatCool = 20;
+  let hintT = 150;
+  const lessonsOn = () => { const st = S(); return st && st.guide && st.guide.on !== false; };
+  const chatOn = () => { const st = S(); return st && st.guide && st.guide.chat !== false; };
   function unlight() {
     gLit.forEach((n) => n.classList.remove('glow'));
     gLit = [];
   }
   function light() {
     unlight();
-    if (!gCur || !gCur.target) return;
-    gLit = Array.from(document.querySelectorAll(gCur.target)).slice(0, 3);
+    if (!gCur || !gCur.tip || !gCur.tip.target) return;
+    gLit = Array.from(document.querySelectorAll(gCur.tip.target)).slice(0, 3);
     gLit.forEach((n) => n.classList.add('glow'));
-  }
-  function showTip(tip) {
-    gCur = tip;
-    const st = S();
-    const n = TIPS.filter((x) => st.guide.seen[x.id]).length + 1;
-    guideEl.innerHTML = `<img class="nib" src="img/nibnub.png" alt="Nib Nub"><div class="g-b"><small>Nib Nub · tip ${n} of ${TIPS.length}</small><b>${esc(tip.t)}</b><p data-say></p><div class="g-acts"><button class="btn sm" data-g="ok">Got it</button>${tip.tab ? '<button class="btn ghost sm" data-g="show">Show me</button>' : ''}</div></div>`;
-    guideEl.hidden = false;
-    placeGuide();
-    say(guideEl.querySelector('[data-say]'), tip.d(st));
   }
   // Nib Nub talks: the words appear a few letters at a time with a soft blip (all at once if motion is reduced)
   let sayT = null;
@@ -2243,24 +2286,55 @@
       }
     }, 28);
   }
-  function finishTip() {
-    clearInterval(sayT);
-    guideEl.classList.remove('talk');
-    if (!gCur) return;
+  function drawLesson() {
+    const { tip, lines: ls, i } = gCur;
+    const last = i >= ls.length - 1;
+    guideEl.className = 'guide';
+    guideEl._mode = '';
+    guideEl.innerHTML = `<img class="nib" src="img/nibnub.png" alt="Nib Nub"><div class="g-b"><small>Nib Nub</small><b>${esc(tip.t)}</b><p data-say></p><div class="g-acts">${last ? `<button class="btn sm" data-g="ok">Got it</button>${tip.tab ? '<button class="btn ghost sm" data-g="show">Show me</button>' : ''}` : '<button class="btn sm" data-g="next">Next</button>'}</div></div>`;
+    guideEl.hidden = false;
+    placeGuide();
+    say(guideEl.querySelector('[data-say]'), ls[i]);
+  }
+  function showTip(tip) {
     const st = S();
-    st.guide.seen[gCur.id] = 1;
-    if (gCur.ev) gEvents.delete(gCur.ev);
+    // heard as soon as he starts talking: an interrupted lesson never starts over
+    st.guide.seen[tip.id] = 1;
+    if (tip.ev) gEvents.delete(tip.ev);
+    gCur = { tip, lines: lines(tip, st), i: 0 };
+    gHide = 0;
+    drawLesson();
+  }
+  function showChat(text) {
+    gCur = { chat: true };
+    guideEl.className = 'guide chat';
+    guideEl._mode = '';
+    guideEl.innerHTML = `<img class="nib" src="img/nibnub.png" alt="Nib Nub"><div class="g-b"><small>Nib Nub</small><p data-say></p></div>`;
+    guideEl.hidden = false;
+    placeGuide();
+    say(guideEl.querySelector('[data-say]'), text);
+    gHide = Math.max(5, text.length / 14 + 3);
+  }
+  function stopTalking() {
+    clearInterval(sayT);
+    const was = gCur;
     gCur = null;
     guideEl.hidden = true;
+    guideEl.classList.remove('talk');
     unlight();
-    gWait = 2.5;
+    if (was && was.chat) chatCool = 35;
+    else {
+      gWait = 2.5;
+      chatCool = Math.max(chatCool, 10);
+    }
     if (!el.sheet.hidden && tab === 'guide') renderPanel();
   }
   function placeGuide() {
     // over the battle above the dock; inside an open menu, or just above the War Council, so it never covers them
     let host = document.body;
     let mode = '';
-    if (gCur && gCur.modal && modalKind === gCur.modal) {
+    const tip = gCur && gCur.tip;
+    if (tip && tip.modal && modalKind === tip.modal) {
       host = el.modal;
       mode = 'inm';
     } else if (!el.sheet.hidden) {
@@ -2279,72 +2353,112 @@
     }
     light();
   }
+  function chat(set, o, important) {
+    if (!chatOn()) return;
+    const text = fill(set === 'era' ? (o.i !== undefined && CHAT.era[o.i] && Math.random() < 0.75 ? CHAT.era[o.i] : pick('eraAny')) : pick(set), o || {});
+    // the newest thing wins; important news (a leader joining, a prestige) skips the wait
+    chatQ = { text, important };
+  }
   function guideTick(dt) {
     const st = S();
     if (!st || !started || !st.guide) return;
-    if (!guideOn()) {
-      if (gCur) {
-        gCur = null;
-        guideEl.hidden = true;
-        unlight();
-      }
-      return;
-    }
-    // step aside while a leader's special popup is open
     const busy = !el.spop.hidden;
-    if (gCur && guideEl.hidden !== busy) {
-      guideEl.hidden = busy;
-      if (busy) unlight();
-    }
-    if (busy && !gCur) return;
     if (gCur) {
-      if ((gCur.done && gCur.done(st)) || (gCur.modal && modalKind !== gCur.modal) || (!gCur.modal && modalKind)) {
-        if (gCur.done && gCur.done(st)) finishTip();
-        else {
-          // the moment passed (a dialog opened or closed): put it back for later
-          gCur = null;
-          guideEl.hidden = true;
-          unlight();
-        }
-        return;
+      const tip = gCur.tip;
+      if (tip && !lessonsOn()) return stopTalking();
+      if (gCur.chat && !chatOn()) return stopTalking();
+      // a dialog that isn't his moves him out of the way (lessons are already heard, so nothing repeats)
+      if ((tip && tip.modal && modalKind !== tip.modal) || (!(tip && tip.modal) && modalKind)) return stopTalking();
+      if (tip && tip.done && tip.done(st)) return stopTalking();
+      if (gCur.chat && (!el.sheet.hidden || busy)) return stopTalking();
+      if (guideEl.hidden !== busy) {
+        guideEl.hidden = busy;
+        if (busy) unlight();
+      }
+      if (gHide > 0) {
+        gHide -= dt;
+        if (gHide <= 0) return stopTalking();
       }
       if (!busy) placeGuide();
       return;
     }
     gWait -= dt;
-    if (gWait > 0) return;
-    for (const tip of TIPS) {
-      if (st.guide.seen[tip.id]) continue;
-      if (modalKind && tip.modal !== modalKind) continue;
-      if (!modalKind && tip.modal) continue;
-      let ok = false;
-      try {
-        ok = tip.ev ? gEvents.has(tip.ev) : tip.when(st);
-      } catch (e) {
-        ok = false;
+    chatCool -= dt;
+    if (busy) return;
+    // lessons first
+    if (lessonsOn() && gWait <= 0) {
+      for (const tip of TIPS) {
+        if (st.guide.seen[tip.id]) continue;
+        if (modalKind && tip.modal !== modalKind) continue;
+        if (!modalKind && tip.modal) continue;
+        let ok = false;
+        try {
+          ok = tip.ev ? gEvents.has(tip.ev) : tip.when(st);
+        } catch (e) {
+          ok = false;
+        }
+        if (ok) return showTip(tip);
       }
-      if (ok) {
-        showTip(tip);
-        return;
-      }
+    }
+    // then chatter, only over the battle itself
+    if (!chatOn() || modalKind || !el.sheet.hidden) return;
+    hintT -= dt;
+    if (!chatQ && hintT <= 0 && chatCool <= 0) {
+      hintT = 120 + Math.random() * 90;
+      chat('hint', {});
+    }
+    if (chatQ && (chatCool <= 0 || (chatQ.important && chatCool <= 15))) {
+      const q = chatQ;
+      chatQ = null;
+      showChat(q.text);
     }
   }
   guideEl.addEventListener('click', (e) => {
+    if (!gCur) return;
+    SFX.ensure();
+    if (gCur.chat) return stopTalking();
     const b = e.target.closest('[data-g]');
     if (!b) return;
-    SFX.ensure();
-    const tip = gCur;
-    finishTip();
+    if (b.dataset.g === 'next') {
+      gCur.i++;
+      drawLesson();
+      return;
+    }
+    const tip = gCur.tip;
+    stopTalking();
     if (b.dataset.g === 'show' && tip && tip.tab) openSheet(tip.tab);
   });
-  // tips that wait for a moment in the game
-  CW.on('defeat', () => gEvents.add('defeat'));
-  CW.on('era', () => gEvents.add('era'));
-  CW.on('rift', () => gEvents.add('rift'));
-  CW.on('special', (e) => {
-    if (e.side === 'a' && gCur && gCur.ev2 === 'special') finishTip();
+  // lessons that wait for a moment in the game, and the things Nib Nub says about what just happened
+  CW.on('defeat', () => {
+    if (S().guide.seen.lose) chat('defeat', {});
+    gEvents.add('defeat');
   });
-  // the Guide page: every tip seen so far, by topic
+  CW.on('era', (info) => {
+    gEvents.add('era');
+    if (S().guide.seen.era) chat('era', { era: ERAS[info.era].name, i: info.era });
+  });
+  CW.on('rift', () => {
+    gEvents.add('rift');
+    if (S().guide.seen.afterrift) chat('rift', {});
+  });
+  CW.on('victory', (r) => {
+    if (!r || !r.lid) return;
+    const name = short(r.lid);
+    if (r.res === 'recruit') chat('joins', { name: LEADER[r.lid].name }, true);
+    else if (r.res === 'star') chat('star', { name });
+  });
+  CW.on('stage', (info) => {
+    if (!info.isBoss || !S().guide.seen.boss) return;
+    if (info.mystery) chat('mystery', {});
+    else if (Math.random() < 0.7) chat('boss', { name: LEADER[info.bossId].name, title: LEADER[info.bossId].title.replace(/^The /, 'the ') });
+  });
+  CW.on('special', (e) => {
+    if (e.side === 'a' && gCur && gCur.tip && gCur.tip.ev2 === 'special') return stopTalking();
+    if (Math.random() > (e.side === 'a' ? 0.12 : 0.35)) return;
+    chat(e.side === 'a' ? 'special' : 'foeSpecial', { name: short(e.lid), sp: e.name });
+  });
+  CW.on('prestige', (e) => chat('prestige', { name: LEADER[e.lid].name, sp: CW.SPECIALS[e.lid][e.rank][0] }, true));
+  // the Guide page: every lesson heard so far, by topic
   function renderGuide() {
     const st = S();
     const seen = TIPS.filter((x) => st.guide.seen[x.id]);
@@ -2353,10 +2467,10 @@
       const all = TIPS.filter((x) => x.sec === sec);
       const got = all.filter((x) => st.guide.seen[x.id]);
       h += `<div class="gsec"><div class="erahead">${sec}<span>${got.length} / ${all.length}</span></div><div class="glist">${got
-        .map((x) => `<div class="gpage"><b>${esc(x.t)}</b><p>${esc(x.d(st))}</p></div>`)
+        .map((x) => `<div class="gpage"><b>${esc(x.t)}</b><p>${esc(lines(x, st).join(' '))}</p></div>`)
         .join('')}${got.length < all.length ? `<div class="gpage locked"><b>${all.length - got.length} more ${all.length - got.length === 1 ? 'page' : 'pages'}</b><p>Keep playing to unlock ${all.length - got.length === 1 ? 'it' : 'them'}.</p></div>` : ''}</div></div>`;
     }
-    return h + `<p class="note">Nib Nub's tips are ${st.guide.on !== false ? 'on' : 'off'}. You can turn them off, or start the guide again, in Settings.</p>`;
+    return h + `<p class="note">You can turn Nib Nub's lessons and chatter on or off, or have him start over, in Settings.</p>`;
   }
 
   function boot(data) {

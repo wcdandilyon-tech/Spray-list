@@ -139,6 +139,7 @@
   // ------------------------------------------------------------ events
   const handlers = {};
   CW.on = (ev, fn) => (handlers[ev] = handlers[ev] || []).push(fn);
+  CW.emit = (ev, data) => emit(ev, data);
   function emit(ev, data) {
     (handlers[ev] || []).forEach((fn) => {
       try {
