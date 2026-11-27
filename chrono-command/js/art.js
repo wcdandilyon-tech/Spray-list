@@ -697,97 +697,260 @@
     const s = 0.6 + 0.45 * t;
     return { x: 180 + (sx - 192) / s, z: 120 * t };
   };
-  const fcache = {};
-  CW.field = function (era) {
-    if (fcache[era]) return fcache[era];
+  // ------------------------------------------------------------ the whole scene around the battlefield
+  // The battle canvas follows the shape of the screen. The 768x432 field sits at (OX, OY) inside it and the scene
+  // carries on around it: the era's sky climbs above, its scenery repeats (mirrored) to the sides and the ground
+  // keeps coming towards the camera below, with bigger props up close. Colours get a lift so the eras read vivid,
+  // and the far edges darken a little so the eye stays on the battle.
+  const projU = (x, z) => {
+    const t = z / 120;
+    const s = 0.6 + 0.45 * t;
+    return { x: 192 + (x - 180) * s, y: 104 + 104 * t * (0.5 + 0.5 * t), s };
+  };
+  const sceneCache = new Map();
+  const luma = (c) => (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+  // a few colours read once per era from its backdrop: the top of the sky and the haze at the horizon
+  const infoCache = {};
+  CW.sceneInfo = function (era) {
+    if (infoCache[era]) return infoCache[era];
+    const bd = CW.backdrop(era);
+    const c = rcanvas(1, 3);
+    const x = c.getContext('2d');
+    x.drawImage(bd, 4, 2, 1, 1, 0, 0, 1, 1);
+    x.drawImage(bd, 384, 236, 1, 1, 0, 1, 1, 1);
+    const d = x.getImageData(0, 0, 1, 2).data;
+    const top = [d[0], d[1], d[2]];
+    return (infoCache[era] = { night: luma(top) < 0.3, top, haze: [d[4], d[5], d[6]] });
+  };
+  CW.scene = function (era, VW, VH, OX, OY) {
+    const key = [era, VW, VH, OX, OY].join(',');
+    if (sceneCache.has(key)) return sceneCache.get(key);
+    if (sceneCache.size > 4) sceneCache.delete(sceneCache.keys().next().value);
     const E = CW.ERAS[era];
     const bd = CW.backdrop(era);
-    const c = canvas(768, 432);
+    const c = rcanvas(VW, VH);
     const g = c.getContext('2d');
     g.imageSmoothingEnabled = false;
-    g.drawImage(bd, 0, 244 - HZ * 2, 768, HZ * 2, 0, 0, 768, HZ * 2);
-    // ground fading into the distance, dithered in 8-bit style
-    const hp = rcanvas(1, 1);
-    hp.getContext('2d').drawImage(bd, 384, 236, 1, 1, 0, 0, 1, 1);
-    const hd = hp.getContext('2d').getImageData(0, 0, 1, 1).data;
-    const haze = '#' + [hd[0], hd[1], hd[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
-    const ga = E.ground[0];
-    const gb = E.ground[1];
-    const pal = [mix(ga, haze, 0.5), mix(ga, haze, 0.28), mix(ga, haze, 0.1), ga, mix(ga, gb, 0.5), gb, shade(gb, -0.1)].map(hex2rgb);
-    const y0 = HZ * 2;
-    const hh = 432 - y0;
-    const img = g.createImageData(768, hh);
-    const d = img.data;
-    const BY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
-    for (let y = 0; y < hh; y++) {
-      const lv = Math.pow(y / (hh - 1), 0.7) * (pal.length - 1);
-      const fl = Math.floor(lv);
-      for (let x = 0; x < 768; x++) {
-        const idx = Math.min(pal.length - 1, lv - fl > (BY[y % 4][x % 4] + 0.5) / 16 ? fl + 1 : fl);
-        const col = pal[idx];
-        const i = (y * 768 + x) * 4;
-        d[i] = col[0];
-        d[i + 1] = col[1];
-        d[i + 2] = col[2];
-        d[i + 3] = 255;
+    const info = CW.sceneInfo(era);
+    // sky above the backdrop: its top colour, deepening towards the top of the screen, in dithered bands
+    const skyTop = OY - 52; // the backdrop's own top rows show above the field
+    if (skyTop > 0) {
+      const top = '#' + info.top.map((v) => v.toString(16).padStart(2, '0')).join('');
+      const deep = info.night ? shade(top, -0.45) : mix(shade(top, -0.18), '#3a6ad0', 0.25);
+      const bands = 6;
+      for (let i = 0; i < bands; i++) {
+        const y0 = Math.round((skyTop * i) / bands);
+        const y1 = Math.round((skyTop * (i + 1)) / bands);
+        const col = mix(deep, top, i / (bands - 1));
+        g.fillStyle = col;
+        g.fillRect(0, y0, VW, y1 - y0 + 1);
+        if (i > 0) {
+          g.fillStyle = mix(deep, top, (i - 1) / (bands - 1));
+          for (let x = (y0 >> 1) % 4; x < VW; x += 4) g.fillRect(x, y0, 2, 2);
+        }
       }
-    }
-    g.putImageData(img, 0, y0);
-    // perspective grid
-    const neon = E.decor === 'neon';
-    g.fillStyle = neon ? '#b03aff' : shade(gb, -0.45);
-    g.globalAlpha = neon ? 0.55 : 0.12;
-    for (let z = 0; z <= 120; z += 10) {
-      const a = CW.proj(-40, z);
-      const b = CW.proj(400, z);
-      g.fillRect(Math.round(a.x * 2), Math.round(a.y * 2), Math.round((b.x - a.x) * 2), 1);
-    }
-    for (let x = -60; x <= 420; x += 30)
-      for (let t = 0; t <= 1; t += 0.004) {
-        const p = CW.proj(x, t * 120);
-        g.fillRect(Math.round(p.x * 2), Math.round(p.y * 2), 1, 1);
-      }
-    g.globalAlpha = 1;
-    // scattered decor, smaller with distance
-    const rand = rnd(era * 131 + 7);
-    const kind = E.decor;
-    for (let i = 0; i < 70; i++) {
-      const p = CW.proj(-30 + rand() * 420, rand() * 120);
-      const X = Math.round(p.x * 2);
-      const Y = Math.round(p.y * 2);
-      const k = p.s * 2;
-      if (kind === 'grass') {
-        g.fillStyle = shade(gb, -0.3);
-        for (let j = -1; j <= 1; j++) g.fillRect(X + j * Math.ceil(k * 1.5), Y - Math.round(k * (3 + (j === 0 ? 2 : 0))), Math.max(1, Math.round(k * 0.6)), Math.round(k * (3 + (j === 0 ? 2 : 0))));
-      } else if (kind === 'rock') {
-        g.fillStyle = shade(gb, -0.35);
-        g.fillRect(X - Math.round(k * 3), Y - Math.round(k * 2), Math.round(k * 6), Math.round(k * 2));
-        g.fillStyle = shade(ga, 0.2);
-        g.fillRect(X - Math.round(k * 2), Y - Math.round(k * 2), Math.round(k * 3), Math.max(1, Math.round(k * 0.6)));
-      } else if (kind === 'snow') {
-        g.fillStyle = '#f4f8fa';
-        g.fillRect(X - Math.round(k * 4), Y - Math.round(k), Math.round(k * 8), Math.round(k * 1.5));
-        g.fillRect(X - Math.round(k * 2), Y - Math.round(k * 2), Math.round(k * 4), Math.round(k));
-      } else if (kind === 'crater') {
-        g.fillStyle = shade(gb, -0.35);
-        g.fillRect(X - Math.round(k * 5), Y - Math.round(k), Math.round(k * 10), Math.round(k * 2));
-        g.fillStyle = shade(ga, 0.15);
-        g.fillRect(X - Math.round(k * 5), Y + Math.round(k), Math.round(k * 10), Math.max(1, Math.round(k * 0.6)));
-      } else if (kind === 'neon') {
-        g.fillStyle = rand() > 0.5 ? '#2ee6ff' : '#ff3cac';
-        g.fillRect(X, Y, Math.max(1, Math.round(k)), Math.max(1, Math.round(k)));
-      } else if (kind === 'crystal') {
-        g.fillStyle = rand() > 0.5 ? '#6ae0ff' : '#b070ff';
-        const hgt = Math.round(k * (4 + rand() * 4));
-        for (let yy = 0; yy < hgt; yy++) {
-          const ww = Math.max(1, Math.round(((hgt - yy) / hgt) * k * 2));
-          g.fillRect(X - (ww >> 1), Y - yy, ww, 1);
+      const rand = rnd(era * 71 + 5);
+      if (info.night) {
+        for (let i = 0; i < (VW * skyTop) / 2600; i++) {
+          g.fillStyle = rand() > 0.75 ? '#ffffff' : rand() > 0.5 ? '#c8d8ff' : '#8aa0c8';
+          const sz = rand() > 0.9 ? 4 : 2;
+          g.fillRect(Math.floor(rand() * VW / 2) * 2, Math.floor(rand() * skyTop / 2) * 2, sz, sz);
+        }
+      } else {
+        for (let i = 0; i < Math.max(2, VW / 220); i++) {
+          const x = rand() * VW;
+          const y = 20 + rand() * Math.max(10, skyTop - 80);
+          const k = 2 + Math.floor(rand() * 3);
+          g.fillStyle = 'rgba(255,255,255,.75)';
+          g.fillRect(x, y, 16 * k * 2, 4 * k);
+          g.fillRect(x + 3 * k * 2, y - 3 * k, 8 * k * 2, 3 * k);
+          g.fillRect(x + 9 * k * 2, y - 2 * k, 5 * k * 2, 2 * k);
+          g.fillStyle = 'rgba(200,215,235,.6)';
+          g.fillRect(x + 2 * k, y + 4 * k - 2, 14 * k * 2, 2);
         }
       }
     }
-    fcache[era] = c;
-    return c;
+    // the backdrop band, mirrored copies to either side
+    const srcY = Math.max(0, 52 - OY);
+    const bandH = 244 - srcY;
+    for (let k = -3; k <= 3; k++) {
+      const x0 = OX + k * 768;
+      if (x0 + 768 <= 0 || x0 >= VW) continue;
+      if (k % 2 === 0) g.drawImage(bd, 0, srcY, 768, bandH, x0, OY - 52 + srcY, 768, bandH);
+      else {
+        g.save();
+        g.translate(x0 + 768, 0);
+        g.scale(-1, 1);
+        g.drawImage(bd, 0, srcY, 768, bandH, 0, OY - 52 + srcY, 768, bandH);
+        g.restore();
+      }
+    }
+    // the ground: dithered from the haze at the horizon to rich near colours, continuing towards the camera
+    const haze = '#' + info.haze.map((v) => v.toString(16).padStart(2, '0')).join('');
+    const ga = E.ground[0];
+    const gb = E.ground[1];
+    const pal = [mix(ga, haze, 0.5), mix(ga, haze, 0.28), mix(ga, haze, 0.1), ga, mix(ga, gb, 0.5), gb, shade(gb, -0.1), shade(gb, -0.18), shade(gb, -0.26)].map(hex2rgb);
+    const y0 = OY + HZ * 2;
+    const hh = 240;
+    const gh = VH - y0;
+    if (gh > 0) {
+      const img = g.createImageData(VW, gh);
+      const d = img.data;
+      const BY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+      for (let y = 0; y < gh; y++) {
+        const lv = y < hh ? Math.pow(y / (hh - 1), 0.7) * 6 : 6 + Math.min(2, ((y - hh) / Math.max(120, gh - hh)) * 2);
+        const fl = Math.floor(lv);
+        const by = BY[y % 4];
+        for (let x = 0; x < VW; x++) {
+          const idx = Math.min(pal.length - 1, lv - fl > (by[(x - OX) & 3] + 0.5) / 16 ? fl + 1 : fl);
+          const col = pal[idx];
+          const i = (y * VW + x) * 4;
+          d[i] = col[0];
+          d[i + 1] = col[1];
+          d[i + 2] = col[2];
+          d[i + 3] = 255;
+        }
+      }
+      g.putImageData(img, 0, y0);
+    }
+    // perspective grid, carried on into the foreground
+    const neon = E.decor === 'neon';
+    const zMax = 120 + Math.max(0, (VH - OY - 432) / 2.4);
+    g.save();
+    g.translate(OX, OY);
+    g.fillStyle = neon ? '#b03aff' : shade(gb, -0.45);
+    g.globalAlpha = neon ? 0.55 : 0.12;
+    const xL = -400;
+    const xR = 760;
+    for (let z = 0; z <= zMax; z += 10) {
+      const a = projU(xL, z);
+      const b = projU(xR, z);
+      g.fillRect(Math.round(a.x * 2), Math.round(a.y * 2), Math.round((b.x - a.x) * 2), z > 120 ? 2 : 1);
+    }
+    for (let x = -390; x <= 750; x += 30)
+      for (let t = 0; t <= zMax / 120; t += 0.003) {
+        const p = projU(x, t * 120);
+        g.fillRect(Math.round(p.x * 2), Math.round(p.y * 2), t > 1 ? 2 : 1, 1);
+      }
+    g.globalAlpha = 1;
+    // scattered decor, smaller with distance; bigger props in the foreground and out to the sides
+    const rand = rnd(era * 131 + 7);
+    const kind = E.decor;
+    const xs = -OX / 2 / 0.6 + 180 - 200;
+    const xe = (VW - OX) / 2 / 0.6 + 180 + 200;
+    const fore = (zMax - 120) / 120;
+    const n = 70 + Math.round(fore * 90) + Math.round(Math.max(0, VW - 768) / 6);
+    for (let i = 0; i < n; i++) {
+      const inField = i < 70;
+      const z = inField ? rand() * 120 : 112 + rand() * Math.max(8, zMax - 112);
+      const x = inField ? -30 + rand() * 420 : xs + rand() * (xe - xs);
+      const p = projU(x, z);
+      const X = Math.round(p.x * 2);
+      const Y = Math.round(p.y * 2);
+      const k = p.s * 2 * (inField ? 1 : 1.2 + Math.max(0, z - 120) / 70);
+      decor(g, kind, X, Y, k, ga, gb, rand, inField);
+    }
+    g.restore();
+    vivid(g, VW, VH, 1.22);
+    // gentle darkening towards the far edges, in steps
+    const steps = 5;
+    if (skyTop > 24) for (let i = 0; i < steps; i++) {
+      g.fillStyle = 'rgba(0,0,0,' + (0.045 * (steps - i)).toFixed(3) + ')';
+      g.fillRect(0, Math.round((skyTop * 0.6 * i) / steps), VW, Math.round((skyTop * 0.6) / steps));
+    }
+    const fb = OY + 432;
+    if (VH - fb > 24) for (let i = 0; i < steps; i++) {
+      const h = Math.round(((VH - fb) * 0.7) / steps);
+      g.fillStyle = 'rgba(0,0,0,' + (0.05 * (i + 1)).toFixed(3) + ')';
+      g.fillRect(0, VH - (steps - i) * h, VW, h);
+    }
+    if (OX > 24) for (let i = 0; i < steps; i++) {
+      const w = Math.round((OX * 0.8) / steps);
+      g.fillStyle = 'rgba(0,0,0,' + (0.04 * (steps - i)).toFixed(3) + ')';
+      g.fillRect(i * w, 0, w, VH);
+      g.fillRect(VW - (i + 1) * w, 0, w, VH);
+    }
+    const out = CW.plain(c);
+    sceneCache.set(key, out);
+    return out;
   };
+  // lift colour saturation a little (the scene only, never the soldiers)
+  function vivid(g, w, h, amt) {
+    const img = g.getImageData(0, 0, w, h);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i];
+      const gg = d[i + 1];
+      const b = d[i + 2];
+      const l = 0.299 * r + 0.587 * gg + 0.114 * b;
+      d[i] = Math.max(0, Math.min(255, l + (r - l) * amt));
+      d[i + 1] = Math.max(0, Math.min(255, l + (gg - l) * amt));
+      d[i + 2] = Math.max(0, Math.min(255, l + (b - l) * amt));
+    }
+    g.putImageData(img, 0, 0);
+  }
+  function decor(g, kind, X, Y, k, ga, gb, rand, small) {
+    const r = (v) => Math.max(1, Math.round(v));
+    if (kind === 'grass') {
+      g.fillStyle = shade(gb, -0.3);
+      for (let j = -1; j <= 1; j++) g.fillRect(X + j * Math.ceil(k * 1.5), Y - r(k * (3 + (j === 0 ? 2 : 0))), r(k * 0.6), r(k * (3 + (j === 0 ? 2 : 0))));
+      if (!small && rand() > 0.55) {
+        // wildflowers up close
+        const fc = ['#ffd84a', '#ff7a9a', '#ffffff', '#b48cff', '#ff9a3a'][Math.floor(rand() * 5)];
+        g.fillStyle = fc;
+        g.fillRect(X + r(k * 2), Y - r(k * 5), r(k * 1.2), r(k * 1.2));
+        g.fillRect(X - r(k * 2.5), Y - r(k * 4), r(k), r(k));
+      }
+    } else if (kind === 'rock') {
+      g.fillStyle = shade(gb, -0.35);
+      g.fillRect(X - r(k * 3), Y - r(k * 2), r(k * 6), r(k * 2));
+      g.fillStyle = shade(ga, 0.2);
+      g.fillRect(X - r(k * 2), Y - r(k * 2), r(k * 3), r(k * 0.6));
+      if (!small && rand() > 0.7) {
+        // desert scrub
+        g.fillStyle = '#8a9a4a';
+        g.fillRect(X + r(k * 4), Y - r(k * 3), r(k * 0.8), r(k * 3));
+        g.fillRect(X + r(k * 3), Y - r(k * 2), r(k * 2.8), r(k * 0.8));
+      }
+    } else if (kind === 'snow') {
+      g.fillStyle = '#f4f8fa';
+      g.fillRect(X - r(k * 4), Y - r(k), r(k * 8), r(k * 1.5));
+      g.fillRect(X - r(k * 2), Y - r(k * 2), r(k * 4), r(k));
+      if (!small && rand() > 0.7) {
+        // small pines dusted with snow
+        g.fillStyle = '#2f5a48';
+        for (let yy = 0; yy < 6; yy++) g.fillRect(X - r(k * (3 - yy * 0.45)), Y - r(k * (4 + yy * 1.4)), r(k * (6 - yy * 0.9)), r(k * 1.4));
+        g.fillStyle = '#eaf4f6';
+        g.fillRect(X - r(k * 1.5), Y - r(k * 11), r(k * 3), r(k * 0.8));
+      }
+    } else if (kind === 'crater') {
+      g.fillStyle = shade(gb, -0.35);
+      g.fillRect(X - r(k * 5), Y - r(k), r(k * 10), r(k * 2));
+      g.fillStyle = shade(ga, 0.15);
+      g.fillRect(X - r(k * 5), Y + r(k), r(k * 10), r(k * 0.6));
+      if (!small && rand() > 0.6) {
+        // sandbags and wire
+        g.fillStyle = '#a8946a';
+        for (let j = 0; j < 3; j++) g.fillRect(X + r(k * (6 + j * 2.4)), Y - r(k * 1.6), r(k * 2.2), r(k * 1.4));
+        g.fillStyle = '#5a5248';
+        g.fillRect(X - r(k * 9), Y - r(k * 3), r(k * 7), Math.max(1, r(k * 0.3)));
+      }
+    } else if (kind === 'neon') {
+      g.fillStyle = rand() > 0.5 ? '#2ee6ff' : '#ff3cac';
+      g.fillRect(X, Y, r(k), r(k));
+      if (!small && rand() > 0.75) {
+        g.fillRect(X - r(k * 3), Y - r(k * 0.5), r(k * 6), r(k * 0.5));
+      }
+    } else if (kind === 'crystal') {
+      g.fillStyle = rand() > 0.5 ? '#6ae0ff' : '#b070ff';
+      const hgt = Math.round(k * (4 + rand() * (small ? 4 : 8)));
+      for (let yy = 0; yy < hgt; yy++) {
+        const ww = Math.max(1, Math.round(((hgt - yy) / hgt) * k * 2));
+        g.fillRect(X - (ww >> 1), Y - yy, ww, 1);
+      }
+    }
+  }
+  CW.field = (era) => CW.scene(era, 768, 432, 0, 0);
 
   // ------------------------------------------------------------ bitmap font (3x5)
   const GL = {

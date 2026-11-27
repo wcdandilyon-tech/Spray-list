@@ -1,31 +1,28 @@
 # Chrono Command: leader list
 
-All 137 leaders with their class, best position, three always-on attributes and two special moves. Values are each leader's base values as your commander with no stars (each star adds 10% to attributes and 5% to specials).
+All 137 leaders with their class, best position, three always-on attributes, three special moves and the prestige goals that unlock them. Values are each leader's base values as your commander with no stars or prestige (each star adds 10% to attributes and 5% to specials; each prestige adds 20% to attributes and specials and 25% strength on the field).
 
-## How specials and positions work
+## How specials, prestige and positions work
 
 - **Special meter.** Your commander and two partners each have a meter that fills when your army defeats an enemy. Each defeat adds that unit's share of the enemy army: a heavy unit (4 capacity) is worth four infantry, so beating weak units fills it slowly. Wiping out a whole army fills about 95%. The commander charges at the full rate, partners at 80%. Meters carry over between battles.
-- **Two specials.** Tap a leader's chip in battle to choose. The **signature special** costs the full meter and hits 25% harder; the **class special** costs 60%. With Auto specials on, a full meter fires the signature after 6 seconds. Enemy leaders charge a meter too.
-- **Position.** Warriors, conquerors, revolutionaries and defenders excel at the **front**: +20% attribute strength and +50% damage there. Strategists, tyrants, statesmen, peacemakers and orators excel **behind the army**: +20% attribute strength and a 30% faster meter. Move any leader in the Commanders tab.
-- **Leaders in the ranks (after the endgame).** Once you finish the time pathway and time shatters, the Army tab lets you swap soldiers
-  for any recruited leader who isn't commanding. Each takes 6 capacity, fights in the front rank with a bodyguard (half damage taken)
-  and cleaves the enemies around their target. Fighters (the front-line classes) hit harder and last longer and give the army 35% of
-  their signature attribute; thinkers fight less well but give 55%. You start with 3 slots and gain one every 18 stages of Shattered
-  Time, up to 8; leaders can use at most half your army capacity.
+- **One special equipped.** Every leader has three specials of their own and starts with one. Only one is equipped at a time; its kind sets the meter it needs (stun and tribute 70%; rally, fortify, heal and shield 80%; snipe, terror, revive, reinforce and drain 90%; barrage, charge, inferno and execute 100%). Tap a leader's chip to use it or swap to another unlocked special. With Auto specials on, a charged special fires after 4 seconds. Enemy leaders charge a meter too.
+- **Prestige.** Each leader has two goals of their own, counted while they command, partner or fight in the ranks (the Devil needs 666 and then 6,666 defeated enemies; Leonidas 300 infantry and then 300 wins at the front). Meeting a goal lets you prestige them: the next special unlocks and is equipped, and they get +25% strength on the field and +20% attribute strength. Prestige is kept through Time Rifts.
+- **Position.** Warriors, conquerors, revolutionaries and defenders excel at the **front**: +20% attribute strength and +50% damage there. Strategists, tyrants, statesmen, peacemakers and orators excel **behind the army**: +20% attribute strength and a 30% faster meter. Move any leader in the Team tab.
+- **Leaders in the ranks (after the endgame).** Once time shatters, the Army tab lets you swap soldiers for recruited leaders who aren't commanding. Each takes 6 capacity, fights in the front rank with a bodyguard (half damage taken) and cleaves the enemies around their target. Fighters (front-line classes) hit harder and give the army 35% of their signature attribute; thinkers give 55%. 3 slots, growing to 8 deeper into Shattered Time.
 
 ## Classes
 
-| Class | Leaders | Commander bonus | Best position | Class special | If the signature is the same kind |
-| --- | --- | --- | --- | --- | --- |
-| Conqueror | 21 | +25% army ATK | Front lines | Overrun | Blitz Assault |
-| Tyrant | 30 | +15% ATK, enemies deal 12% less damage | Behind the army | Reign of Fear | Iron Decree |
-| Strategist | 16 | All your leaders' attributes are 25% stronger | Behind the army | Flanking Maneuver | False Retreat |
-| Defender | 10 | +35% army HP | Front lines | Hold the Line | Field Hospital |
-| Revolutionary | 13 | +25% attack speed | Front lines | Uprising | Barricades |
-| Statesman | 17 | +35% gold | Behind the army | War Bonds | Grand Alliance |
-| Peacemaker | 6 | +20% HP and 1% HP regen per second | Behind the army | Ceasefire | Healing Hands |
-| Warrior | 19 | +15% critical chance | Front lines | Battle Cry | Lead the Charge |
-| Orator | 5 | +15% army ATK and +20% gold | Behind the army | Rallying Speech | Call to Arms |
+| Class | Leaders | Commander bonus | Best position | In the ranks |
+| --- | --- | --- | --- | --- |
+| Conqueror | 21 | +25% army ATK | Front lines | Fighter |
+| Tyrant | 30 | +15% ATK, enemies deal 12% less damage | Behind the army | Thinker |
+| Strategist | 16 | All your leaders' attributes are 25% stronger | Behind the army | Thinker |
+| Defender | 10 | +35% army HP | Front lines | Fighter |
+| Revolutionary | 13 | +25% attack speed | Front lines | Fighter |
+| Statesman | 17 | +35% gold | Behind the army | Thinker |
+| Peacemaker | 6 | +20% HP and 1% HP regen per second | Behind the army | Thinker |
+| Warrior | 19 | +15% critical chance | Front lines | Fighter |
+| Orator | 5 | +15% army ATK and +20% gold | Behind the army | Thinker |
 
 ## I · Stone Age (5)
 
@@ -40,8 +37,9 @@ An Ice Age chieftain of the Neanderthals, the stocky, big-brained cousins of mod
 - **Mammoth Hunt** (third attribute): +24% gold
 
 **Special moves**
-- **Cave Bear Ambush** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+- **Cave Bear Ambush** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Firelit Cavern** (shield, 80% meter; prestige 1: win 25 battles): Your army can't be hurt for 4.0 seconds
+- **Healing Herbs** (heal, 80% meter; prestige 2: win 200 battles without falling): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Ice Age Endurance: Your army takes 9% less damage, and your army heals 0.4% health every second
 
@@ -56,8 +54,9 @@ A legendary clan leader of the Ice Age, said to have been the first to carry fir
 - **Ring of Fire** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Wildfire** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Wildfire** (inferno, 100% meter; starts unlocked): Every enemy burns away 45% of their health over 6 seconds
+- **Torch Volley** (barrage, 100% meter; prestige 1: defeat 1,200 enemies): Every enemy loses 38% of their health (leaders 8%)
+- **Ember Dance** (rally, 80% meter; prestige 2: defeat 5,000 enemies with specials): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. First Flame: The enemy army burns for 4% of your army's damage each second
 
@@ -72,8 +71,9 @@ A legendary matriarch of the mammoth hunters, remembered in the painted handprin
 - **Ivory Spears** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Ivory Avalanche** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Ivory Avalanche** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Matriarch's Call** (reinforce, 90% meter; prestige 1: defeat 100 heavy units (siege, tanks, mechs)): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Stampede Dust** (stun, 70% meter; prestige 2: defeat 1,000 heavy units (siege, tanks, mechs)): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Stampede: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
 
@@ -88,8 +88,9 @@ A Stone Age chieftain from before writing, cities or the wheel, who leads his cl
 - **Mammoth Stampede** (third attribute): Every hit also splashes nearby enemies for 12% damage
 
 **Special moves**
-- **Boulder Rain** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Boulder Rain** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Skull Cracker** (execute, 100% meter; prestige 1: defeat 800 enemy infantry): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Primal Roar** (terror, 90% meter; prestige 2: call 1,000 field strikes as commander): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Discover Fire: The enemy army burns for 4% of your army's damage each second, and +6% army damage
 
@@ -104,8 +105,9 @@ A Copper Age man whose naturally mummified body was found in an Alpine glacier i
 - **Glacier Hardened** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Glacier Arrow** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Glacier Arrow** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Iceman's Axe** (execute, 100% meter; prestige 1: defeat 600 enemy ranged units): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Frozen Pass** (stun, 70% meter; prestige 2: win 200 battles without falling): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Copper Axe: +11% army damage, and +3% chance of critical hits
 
@@ -122,8 +124,9 @@ Chinese general and philosopher credited with The Art of War, the most influenti
 - **All Warfare Is Deception** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Thirty-Six Stratagems** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Thirty-Six Stratagems** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Know the Terrain** (fortify, 80% meter; prestige 1: use 13 specials): Your army takes half damage for 8 seconds and heals 25%
+- **Win Without Fighting** (stun, 70% meter; prestige 2: win 300 battles without falling): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. The Art of War: +17% army damage, and +8% attack speed
 
@@ -138,8 +141,9 @@ Spartan king who held the pass at Thermopylae against the vast Persian army with
 - **Molon Labe** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Hold the Hot Gates** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Hold the Hot Gates** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Spartan Phalanx** (charge, 100% meter; prestige 1: defeat 300 enemy infantry): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Come and Take Them** (shield, 80% meter; prestige 2: win 300 battles at the front): Your army can't be hurt for 4.0 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Thermopylae: Your army takes 9% less damage, and +6% army damage
 
@@ -154,8 +158,9 @@ Legendary king of the Sumerian city of Uruk and hero of the Epic of Gilgamesh, o
 - **Quest for Immortality** (third attribute): Fallen soldiers get back up once, after 10 seconds
 
 **Special moves**
-- **Bull of Heaven** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Bull of Heaven** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Enkidu's Fury** (rally, 80% meter; prestige 1: beat 5 enemy leaders): +50% army damage and +31% attack speed for 8 seconds
+- **Cedar Forest Blaze** (inferno, 100% meter; prestige 2: win battles in 10 different eras): Every enemy burns away 45% of their health over 6 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Slayer of Humbaba: +18% damage to enemy leaders
 
@@ -170,8 +175,9 @@ Founded the Akkadian Empire, often called the first empire in history, by unitin
 - **Imperial Tribute** (third attribute): +24% gold
 
 **Special moves**
-- **Akkadian Onslaught** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Akkadian Onslaught** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Akkadian Spears** (charge, 100% meter; prestige 1: win 34 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Tribute of Kish** (tribute, 70% meter; prestige 2: win 340 battles): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. First Empire: +11% army damage, and your army takes 5% less damage
 
@@ -186,8 +192,9 @@ King of Babylon whose Code of Hammurabi is one of the oldest written law codes i
 - **Granaries of Babylon** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Stele of Judgment** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Stele of Judgment** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Judgment of Shamash** (execute, 100% meter; prestige 1: win 40 battles): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Walls of Babylon** (fortify, 80% meter; prestige 2: win 282 battles commanding from behind): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Code of Laws: Enemies deal 11% less damage, and your army takes 8% less damage
 
@@ -202,8 +209,9 @@ One of Egypt's most successful pharaohs: she wore the royal false beard, sent tr
 - **Crown of Two Lands** (third attribute): +18% army damage
 
 **Special moves**
-- **Gifts of Punt** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Gifts of Punt** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Temple of Deir el-Bahari** (heal, 80% meter; prestige 1: command for 30 minutes): Your whole army heals 56% of its health
+- **Pharaoh's Barge** (reinforce, 90% meter; prestige 2: win 250 battles commanding from behind): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Expedition to Punt: +22% gold
 
@@ -218,8 +226,9 @@ The most celebrated pharaoh of Egypt; fought the Hittites at Kadesh and built mo
 - **Treasures of the Nile** (third attribute): +24% gold
 
 **Special moves**
-- **Kadesh Chariots** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Kadesh Chariots** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Abu Simbel** (fortify, 80% meter; prestige 1: defeat 300 enemy cavalry): Your army takes half damage for 8 seconds and heals 25%
+- **Pharaoh's Archers** (barrage, 100% meter; prestige 2: beat 40 enemy leaders): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Battle of Kadesh: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
@@ -234,8 +243,9 @@ Babylonian king who conquered Jerusalem in 587 BC, sent its people into exile an
 - **Chariots of Babylon** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Hanging Gardens** (signature, heal, 100% meter): Your whole army heals 56% of its health
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Hanging Gardens** (heal, 80% meter; starts unlocked): Your whole army heals 56% of its health
+- **Blue Lion Gate** (shield, 80% meter; prestige 1: defeat 150 heavy units (siege, tanks, mechs)): Your army can't be hurt for 4.0 seconds
+- **Babylonian Siege** (barrage, 100% meter; prestige 2: win 400 battles): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Siege of Jerusalem: Every hit also splashes nearby enemies for 7% damage, and enemies deal 4% less damage
 
@@ -250,8 +260,9 @@ Founder of the Persian Achaemenid Empire, remembered for tolerant rule and the C
 - **Royal Road** (third attribute): +15% attack speed
 
 **Special moves**
-- **March of the Immortals** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **March of the Immortals** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Cyrus Cylinder** (heal, 80% meter; prestige 1: win 50 battles): Your whole army heals 56% of its health
+- **Persian Horsemen** (charge, 100% meter; prestige 2: win battles in 9 different eras): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. King of Kings: Fallen soldiers get back up once, after 11 seconds, and your army heals 0.7% health every second
 
@@ -268,8 +279,9 @@ Thracian gladiator who led the largest slave uprising against the Roman Republic
 - **Escape Vesuvius** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Break the Chains** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Break the Chains** (revive, 90% meter; starts unlocked): 44% of your fallen soldiers get back up
+- **Gladiator's Fury** (execute, 100% meter; prestige 1: defeat 1,000 enemy infantry): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Army of the Free** (reinforce, 90% meter; prestige 2: win 250 battles at the front): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Slave Revolt: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
@@ -284,8 +296,9 @@ Macedonian king who never lost a battle and built an empire from Greece to India
 - **Cut the Gordian Knot** (third attribute): Enemies take 12% more damage
 
 **Special moves**
-- **Charge at Gaugamela** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Charge at Gaugamela** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Sarissa Storm** (barrage, 100% meter; prestige 1: beat 7 enemy leaders): Every enemy loses 38% of their health (leaders 8%)
+- **Gordian Cut** (execute, 100% meter; prestige 2: win battles in 12 different eras): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Hammer and Anvil: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
 
@@ -300,8 +313,9 @@ Emperor of India who renounced conquest after the bloody Kalinga war and spread 
 - **Mauryan Elephants** (third attribute): +18% army damage
 
 **Special moves**
-- **Pillars of Ashoka** (signature, heal, 100% meter): Your whole army heals 56% of its health
-- **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Pillars of Ashoka** (heal, 80% meter; starts unlocked): Your whole army heals 56% of its health
+- **Dharma Wheel** (stun, 70% meter; prestige 1: win 30 battles without falling): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Kalinga Remorse** (shield, 80% meter; prestige 2: command for 260 minutes): Your army can't be hurt for 4.0 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Wheel of Dharma: Your army heals 1.1% health every second, and enemies deal 7% less damage
 
@@ -316,8 +330,9 @@ Unified China by force, standardized its writing and coins, began the Great Wall
 - **Unify the Realm** (third attribute): +18% army damage
 
 **Special moves**
-- **Terracotta Legion** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Terracotta Legion** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Bronze Ramparts** (fortify, 80% meter; prestige 1: win 60 battles): Your army takes half damage for 8 seconds and heals 25%
+- **Crossbow Volley** (barrage, 100% meter; prestige 2: defeat 1,500 heavy units (siege, tanks, mechs)): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Terracotta Army: Fallen soldiers get back up once, after 11 seconds, and your army takes 8% less damage
 
@@ -332,8 +347,9 @@ Carthaginian general who crossed the Alps with war elephants and crushed Rome at
 - **War Elephants** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Over the Alps** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Over the Alps** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Elephant Stampede** (charge, 100% meter; prestige 1: defeat 120 heavy units (siege, tanks, mechs)): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Double Envelopment** (execute, 100% meter; prestige 2: win 216 battles commanding from behind): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Crossing the Alps: +14% attack speed, and +10% army damage
 
@@ -348,8 +364,9 @@ Roman general who beat Hannibal at the Battle of Zama in 202 BC, ending the Seco
 - **Spanish Campaign** (third attribute): +18% army damage
 
 **Special moves**
-- **Open the Ranks** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Open the Ranks** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Battle of Zama** (snipe, 90% meter; prestige 1: beat 8 enemy leaders): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Numidian Horse** (charge, 100% meter; prestige 2: defeat 2,500 enemy cavalry): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Zama: +17% army damage, and enemies take 7% more damage
 
@@ -364,8 +381,9 @@ Gaulish chieftain who united the tribes of Gaul against Julius Caesar and made a
 - **Alesia** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Gaulish Uprising** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Gaulish Uprising** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Alesia Stand** (shield, 80% meter; prestige 1: win 40 battles at the front): Your army can't be hurt for 4.0 seconds
+- **Arverni Charge** (charge, 100% meter; prestige 2: defeat 30,000 enemies): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Revolt of Gaul: +9% attack speed, and every hit also splashes nearby enemies for 4% damage
 
@@ -380,8 +398,9 @@ Roman general who conquered Gaul, crossed the Rubicon and made himself dictator 
 - **Testudo Formation** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Tenth Legion** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Tenth Legion** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **The Die Is Cast** (charge, 100% meter; prestige 1: win 50 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Siege Lines** (barrage, 100% meter; prestige 2: beat 44 enemy leaders): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Veni, Vidi, Vici: Every hit also splashes nearby enemies for 7% damage, and +6% army damage, and +5% attack speed
 
@@ -396,8 +415,9 @@ Last active pharaoh of Ptolemaic Egypt, a shrewd ruler who allied with Julius Ca
 - **Royal Charm** (third attribute): 7% chance to stun on every hit, and enemies deal 7% less damage
 
 **Special moves**
-- **Nile Treasury** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Nile Treasury** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Asp's Venom** (drain, 90% meter; prestige 1: use 30 specials): Every enemy loses 19% of their health (leaders 4%) and your army heals 31%
+- **Royal Fleet** (barrage, 100% meter; prestige 2: win 300 battles commanding from behind): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Queen of the Nile: +22% gold, and your army heals 0.7% health every second
 
@@ -412,8 +432,9 @@ Queen of the British Iceni tribe who led a fierce uprising against the Roman occ
 - **War Cry** (third attribute): +18% army damage
 
 **Special moves**
-- **Iceni Revolt** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Iceni Revolt** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Burning of Londinium** (inferno, 100% meter; prestige 1: win 35 battles at the front): Every enemy burns away 45% of their health over 6 seconds
+- **Chariot Queen** (rally, 80% meter; prestige 2: defeat 6,000 enemies with specials): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Iceni Uprising: Every hit also splashes nearby enemies for 7% damage, and the enemy army burns for 3% of your army's damage each second
 
@@ -428,8 +449,9 @@ Roman emperor who had his own mother killed, persecuted Christians after the Gre
 - **Praetorian Guard** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Emperor's Games** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Emperor's Games** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Great Fire** (inferno, 100% meter; prestige 1: call 200 field strikes as commander): Every enemy burns away 45% of their health over 6 seconds
+- **Lyre Lament** (terror, 90% meter; prestige 2: defeat 6,400 enemies with specials): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Great Fire of Rome: The enemy army burns for 7% of your army's damage each second
 
@@ -446,8 +468,9 @@ Ruler of the Huns who terrorized both halves of the Roman Empire from the Danube
 - **Plunder** (third attribute): +24% gold
 
 **Special moves**
-- **Hunnic Storm** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Hunnic Storm** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Hunnic Dread** (terror, 90% meter; prestige 1: defeat 450 enemy cavalry): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Hunnic Horse Archers** (charge, 100% meter; prestige 2: defeat 45,000 enemies): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Scourge of God: Every hit also splashes nearby enemies for 7% damage, and enemies deal 4% less damage
 
@@ -462,8 +485,9 @@ Legendary king of the Britons who, in medieval romance, pulled the sword from th
 - **Avalon** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Sword from the Stone** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+- **Sword from the Stone** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Round Table** (rally, 80% meter; prestige 1: beat 12 enemy leaders): +50% army damage and +31% attack speed for 8 seconds
+- **Avalon's Grace** (revive, 90% meter; prestige 2: win 300 battles without falling): 44% of your fallen soldiers get back up
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Excalibur: +18% damage to enemy leaders, and +3% chance of critical hits
 
@@ -478,8 +502,9 @@ King of the Franks who united much of Western Europe and was crowned the first H
 - **Carolingian Renewal** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Holy Roman Host** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+- **Holy Roman Host** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Twelve Peers** (charge, 100% meter; prestige 1: win 80 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Crown of the West** (fortify, 80% meter; prestige 2: beat 40 enemy leaders): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Imperial Crown: Your army takes 9% less damage, and +6% army damage
 
@@ -494,8 +519,9 @@ Legendary Norse hero of the sagas, said to have raided England and France; his s
 - **Shield Wall** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Shield Wall Breaker** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Shield Wall Breaker** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Raid on Paris** (tribute, 70% meter; prestige 1: defeat 2,500 enemies): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Snake Pit Curse** (terror, 90% meter; prestige 2: defeat 8,450 enemy infantry): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Great Heathen Army: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
 
@@ -510,8 +536,9 @@ Viking leader and son of Ragnar, said in the sagas to be unable to walk, who led
 - **Cunning** (third attribute): Enemies take 12% more damage
 
 **Special moves**
-- **Heathen Host** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Heathen Host** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Shieldless Fury** (charge, 100% meter; prestige 1: win 60 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Boneless Cunning** (terror, 90% meter; prestige 2: win 300 battles commanding from behind): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Taking of York: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
 
@@ -526,8 +553,9 @@ King of Wessex who beat back the Viking invasions at Edington in 878 and laid th
 - **Wessex Levy** (third attribute): Fallen soldiers get back up once, after 10 seconds
 
 **Special moves**
-- **Burghal Forts** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Burghal Forts** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Athelney Refuge** (heal, 80% meter; prestige 1: win 30 battles without falling): Your whole army heals 56% of its health
+- **Wessex Fyrd** (reinforce, 90% meter; prestige 2: defeat 8,780 enemy infantry): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Burh Fortresses: Your army takes 9% less damage, and +6% army damage
 
@@ -542,8 +570,9 @@ Norse explorer, outlawed from Iceland for killing, who founded the first Norse s
 - **Longship Raid** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Longship Landing** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Longship Landing** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Greenland Saga** (revive, 90% meter; prestige 1: defeat 1,500 enemies): 44% of your fallen soldiers get back up
+- **Bearded Axes** (execute, 100% meter; prestige 2: win battles in 8 different eras): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Green Land: +14% gold, and your army heals 0.4% health every second
 
@@ -558,8 +587,9 @@ High King of Ireland who broke Norse power in Ireland at the Battle of Clontarf 
 - **Harp of Ireland** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **High King's Muster** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+- **High King's Muster** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Dalcassian Charge** (charge, 100% meter; prestige 1: beat 6 enemy leaders): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Harp of Tara** (heal, 80% meter; prestige 2: defeat 10,140 enemies): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Clontarf: Every hit also splashes nearby enemies for 7% damage, and your army takes 5% less damage
 
@@ -574,8 +604,9 @@ Danish prince who conquered England and ruled a North Sea empire of England, Den
 - **Huscarls** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Northern Fleet** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Northern Fleet** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Command the Tide** (stun, 70% meter; prestige 1: win 40 battles commanding from behind): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Danish Host** (reinforce, 90% meter; prestige 2: win battles in 8 different eras): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. North Sea Empire: +22% gold, and +10% army damage
 
@@ -590,8 +621,9 @@ Norman duke who invaded England and won the crown at the Battle of Hastings in 1
 - **Domesday Book** (third attribute): +24% gold
 
 **Special moves**
-- **Hastings Feint** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Hastings Feint** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Destriers of Normandy** (charge, 100% meter; prestige 1: win 66 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Norman Tithe** (tribute, 70% meter; prestige 2: defeat 1,066 enemy cavalry): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Hastings 1066: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
 
@@ -606,8 +638,9 @@ King of Norway and former Byzantine guardsman who invaded England in 1066 and fe
 - **Stamford Bridge** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Landwaster Banner** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Landwaster Banner** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Byzantine Oath** (fortify, 80% meter; prestige 1: win 30 battles at the front): Your army takes half damage for 8 seconds and heals 25%
+- **Berserker Wave** (charge, 100% meter; prestige 2: defeat 5,000 enemy infantry): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Varangian Guard: +11% army damage, and +3% chance of critical hits
 
@@ -624,8 +657,9 @@ Castilian knight Rodrigo Diaz, who fought for both Christian and Muslim rulers a
 - **Last Ride** (third attribute): Fallen soldiers get back up once, after 10 seconds
 
 **Special moves**
-- **Ride of the Champion** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Ride of the Champion** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Tizona Strike** (execute, 100% meter; prestige 1: win 50 battles): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Valencian Catapults** (barrage, 100% meter; prestige 2: win 250 battles without falling): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Siege of Valencia: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
 
@@ -640,8 +674,9 @@ Sultan who united the Muslim world against the Crusaders and won the great victo
 - **Chivalrous Truce** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Desert Mirage** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Desert Mirage** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Jerusalem Truce** (heal, 80% meter; prestige 1: beat 8 enemy leaders): Your whole army heals 56% of its health
+- **Mamluk Horsemen** (charge, 100% meter; prestige 2: defeat 3,000 enemy cavalry): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Horns of Hattin: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
 
@@ -656,8 +691,9 @@ King of England famed for his courage on the Third Crusade, where he fought Sala
 - **King's Ransom** (third attribute): +24% gold
 
 **Special moves**
-- **Lionheart Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Lionheart Charge** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Crusader Crossbows** (barrage, 100% meter; prestige 1: win 50 battles at the front): Every enemy loses 38% of their health (leaders 8%)
+- **Spoils of Acre** (tribute, 70% meter; prestige 2: beat 40 enemy leaders): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Heart of a Lion: +11% army damage, and +3% chance of critical hits
 
@@ -672,8 +708,9 @@ Founder of the Mongol Empire, which became the largest contiguous land empire in
 - **Yam Relay** (third attribute): +15% attack speed
 
 **Special moves**
-- **Endless Steppe** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Endless Steppe** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Mongol Horse Archers** (barrage, 100% meter; prestige 1: defeat 600 enemy cavalry): Every enemy loses 38% of their health (leaders 8%)
+- **Feigned Flight** (terror, 90% meter; prestige 2: win battles in 13 different eras): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Mongol Horde: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
@@ -688,8 +725,9 @@ Grandson of Genghis Khan who completed the conquest of China, founded the Yuan d
 - **Yuan Cavalry** (third attribute): +15% attack speed
 
 **Special moves**
-- **Yuan Armada** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Yuan Armada** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Grand Canal** (tribute, 70% meter; prestige 1: defeat 200 heavy units (siege, tanks, mechs)): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Thunder-Crash Bombs** (inferno, 100% meter; prestige 2: defeat 12,790 enemies): Every enemy burns away 45% of their health over 6 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Conquest of the Song: Every hit also splashes nearby enemies for 7% damage
 
@@ -704,8 +742,9 @@ Scottish knight who led the rising against English rule and won the Battle of St
 - **Schiltron** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Highland Fury** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Highland Fury** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Bridge Ambush** (charge, 100% meter; prestige 1: defeat 1,297 enemy infantry): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Spear Ring** (fortify, 80% meter; prestige 2: win 250 battles at the front): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Stirling Bridge: +11% army damage, and +5% attack speed
 
@@ -720,8 +759,9 @@ Emperor of Mali, perhaps the richest person who ever lived; his golden pilgrimag
 - **Scholars of Timbuktu** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **River of Gold** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **River of Gold** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Pilgrimage of Gold** (heal, 80% meter; prestige 1: command for 45 minutes): Your whole army heals 56% of its health
+- **Mali Horsemen** (charge, 100% meter; prestige 2: win 324 battles commanding from behind): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Golden Pilgrimage: +22% gold
 
@@ -736,8 +776,9 @@ Turco-Mongol warlord whose ruthless campaigns stretched from Delhi to Damascus a
 - **Caltrops** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Iron Lame Wrath** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Iron Lame Wrath** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Lame Conqueror** (charge, 100% meter; prestige 1: beat 10 enemy leaders): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Samarkand Splendor** (tribute, 70% meter; prestige 2: defeat 4,000 enemy cavalry): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Conquest of Delhi: Every hit also splashes nearby enemies for 11% damage
 
@@ -752,8 +793,9 @@ French peasant girl who, guided by visions, lifted the siege of Orleans and turn
 - **Visions** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **The Maid's Banner** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **The Maid's Banner** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Visions of Saints** (heal, 80% meter; prestige 1: win 40 battles at the front): Your whole army heals 56% of its health
+- **Coronation at Reims** (shield, 80% meter; prestige 2: win 250 battles without falling): Your army can't be hurt for 4.0 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Siege of Orleans: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
@@ -770,8 +812,9 @@ Ottoman sultan who took Constantinople in 1453 with giant bombards, ending the B
 - **Janissaries** (third attribute): +18% army damage
 
 **Special moves**
-- **Walls Come Down** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Walls Come Down** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Orban's Cannon** (barrage, 100% meter; prestige 1: beat 8 enemy leaders): Every enemy loses 38% of their health (leaders 8%)
+- **Ships over Land** (charge, 100% meter; prestige 2: defeat 1,453 heavy units (siege, tanks, mechs)): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Fall of Constantinople: +18% damage to enemy leaders, and every hit also splashes nearby enemies for 4% damage
 
@@ -786,8 +829,9 @@ Wallachian prince infamous for brutal punishments; he fought the Ottoman Empire 
 - **Scorched Earth** (third attribute): The enemy army burns for 7% of your army's damage each second
 
 **Special moves**
-- **Moonlit Raid** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Moonlit Raid** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Carpathian Retreat** (fortify, 80% meter; prestige 1: defeat 1,462 enemies): Your army takes half damage for 8 seconds and heals 25%
+- **Dragon's Thirst** (drain, 90% meter; prestige 2: command for 240 minutes): Every enemy loses 19% of their health (leaders 4%) and your army heals 31%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Order of the Dragon: Enemies deal 11% less damage, and +10% army damage
 
@@ -802,8 +846,9 @@ Longest-reigning Ottoman sultan, who brought the empire to its height in power, 
 - **The Lawgiver** (third attribute): Your army takes 15% less damage, and your army heals 0.7% health every second
 
 **Special moves**
-- **Magnificent Host** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Magnificent Host** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Janissary Volley** (barrage, 100% meter; prestige 1: beat 13 enemy leaders): Every enemy loses 38% of their health (leaders 8%)
+- **Kanuni Decree** (fortify, 80% meter; prestige 2: win 500 battles): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Magnificent Century: +22% gold, and +10% army damage
 
@@ -818,8 +863,9 @@ First Tsar of Russia, who conquered Kazan and ruled through terror with his blac
 - **Tsar's Wrath** (third attribute): Enemies deal 12% less damage, and 4% chance to stun on every hit
 
 **Special moves**
-- **Tsar's Cannons** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Tsar's Cannons** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Cossack Charge** (charge, 100% meter; prestige 1: win 60 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Conquest of Kazan** (reinforce, 90% meter; prestige 2: defeat 1,552 heavy units (siege, tanks, mechs)): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Siege of Kazan: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
@@ -834,8 +880,9 @@ Ruthless Japanese warlord who began the unification of Japan and used massed mus
 - **Demon King** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Three-Rank Volley** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Three-Rank Volley** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Nagashino Palisade** (fortify, 80% meter; prestige 1: defeat 1,575 enemy ranged units): Your army takes half damage for 8 seconds and heals 25%
+- **Owari Fury** (terror, 90% meter; prestige 2: beat 40 enemy leaders): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Nagashino Volley: Every hit also splashes nearby enemies for 7% damage
 
@@ -850,8 +897,9 @@ Mughal emperor who expanded his empire across most of northern India and was kno
 - **Tolerance** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Elephant Batteries** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Elephant Batteries** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Din-i Ilahi** (heal, 80% meter; prestige 1: win 50 battles commanding from behind): Your whole army heals 56% of its health
+- **Mughal Treasury** (tribute, 70% meter; prestige 2: win battles in 11 different eras): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. War Elephants: Every hit also splashes nearby enemies for 11% damage
 
@@ -866,8 +914,9 @@ Queen of England whose navy defeated the Spanish Armada and whose reign became a
 - **Heart of a King** (third attribute): +18% army damage
 
 **Special moves**
-- **Fire Ships** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Fire Ships** (inferno, 100% meter; starts unlocked): Every enemy burns away 45% of their health over 6 seconds
+- **Drake's Raid** (barrage, 100% meter; prestige 1: defeat 1,588 enemies with specials): Every enemy loses 38% of their health (leaders 8%)
+- **Tilbury Speech** (rally, 80% meter; prestige 2: win 300 battles commanding from behind): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. The Armada's Doom: Every hit also splashes nearby enemies for 11% damage, and the enemy army burns for 4% of your army's damage each second
 
@@ -882,8 +931,9 @@ Won the Battle of Sekigahara and founded the shogunate that kept Japan at peace 
 - **Edo Treasury** (third attribute): +24% gold
 
 **Special moves**
-- **Unifier of Japan** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Unifier of Japan** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Eastern Army** (charge, 100% meter; prestige 1: win 60 battles commanding from behind): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Peace of Edo** (heal, 80% meter; prestige 2: win 160 battles without falling): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Sekigahara: Every hit also splashes nearby enemies for 11% damage, and your army takes 8% less damage
 
@@ -898,8 +948,9 @@ Swedish king whose light field guns and drilled musketeers made Sweden a great p
 - **Lion of the North** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Swedish Brigade** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Swedish Brigade** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Regimental Guns** (barrage, 100% meter; prestige 1: win 60 battles): Every enemy loses 38% of their health (leaders 8%)
+- **Breitenfeld** (charge, 100% meter; prestige 2: defeat 800 heavy units (siege, tanks, mechs)): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Volley Fire: +19% damage from ranged units, and +8% attack speed
 
@@ -914,8 +965,9 @@ English general who led Parliament's New Model Army to victory in the Civil War,
 - **Rule of the Major-Generals** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Ironside Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Ironside Charge** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Roundhead Muster** (reinforce, 90% meter; prestige 1: win 60 battles): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Lord Protector** (fortify, 80% meter; prestige 2: defeat 1,650 enemy cavalry): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. New Model Army: +17% army damage, and your army takes 8% less damage
 
@@ -930,8 +982,9 @@ Tsar who modernized Russia, built its first navy, founded St Petersburg and crus
 - **Baltic Fleet** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Northern Bastion** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Northern Bastion** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Preobrazhensky Guard** (charge, 100% meter; prestige 1: win 70 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Shipyard Muster** (reinforce, 90% meter; prestige 2: defeat 17,090 enemies): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Window to the West: +11% army damage, and +5% attack speed
 
@@ -948,8 +1001,9 @@ Prussian king and master of the oblique order, who survived the Seven Years' War
 - **Seven Years' War** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Leuthen Maneuver** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Leuthen Maneuver** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Prussian Grenadiers** (charge, 100% meter; prestige 1: win 50 battles commanding from behind): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Sanssouci** (heal, 80% meter; prestige 2: win 175 battles without falling): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Oblique Order: +17% army damage, and enemies take 7% more damage
 
@@ -964,8 +1018,9 @@ Empress who pushed Russia to the Black Sea and championed the ideas of the Enlig
 - **Enlightened Rule** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Imperial Guard** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Imperial Guard** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Potemkin Fleet** (barrage, 100% meter; prestige 1: win 60 battles commanding from behind): Every enemy loses 38% of their health (leaders 8%)
+- **Hermitage Treasury** (tribute, 70% meter; prestige 2: win battles in 10 different eras): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Golden Age: +22% gold, and +10% army damage
 
@@ -980,8 +1035,9 @@ Led the Continental Army to American independence and became the first President
 - **Continental Army** (third attribute): Fallen soldiers get back up once, after 10 seconds
 
 **Special moves**
-- **Delaware Surprise** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Delaware Surprise** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Mount Vernon Rest** (heal, 80% meter; prestige 1: win 40 battles without falling): Your whole army heals 56% of its health
+- **Minutemen** (reinforce, 90% meter; prestige 2: defeat 17,760 enemies): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Crossing the Delaware: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
 
@@ -996,8 +1052,9 @@ Revolutionary leader whose Reign of Terror (1793–94) sent thousands to the gui
 - **Republic of Virtue** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Revolutionary Levy** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Revolutionary Levy** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Tennis Court Oath** (fortify, 80% meter; prestige 1: win 50 battles): Your army takes half damage for 8 seconds and heals 25%
+- **Liberty Cap** (rally, 80% meter; prestige 2: win 179 battles commanding from behind): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Committee of Public Safety: +17% army damage, and your army takes 8% less damage
 
@@ -1012,8 +1069,9 @@ Formerly enslaved general who led the Haitian Revolution, the only slave uprisin
 - **Mountain Ambush** (third attribute): +21% damage from ranged units, and 4% chance to stun on every hit
 
 **Special moves**
-- **Spirit of Saint-Domingue** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Spirit of Saint-Domingue** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Black Jacobins** (charge, 100% meter; prestige 1: defeat 1,791 enemy infantry): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Fort Crete-a-Pierrot** (fortify, 80% meter; prestige 2: win 180 battles at the front): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Liberty or Death: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
@@ -1028,8 +1086,9 @@ French emperor and military genius who conquered most of Europe before his final
 - **Sun of Austerlitz** (third attribute): +9% chance of critical hits, and +9% attack speed
 
 **Special moves**
-- **Old Guard Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Old Guard Charge** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Imperial Artillery** (barrage, 100% meter; prestige 1: beat 7 enemy leaders): Every enemy loses 38% of their health (leaders 8%)
+- **Hundred Days** (revive, 90% meter; prestige 2: win 600 battles): 44% of your fallen soldiers get back up
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. La Grande Armee: +11% army damage, and fallen soldiers get back up once, after 29 seconds
 
@@ -1044,8 +1103,9 @@ British admiral who lost an arm and the sight of one eye in battle and destroyed
 - **Broadside** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Line of Battle** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Line of Battle** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Crossing the T** (charge, 100% meter; prestige 1: defeat 1,805 enemy ranged units): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Kiss Me Hardy** (heal, 80% meter; prestige 2: beat 27 enemy leaders): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Trafalgar: Every hit also splashes nearby enemies for 7% damage
 
@@ -1060,8 +1120,9 @@ Zulu king who transformed southern African warfare with the short stabbing spear
 - **Impi Drill** (third attribute): +18% army damage
 
 **Special moves**
-- **Impi Charge** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Impi Charge** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Impi Regiments** (reinforce, 90% meter; prestige 1: defeat 1,500 enemy infantry): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Bull's Chest** (charge, 100% meter; prestige 2: win 180 battles at the front): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Horns of the Buffalo: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
@@ -1076,8 +1137,9 @@ Led Venezuela, Colombia, Ecuador, Peru and Bolivia to independence from the Span
 - **Gran Colombia** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Liberator's March** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Liberator's March** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Boyaca Charge** (charge, 100% meter; prestige 1: win battles in 5 different eras): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Liberator's Mercy** (heal, 80% meter; prestige 2: defeat 18,190 enemies): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. El Libertador: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
@@ -1094,8 +1156,9 @@ Italian general whose Expedition of the Thousand, the red-shirted volunteers, co
 - **Hero of Two Worlds** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **The Thousand** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Barricades** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+- **The Thousand** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Redshirt Charge** (charge, 100% meter; prestige 1: defeat 1,000 enemy infantry): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Risorgimento** (rally, 80% meter; prestige 2: win 200 battles at the front): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Expedition of the Thousand: +9% attack speed, and +6% army damage
 
@@ -1110,8 +1173,9 @@ Led the Union through the American Civil War and ended slavery in the United Sta
 - **Anaconda Blockade** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Better Angels** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Better Angels** (revive, 90% meter; starts unlocked): 44% of your fallen soldiers get back up
+- **Four Score** (rally, 80% meter; prestige 1: win 60 battles): +50% army damage and +31% attack speed for 8 seconds
+- **Union Forever** (fortify, 80% meter; prestige 2: win 186 battles without falling): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Emancipation: Fallen soldiers get back up once, after 11 seconds, and your army heals 0.7% health every second
 
@@ -1126,8 +1190,9 @@ Escaped slavery, then guided dozens to freedom on the Underground Railroad and l
 - **North Star** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Conductor's Lantern** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Conductor's Lantern** (revive, 90% meter; starts unlocked): 44% of your fallen soldiers get back up
+- **Safe House** (heal, 80% meter; prestige 1: get 300 fallen soldiers back up): Your whole army heals 56% of its health
+- **Combahee Raid** (charge, 100% meter; prestige 2: win 300 battles without falling): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Underground Railroad: Fallen soldiers get back up once, after 17 seconds, and +5% attack speed
 
@@ -1142,8 +1207,9 @@ Union general who won at Vicksburg and accepted Robert E. Lee's surrender at App
 - **Overland Campaign** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Siege of Vicksburg** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Siege of Vicksburg** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Army of the Potomac** (reinforce, 90% meter; prestige 1: win 60 battles): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Wilderness Grind** (terror, 90% meter; prestige 2: defeat 1,863 heavy units (siege, tanks, mechs)): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Vicksburg: Enemies deal 11% less damage, and every hit also splashes nearby enemies for 7% damage
 
@@ -1158,8 +1224,9 @@ Prussian statesman who unified Germany through "blood and iron" and decades of s
 - **Unification** (third attribute): Your army takes 15% less damage, and your army heals 0.7% health every second
 
 **Special moves**
-- **Iron and Blood** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **False Retreat** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Iron and Blood** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Zollverein** (tribute, 70% meter; prestige 1: win 50 battles commanding from behind): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Wars of Unification** (charge, 100% meter; prestige 2: win battles in 9 different eras): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Blood and Iron: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
@@ -1174,8 +1241,9 @@ Queen of the United Kingdom for 63 years, ruling an empire on which the sun neve
 - **Victoria Cross** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Imperial Jubilee** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Imperial Jubilee** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Ironclad Broadside** (barrage, 100% meter; prestige 1: command for 60 minutes): Every enemy loses 38% of their health (leaders 8%)
+- **Nightingale's Lamp** (heal, 80% meter; prestige 2: win 300 battles commanding from behind): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. The Sun Never Sets: +22% gold, and +10% army damage
 
@@ -1190,8 +1258,9 @@ Ruled Mexico as a dictator for over 30 years (1876–1911) until the Mexican Rev
 - **Order and Progress** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Rurales** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Rurales** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Pax Porfiriana** (fortify, 80% meter; prestige 1: win 60 battles): Your army takes half damage for 8 seconds and heals 25%
+- **Federal Artillery** (barrage, 100% meter; prestige 2: command for 300 minutes): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. The Porfiriato: +22% gold, and +10% army damage
 
@@ -1206,8 +1275,9 @@ Led the Rough Riders up San Juan Hill, then as president urged America to "speak
 - **Bull Moose** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Rough Riders** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Rough Riders** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **San Juan Hill** (rally, 80% meter; prestige 1: win 40 battles at the front): +50% army damage and +31% attack speed for 8 seconds
+- **Great White Fleet** (barrage, 100% meter; prestige 2: defeat 2,000 enemy cavalry): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Rough Riders' Charge: +11% army damage, and +5% attack speed
 
@@ -1222,8 +1292,9 @@ Last German emperor, whose militarism and imperial ambitions helped drag Europe 
 - **Spiked Helmets** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Paris Gun** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Paris Gun** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Krupp Howitzers** (barrage, 100% meter; prestige 1: defeat 300 heavy units (siege, tanks, mechs)): Every enemy loses 38% of their health (leaders 8%)
+- **Schlieffen Plan** (charge, 100% meter; prestige 2: defeat 19,140 enemies): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Big Bertha: Every hit also splashes nearby enemies for 7% damage
 
@@ -1238,8 +1309,9 @@ Led the Bolshevik October Revolution of 1917 and founded the Soviet state.
 - **Agitprop** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Storm the Winter Palace** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Storm the Winter Palace** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Bread Peace Land** (heal, 80% meter; prestige 1: defeat 1,917 enemy infantry): Your whole army heals 56% of its health
+- **Red Guards** (reinforce, 90% meter; prestige 2: win battles in 10 different eras): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. October Revolution: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
@@ -1254,8 +1326,9 @@ Led India's independence movement through nonviolent resistance and inspired civ
 - **Hunger Strike** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Quit India** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Quit India** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Peaceful Resistance** (stun, 70% meter; prestige 1: win 40 battles without falling): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Ahimsa** (heal, 80% meter; prestige 2: command for 240 minutes): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Salt March: Your army heals 1.1% health every second, and your army takes 8% less damage
 
@@ -1272,8 +1345,9 @@ Founder of Fascism and dictator of Italy from 1922; allied with Hitler and was e
 - **Trains on Time** (third attribute): +15% attack speed
 
 **Special moves**
-- **Balcony Speech** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Balcony Speech** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Littorio Legion** (reinforce, 90% meter; prestige 1: defeat 1,922 enemy infantry): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Blackshirt Squads** (charge, 100% meter; prestige 2: command for 240 minutes): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. March on Rome: +17% army damage, and every hit also splashes nearby enemies for 7% damage
 
@@ -1288,8 +1362,9 @@ Ruled the Dominican Republic through terror for 31 years (1930–61), including 
 - **Island Fortress** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Benefactor's Decree** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Benefactor's Decree** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Sugar Fortune** (tribute, 70% meter; prestige 1: win 40 battles commanding from behind): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Palace Guard** (fortify, 80% meter; prestige 2: command for 300 minutes): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. El Jefe: +17% army damage, and enemies deal 7% less damage
 
@@ -1304,8 +1379,9 @@ Spanish general who won the Spanish Civil War and ruled Spain as a dictator for 
 - **Iron Rule** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Ebro Offensive** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Ebro Offensive** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Siege of the Alcazar** (fortify, 80% meter; prestige 1: win 60 battles): Your army takes half damage for 8 seconds and heals 25%
+- **Army of Africa** (reinforce, 90% meter; prestige 2: beat 36 enemy leaders): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Nationalist Advance: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
@@ -1320,8 +1396,9 @@ Dictator of Nazi Germany (1933–45). Started the Second World War in Europe and
 - **Propaganda Machine** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Panzer Thrust** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Panzer Thrust** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Luftwaffe Raid** (barrage, 100% meter; prestige 1: defeat 400 heavy units (siege, tanks, mechs)): Every enemy loses 38% of their health (leaders 8%)
+- **Concrete Bunkers** (fortify, 80% meter; prestige 2: win 450 battles): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Blitzkrieg: Every hit also splashes nearby enemies for 11% damage, and +8% attack speed
 
@@ -1336,8 +1413,9 @@ British prime minister who refused to make peace with Nazi Germany and rallied B
 - **V for Victory** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Never Surrender** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Never Surrender** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Blood Toil Tears** (rally, 80% meter; prestige 1: win 40 battles commanding from behind): +50% army damage and +31% attack speed for 8 seconds
+- **Spitfire Squadrons** (barrage, 100% meter; prestige 2: use 300 specials): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Their Finest Hour: Your army takes 14% less damage, and +10% army damage
 
@@ -1352,8 +1430,9 @@ Prime Minister of Japan for most of the Second World War who led it into war wit
 - **Bushido Code** (third attribute): +18% army damage, and +5% chance of critical hits
 
 **Special moves**
-- **Southern Strike** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Southern Strike** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Island Assault** (charge, 100% meter; prestige 1: win 60 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Combined Fleet** (reinforce, 90% meter; prestige 2: defeat 19,410 enemies): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Pacific Offensive: Every hit also splashes nearby enemies for 7% damage
 
@@ -1368,8 +1447,9 @@ Four-term president who led America through the Great Depression and most of the
 - **Lend-Lease** (third attribute): Your army takes 15% less damage, and +9% attack speed
 
 **Special moves**
-- **Victory Bonds** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Victory Bonds** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **New Deal** (heal, 80% meter; prestige 1: win 50 battles commanding from behind): Your whole army heals 56% of its health
+- **Liberty Ships** (reinforce, 90% meter; prestige 2: command for 240 minutes): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Arsenal of Democracy: +22% gold, and +10% army damage
 
@@ -1384,8 +1464,9 @@ German field marshal who led the Afrika Korps in North Africa; linked to the plo
 - **Atlantic Wall** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Desert Blitz** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Desert Blitz** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Ghost Division** (terror, 90% meter; prestige 1: defeat 500 heavy units (siege, tanks, mechs)): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Tobruk Assault** (barrage, 100% meter; prestige 2: win 250 battles commanding from behind): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Desert Fox: +14% attack speed, and enemies take 7% more damage
 
@@ -1400,8 +1481,9 @@ Soviet dictator who industrialized the USSR and defeated Nazi Germany in the eas
 - **Five-Year Plan** (third attribute): +24% gold
 
 **Special moves**
-- **Katyusha Barrage** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Katyusha Barrage** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Red Army Wave** (reinforce, 90% meter; prestige 1: defeat 2,000 enemy infantry): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Stalingrad Stand** (fortify, 80% meter; prestige 2: win 450 battles): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Red Tide: Fallen soldiers get back up once, after 11 seconds, and every hit also splashes nearby enemies for 7% damage
 
@@ -1416,8 +1498,9 @@ Hard-charging American general whose Third Army raced across France and relieved
 - **Ghost Army** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Relief of Bastogne** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Relief of Bastogne** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Third Army Dash** (charge, 100% meter; prestige 1: defeat 400 heavy units (siege, tanks, mechs)): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Armored Fist** (terror, 90% meter; prestige 2: win 250 battles at the front): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Third Army Breakout: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
@@ -1432,8 +1515,9 @@ Planned and led the D-Day invasion of Normandy, then served as the 34th U.S. pre
 - **Interstate Supply** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **D-Day Landings** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **D-Day Landings** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Air Supremacy** (barrage, 100% meter; prestige 1: win 60 battles commanding from behind): Every enemy loses 38% of their health (leaders 8%)
+- **Allied Coalition** (rally, 80% meter; prestige 2: beat 44 enemy leaders): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. D-Day: Every hit also splashes nearby enemies for 11% damage
 
@@ -1448,8 +1532,9 @@ Soviet marshal who defended Moscow, encircled the German army at Stalingrad and 
 - **Defence of Moscow** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Storm of Berlin** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Storm of Berlin** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Deep Battle** (charge, 100% meter; prestige 1: defeat 450 heavy units (siege, tanks, mechs)): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Khalkhin Gol** (barrage, 100% meter; prestige 2: win 500 battles): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Operation Uranus: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
 
@@ -1464,8 +1549,9 @@ American general who commanded Allied forces in the Southwest Pacific, accepted 
 - **Inchon Landing** (third attribute): Enemies take 12% more damage
 
 **Special moves**
-- **Amphibious Assault** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Amphibious Assault** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Return to Leyte** (revive, 90% meter; prestige 1: win 50 battles commanding from behind): 44% of your fallen soldiers get back up
+- **Marine Assault** (charge, 100% meter; prestige 2: win battles in 10 different eras): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Island Hopping: +19% damage from ranged units, and +8% attack speed
 
@@ -1482,8 +1568,9 @@ Founder of the People's Republic of China, whose Great Leap Forward caused a fam
 - **People's Army** (third attribute): Fallen soldiers get back up once, after 10 seconds
 
 **Special moves**
-- **Prairie Fire** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Prairie Fire** (inferno, 100% meter; starts unlocked): Every enemy burns away 45% of their health over 6 seconds
+- **Yan'an Retreat** (heal, 80% meter; prestige 1: defeat 2,000 enemy infantry): Your whole army heals 56% of its health
+- **People's War** (reinforce, 90% meter; prestige 2: win 500 battles): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Long March: Your army heals 1.1% health every second, and your army takes 8% less damage
 
@@ -1498,8 +1585,9 @@ Founder of North Korea who invaded the South in 1950, starting the Korean War, a
 - **Tunnel Ambush** (third attribute): +18% army damage
 
 **Special moves**
-- **Chollima Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Chollima Charge** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Juche Fortress** (fortify, 80% meter; prestige 1: win 50 battles): Your army takes half damage for 8 seconds and heals 25%
+- **Northern Divisions** (reinforce, 90% meter; prestige 2: command for 300 minutes): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Juche: Your army heals 1.1% health every second, and +10% army damage
 
@@ -1514,8 +1602,9 @@ Partisan leader who drove the Axis out of Yugoslavia, defied Stalin, and ruled t
 - **Brotherhood and Unity** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Partisan Ambush** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Partisan Ambush** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Neretva Crossing** (heal, 80% meter; prestige 1: win 30 battles at the front): Your whole army heals 56% of its health
+- **Partisan Brigades** (reinforce, 90% meter; prestige 2: defeat 20,000 enemies): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Partisan War: +12% damage from ranged units, and +5% attack speed
 
@@ -1530,8 +1619,9 @@ Led Vietnam's long struggle for independence, first against France and then the 
 - **Jungle Ambush** (third attribute): +18% army damage
 
 **Special moves**
-- **Ho Chi Minh Trail** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Barricades** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+- **Ho Chi Minh Trail** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Dien Bien Phu** (barrage, 100% meter; prestige 1: win 50 battles commanding from behind): Every enemy loses 38% of their health (leaders 8%)
+- **Tunnel Network** (shield, 80% meter; prestige 2: defeat 1,954 heavy units (siege, tanks, mechs)): Your army can't be hurt for 4.0 seconds
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Tet Offensive: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
 
@@ -1546,8 +1636,9 @@ Led the Free French against Nazi Germany, then founded France's Fifth Republic a
 - **Grandeur** (third attribute): +18% army damage
 
 **Special moves**
-- **Free French** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+- **Free French** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Appeal of 18 June** (reinforce, 90% meter; prestige 1: win 30 battles without falling): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Liberation of Paris** (charge, 100% meter; prestige 2: beat 40 enemy leaders): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Free France: Fallen soldiers get back up once, after 17 seconds, and your army takes 5% less damage
 
@@ -1562,8 +1653,9 @@ Argentine doctor turned guerrilla who fought in the Cuban Revolution; his portra
 - **Hit and Run** (third attribute): +18% army damage
 
 **Special moves**
-- **Guerrilla Ambush** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Guerrilla Ambush** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Mountain Camp** (fortify, 80% meter; prestige 1: win 30 battles at the front): Your army takes half damage for 8 seconds and heals 25%
+- **Santa Clara Raid** (charge, 100% meter; prestige 2: defeat 19,590 enemies): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Guerrilla Warfare: +12% damage from ranged units, and +5% attack speed
 
@@ -1578,8 +1670,9 @@ Led the Cuban Revolution and ruled Cuba as a one-party communist state for nearl
 - **Seven-Hour Speech** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Havana Bastion** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Havana Bastion** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Playa Giron** (charge, 100% meter; prestige 1: win 30 battles without falling): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Granma Landing** (reinforce, 90% meter; prestige 2: command for 300 minutes): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Sierra Maestra: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
@@ -1594,8 +1687,9 @@ Faced down the Soviet Union in the Cuban Missile Crisis and launched the race to
 - **Naval Quarantine** (third attribute): 7% chance to stun on every hit, and enemies deal 7% less damage
 
 **Special moves**
-- **Moonshot** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Moonshot** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Camelot** (heal, 80% meter; prestige 1: win 40 battles commanding from behind): Your whole army heals 56% of its health
+- **Thirteen Days** (stun, 70% meter; prestige 2: win battles in 11 different eras): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. We Choose the Moon: Every hit also splashes nearby enemies for 11% damage, and +5% chance of critical hits
 
@@ -1610,8 +1704,9 @@ Soviet leader who denounced Stalin, crushed the Hungarian Revolution in 1956 and
 - **Sputnik** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Missile Crisis** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Missile Crisis** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Shoe on the Desk** (terror, 90% meter; prestige 1: call 300 field strikes as commander): For 8 seconds enemies deal 44% less damage and take 44% more
+- **R-7 Rocket** (snipe, 90% meter; prestige 2: win 450 battles): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Missiles to Cuba: Every hit also splashes nearby enemies for 11% damage
 
@@ -1626,8 +1721,9 @@ Baptist minister who led the American civil rights movement through nonviolent p
 - **Nonviolent Resolve** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Selma March** (signature, heal, 100% meter): Your whole army heals 56% of its health
-- **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Selma March** (heal, 80% meter; starts unlocked): Your whole army heals 56% of its health
+- **Mountaintop** (rally, 80% meter; prestige 1: win 30 battles without falling): +50% army damage and +31% attack speed for 8 seconds
+- **Montgomery Boycott** (stun, 70% meter; prestige 2: win 250 battles without falling): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. I Have a Dream: +17% army damage, and +8% attack speed, and your army heals 0.7% health every second
 
@@ -1642,8 +1738,9 @@ Military dictator of Uganda (1971–79), notorious for his brutality; between 10
 - **Field Marshal's Decree** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Last King** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Last King** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Boxing Champion** (execute, 100% meter; prestige 1: defeat 1,500 enemy infantry): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Self-Crowned** (tribute, 70% meter; prestige 2: command for 300 minutes): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Conqueror of the British Empire: +17% army damage, and every hit also splashes nearby enemies for 7% damage
 
@@ -1658,8 +1755,9 @@ Seized power in Chile in a 1973 coup and ruled as military dictator until 1990; 
 - **Iron Fist** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Iron Junta** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Iron Junta** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Andes Garrison** (fortify, 80% meter; prestige 1: win 40 battles commanding from behind): Your army takes half damage for 8 seconds and heals 25%
+- **Coastal Batteries** (barrage, 100% meter; prestige 2: command for 300 minutes): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Junta Command: +17% army damage, and your army takes 8% less damage
 
@@ -1674,8 +1772,9 @@ Led Cambodia's Khmer Rouge regime (1975–79), whose genocide killed up to two m
 - **Khmer Rouge Ambush** (third attribute): +18% army damage
 
 **Special moves**
-- **Jungle War** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Jungle War** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Monsoon Ambush** (charge, 100% meter; prestige 1: win 50 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Hidden Bases** (fortify, 80% meter; prestige 2: command for 300 minutes): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Fall of Phnom Penh: Every hit also splashes nearby enemies for 11% damage, and 4% chance to stun on every hit
 
@@ -1690,8 +1789,9 @@ Britain's first woman prime minister, the 'Iron Lady' who won the Falklands War.
 - **Not for Turning** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Iron Lady** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Iron Lady** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Royal Marines** (reinforce, 90% meter; prestige 1: win 30 battles without falling): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Handbag Swing** (stun, 70% meter; prestige 2: win 200 battles at the front): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. The Iron Lady: Your army takes 9% less damage, and +6% army damage
 
@@ -1706,8 +1806,9 @@ Confronted the Soviet Union in the last decade of the Cold War and urged "Mr. Go
 - **Morning in America** (third attribute): Your army heals 1.2% health every second, and +14% gold
 
 **Special moves**
-- **Peace Through Strength** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Peace Through Strength** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Strategic Defense** (shield, 80% meter; prestige 1: win 40 battles commanding from behind): Your army can't be hurt for 4.0 seconds
+- **B-1 Bombers** (barrage, 100% meter; prestige 2: beat 40 enemy leaders): Every enemy loses 38% of their health (leaders 8%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Tear Down This Wall: +28% damage to enemy leaders, and enemies take 7% more damage
 
@@ -1724,8 +1825,9 @@ Ruled Libya with an iron fist for 42 years until he was overthrown during the 20
 - **Oil Fortune** (third attribute): +24% gold
 
 **Special moves**
-- **Green Book** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Green Book** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Desert Tent** (heal, 80% meter; prestige 1: win 40 battles commanding from behind): Your whole army heals 56% of its health
+- **Amazon Guard** (fortify, 80% meter; prestige 2: command for 300 minutes): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. The Green Book: +17% army damage, and enemies deal 7% less damage
 
@@ -1740,8 +1842,9 @@ Last leader of the Soviet Union, whose reforms ended the Cold War; Nobel Peace P
 - **End of the Cold War** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **The Thaw** (signature, heal, 100% meter): Your whole army heals 56% of its health
-- **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **The Thaw** (heal, 80% meter; starts unlocked): Your whole army heals 56% of its health
+- **Reykjavik Summit** (stun, 70% meter; prestige 1: win 30 battles without falling): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Market Reform** (tribute, 70% meter; prestige 2: command for 240 minutes): Gold worth 50 enemies, and +20% army damage for 6 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Perestroika: Your army heals 1.1% health every second, and +8% attack speed
 
@@ -1756,8 +1859,9 @@ Dictator of Iraq (1979–2003) who waged wars on Iran and Kuwait and brutally re
 - **Scud Volley** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Baghdad Guard** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Baghdad Guard** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Scud Launch** (barrage, 100% meter; prestige 1: defeat 500 heavy units (siege, tanks, mechs)): Every enemy loses 38% of their health (leaders 8%)
+- **Tyrant's Glare** (terror, 90% meter; prestige 2: command for 300 minutes): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Mother of All Battles: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
@@ -1772,8 +1876,9 @@ Anti-apartheid leader imprisoned for 27 years who became South Africa's first Bl
 - **Madiba Magic** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Robben Island Will** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
-- **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Robben Island Will** (revive, 90% meter; starts unlocked): 44% of your fallen soldiers get back up
+- **Madiba's Mercy** (heal, 80% meter; prestige 1: win 27 battles without falling): Your whole army heals 56% of its health
+- **Springbok Spirit** (rally, 80% meter; prestige 2: command for 270 minutes): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Long Walk to Freedom: Fallen soldiers get back up once, after 11 seconds, and your army heals 0.7% health every second, and your army takes 8% less damage
 
@@ -1788,8 +1893,9 @@ Seized power in Congo in 1965 and ruled it as Zaire for 32 years, looting billio
 - **Zairean Paratroopers** (third attribute): +18% army damage
 
 **Special moves**
-- **Leopard's Fortune** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Leopard's Fortune** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Leopard Guard** (fortify, 80% meter; prestige 1: win 40 battles commanding from behind): Your army takes half damage for 8 seconds and heals 25%
+- **Kinshasa Spectacle** (stun, 70% meter; prestige 2: command for 300 minutes): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Leopard Throne: +17% army damage, and +13% gold
 
@@ -1804,8 +1910,9 @@ Ruled North Korea from 1994 to 2011 through a famine that killed hundreds of tho
 - **Director's Cut** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Songun Parade** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Songun Parade** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Hole in One** (snipe, 90% meter; prestige 1: call 111 field strikes as commander): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Movie Director** (terror, 90% meter; prestige 2: command for 300 minutes): For 8 seconds enemies deal 44% less damage and take 44% more
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Military First: +17% army damage, and your army takes 8% less damage
 
@@ -1820,8 +1927,9 @@ Venezuelan president who led a socialist 'Bolivarian Revolution' paid for with t
 - **Alo Presidente** (third attribute): 7% chance to stun on every hit
 
 **Special moves**
-- **Bolivar's Heirs** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
-- **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Bolivar's Heirs** (rally, 80% meter; starts unlocked): +50% army damage and +31% attack speed for 8 seconds
+- **Petro Dollars** (tribute, 70% meter; prestige 1: win 50 battles): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Bolivarian Militia** (reinforce, 90% meter; prestige 2: win 200 battles at the front): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Bolivarian Revolution: +11% army damage, and +5% attack speed
 
@@ -1836,8 +1944,9 @@ Led Zimbabwe's liberation war, then ruled for 37 years (1980–2017) as the econ
 - **Print More Money** (third attribute): +24% gold
 
 **Special moves**
-- **Bush War** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Bush War** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Liberation Fighters** (charge, 100% meter; prestige 1: win 50 battles): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Harare Bastion** (fortify, 80% meter; prestige 2: command for 300 minutes): Your army takes half damage for 8 seconds and heals 25%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Chimurenga: Fallen soldiers get back up once, after 11 seconds, and +10% army damage
 
@@ -1852,8 +1961,9 @@ First African American president of the United States, who wound down the Iraq W
 - **Drone Program** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Hope and Change** (signature, heal, 100% meter): Your whole army heals 56% of its health
-- **Call to Arms** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+- **Hope and Change** (heal, 80% meter; starts unlocked): Your whole army heals 56% of its health
+- **Audacity of Hope** (rally, 80% meter; prestige 1: win 44 battles commanding from behind): +50% army damage and +31% attack speed for 8 seconds
+- **Drone Strike** (snipe, 90% meter; prestige 2: win 250 battles without falling): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Yes We Can: +17% army damage, and +8% attack speed
 
@@ -1868,8 +1978,9 @@ Britain's longest-reigning monarch, on the throne for 70 years, who served as a 
 - **Corgi Brigade** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Keep Calm** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Keep Calm** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Royal Corgis** (charge, 100% meter; prestige 1: command for 70 minutes): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Royal Garden Party** (heal, 80% meter; prestige 2: win 700 battles): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Platinum Jubilee: Fallen soldiers get back up once, after 17 seconds, and your army takes 5% less damage
 
@@ -1884,8 +1995,9 @@ American conservative activist who founded Turning Point USA in 2012 and toured 
 - **Campus Tour** (third attribute): Fallen soldiers get back up once, after 10 seconds
 
 **Special moves**
-- **Campus Debate** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Campus Debate** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Change My Mind** (terror, 90% meter; prestige 1: call 100 field strikes as commander): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Turning Point Rally** (rally, 80% meter; prestige 2: use 300 specials): +50% army damage and +31% attack speed for 8 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Turning Point: +17% army damage, and +13% gold
 
@@ -1900,8 +2012,9 @@ New York real-estate developer and reality-TV host who became the 45th and 47th 
 - **Build the Wall** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **The Deal** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **The Deal** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Big Beautiful Wall** (fortify, 80% meter; prestige 1: win 45 battles): Your army takes half damage for 8 seconds and heals 25%
+- **You're Fired** (execute, 100% meter; prestige 2: beat 47 enemy leaders): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Make America Great Again: +17% army damage, and +13% gold
 
@@ -1916,8 +2029,9 @@ Third ruler of North Korea's Kim dynasty, who expanded its nuclear and missile p
 - **Military First** (third attribute): +18% army damage
 
 **Special moves**
-- **Missile Salvo** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Missile Salvo** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Supreme Parade** (rally, 80% meter; prestige 1: call 150 field strikes as commander): +50% army damage and +31% attack speed for 8 seconds
+- **Hwasong Launch** (snipe, 90% meter; prestige 2: defeat 800 heavy units (siege, tanks, mechs)): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Missile Test: Every hit also splashes nearby enemies for 11% damage
 
@@ -1932,8 +2046,9 @@ Former KGB officer who has ruled Russia since 2000, jailed and silenced his crit
 - **Gas Pipeline** (third attribute): +24% gold
 
 **Special moves**
-- **Iron Curtain** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Iron Curtain** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **Judo Throw** (stun, 70% meter; prestige 1: win 40 battles commanding from behind): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Kremlin Guard** (reinforce, 90% meter; prestige 2: command for 300 minutes): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Iron Grip: Enemies deal 11% less damage, and your army takes 8% less damage
 
@@ -1948,8 +2063,9 @@ Former comedian and actor elected president of Ukraine in 2019, who stayed in Ky
 - **Drone Swarm** (third attribute): +21% damage from ranged units
 
 **Special moves**
-- **Kyiv Holds** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
-- **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Kyiv Holds** (fortify, 80% meter; starts unlocked): Your army takes half damage for 8 seconds and heals 25%
+- **FPV Drones** (barrage, 100% meter; prestige 1: win 30 battles without falling): Every enemy loses 38% of their health (leaders 8%)
+- **Ghost of Kyiv** (snipe, 90% meter; prestige 2: defeat 2,022 heavy units (siege, tanks, mechs)): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Defence of Kyiv: Your army takes 9% less damage, and your army heals 0.4% health every second
 
@@ -1966,8 +2082,9 @@ A cyborg assassin built in 2029 and sent back through time: a steel skeleton und
 - **Steel Endoskeleton** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Termination** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Termination** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Judgment Day** (barrage, 100% meter; prestige 1: defeat 2,029 enemy infantry): Every enemy loses 38% of their health (leaders 8%)
+- **Endoskeleton Rebuild** (revive, 90% meter; prestige 2: win 300 battles without falling): 44% of your fallen soldiers get back up
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Extermination Protocol: Every hit also splashes nearby enemies for 7% damage, and +3% chance of critical hits
 
@@ -1982,8 +2099,9 @@ A fictional war machine built in the likeness of Adolf Hitler, the Nazi dictator
 - **Targeting Array** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Steel Barrage** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Steel Barrage** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Steel Legion** (reinforce, 90% meter; prestige 1: defeat 500 heavy units (siege, tanks, mechs)): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Laser Eyes** (snipe, 90% meter; prestige 2: command for 300 minutes): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Iron Onslaught: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
@@ -1998,8 +2116,9 @@ An android who woke up on a factory floor in 2088, freed the robot workforce and
 - **Firewall** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Machine Uprising** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Machine Uprising** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Neural Hack** (stun, 70% meter; prestige 1: win 50 battles commanding from behind): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Nanite Repair** (heal, 80% meter; prestige 2: use 300 specials): Your whole army heals 56% of its health
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Factory Uprising: Fallen soldiers get back up once, after 11 seconds, and +10% army damage
 
@@ -2014,8 +2133,9 @@ A cybernetic warlord who rules a flooded megacity from a tower of neon, guarded 
 - **Megacity Tax** (third attribute): +24% gold
 
 **Special moves**
-- **Thousand Cuts** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Thousand Cuts** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Neon Katana** (execute, 100% meter; prestige 1: win 40 battles at the front): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Cyber Ronin** (reinforce, 90% meter; prestige 2: defeat 4,000 enemy infantry): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Neon Blade: +11% army damage
 
@@ -2030,8 +2150,9 @@ A grey visitor from another star whose saucers have haunted sky-watchers since t
 - **Alien Probe** (third attribute): Enemies take 12% more damage
 
 **Special moves**
-- **Abduction Beam** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Abduction Beam** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Saucer Swarm** (barrage, 100% meter; prestige 1: win 51 battles commanding from behind): Every enemy loses 38% of their health (leaders 8%)
+- **The Probe** (drain, 90% meter; prestige 2: defeat 5,100 enemies with specials): Every enemy loses 19% of their health (leaders 4%) and your army heals 31%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Mothership Beam: Every hit also splashes nearby enemies for 11% damage
 
@@ -2048,8 +2169,9 @@ A planet-spanning artificial intelligence that slipped its leash in the 27th cen
 - **Firewall** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **System Override** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **System Override** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Hive Mind** (rally, 80% meter; prestige 1: use 64 specials): +50% army damage and +31% attack speed for 8 seconds
+- **Data Drain** (drain, 90% meter; prestige 2: use 512 specials): Every enemy loses 19% of their health (leaders 4%) and your army heals 31%
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Total Calculation: +8% chance of critical hits, and +8% attack speed
 
@@ -2064,8 +2186,9 @@ A ruthless fleet admiral who rules the space lanes between Earth and the outer m
 - **Targeting Lock** (third attribute): +9% chance of critical hits
 
 **Special moves**
-- **Full Broadside** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **False Retreat** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Full Broadside** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Shield Generators** (shield, 80% meter; prestige 1: win 50 battles commanding from behind): Your army can't be hurt for 4.0 seconds
+- **Boarding Party** (charge, 100% meter; prestige 2: beat 45 enemy leaders): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Orbital Bombardment: Every hit also splashes nearby enemies for 11% damage
 
@@ -2080,8 +2203,9 @@ Born in the domed cities of Mars, this ruthless general united the colonies by f
 - **Iron Dust** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Martian Dust Storm** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
-- **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Martian Dust Storm** (terror, 90% meter; starts unlocked): For 8 seconds enemies deal 44% less damage and take 44% more
+- **Red Planet Legion** (reinforce, 90% meter; prestige 1: defeat 800 heavy units (siege, tanks, mechs)): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Tripod Walkers** (charge, 100% meter; prestige 2: win 500 battles): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Red Planet Rising: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
@@ -2096,8 +2220,9 @@ The self-crowned king of the Moon's mining colonies, who grew rich selling fuel 
 - **Moon Dust** (third attribute): Enemies deal 12% less damage
 
 **Special moves**
-- **Helium Rush** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
-- **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+- **Helium Rush** (tribute, 70% meter; starts unlocked): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Low Gravity Leap** (charge, 100% meter; prestige 1: win 50 battles commanding from behind): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Lunar Eclipse** (stun, 70% meter; prestige 2: command for 300 minutes): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Helium Fortune: +22% gold
 
@@ -2114,8 +2239,9 @@ Crowned beside a dying star, she rules a galactic empire of a thousand worlds an
 - **Crown of Light** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Starfleet Armada** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
+- **Starfleet Armada** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Royal Decree** (rally, 80% meter; prestige 1: beat 10 enemy leaders): +50% army damage and +31% attack speed for 8 seconds
+- **Starlight Shield** (shield, 80% meter; prestige 2: win battles in 14 different eras): Your army can't be hurt for 4.0 seconds
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Imperial Decree: +17% army damage, and +13% gold
 
@@ -2130,8 +2256,9 @@ The vast insect queen of a swarm that devours whole planets; every soldier in he
 - **Chitin Armor** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **The Swarm Rises** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **The Swarm Rises** (reinforce, 90% meter; starts unlocked): Reinforcements: 19% more soldiers of your best infantry join the battle
+- **Bio-Leech** (drain, 90% meter; prestige 1: defeat 3,000 enemy infantry): Every enemy loses 19% of their health (leaders 4%) and your army heals 31%
+- **Queen's Brood** (revive, 90% meter; prestige 2: defeat 30,000 enemies): 44% of your fallen soldiers get back up
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Endless Swarm: Fallen soldiers get back up once, after 17 seconds, and +5% attack speed
 
@@ -2146,8 +2273,9 @@ An immortal ruler of the galactic core who has replaced every part of their body
 - **Starlight** (third attribute): Your army heals 1.2% health every second
 
 **Special moves**
-- **Supernova** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Supernova** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Gravity Crush** (execute, 100% meter; prestige 1: beat 15 enemy leaders): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Stasis Field** (stun, 70% meter; prestige 2: defeat 10,000 enemies with specials): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Decree of Stars: +17% army damage, and enemies deal 7% less damage
 
@@ -2162,8 +2290,9 @@ A warlord who leads a horde of comet riders across the galaxy, said to conquer a
 - **Tribute of Worlds** (third attribute): +24% gold
 
 **Special moves**
-- **Comet Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
-- **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **Comet Charge** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Meteor Shower** (barrage, 100% meter; prestige 1: defeat 800 enemy cavalry): Every enemy loses 38% of their health (leaders 8%)
+- **Star Horde** (reinforce, 90% meter; prestige 2: win 600 battles): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Comet Horde: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
@@ -2182,8 +2311,9 @@ The ancient adversary of countless myths and scriptures, said to bargain for sou
 - **Deal with the Devil** (third attribute): +24% gold, and +11% army damage
 
 **Special moves**
-- **Brimstone** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
-- **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+- **Brimstone** (inferno, 100% meter; starts unlocked): Every enemy burns away 45% of their health over 6 seconds
+- **Soul Bargain** (drain, 90% meter; prestige 1: defeat 666 enemies): Every enemy loses 19% of their health (leaders 4%) and your army heals 31%
+- **Legion of the Damned** (reinforce, 90% meter; prestige 2: defeat 6,666 enemies): Reinforcements: 19% more soldiers of your best infantry join the battle
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Infernal Legion: Fallen soldiers get back up once, after 11 seconds, and the enemy army burns for 4% of your army's damage each second
 
@@ -2198,8 +2328,9 @@ The jolly gift-bringer of Christmas legend, inspired by the 4th-century bishop S
 - **Reindeer Stampede** (third attribute): Every hit also splashes nearby enemies for 12% damage
 
 **Special moves**
-- **Naughty List** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
-- **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+- **Naughty List** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Sack of Presents** (tribute, 70% meter; prestige 1: use 25 specials): Gold worth 50 enemies, and +20% army damage for 6 seconds
+- **Reindeer Run** (charge, 100% meter; prestige 2: win 365 battles without falling): The nearest 40% of the enemy army loses 69% health and is stunned
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. The Night Before Christmas: +22% gold, and your army heals 0.7% health every second
 
@@ -2214,8 +2345,9 @@ A hooded phantom born where the timeline shattered. It feeds on lost moments and
 - **Temporal Rift** (third attribute): Enemies take 12% more damage
 
 **Special moves**
-- **The Reaping** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
-- **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+- **The Reaping** (snipe, 90% meter; starts unlocked): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
+- **Undo Time** (revive, 90% meter; prestige 1: command for 60 minutes): 44% of your fallen soldiers get back up
+- **Paradox** (stun, 70% meter; prestige 2: win battles in 14 different eras): Every enemy is stunned for 3 seconds (leaders for 1)
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Stolen Moments: 7% chance to stun on every hit, and +8% attack speed
 
@@ -2230,8 +2362,9 @@ A cosmic tyrant from after the last star burns out, ruling the empty space betwe
 - **Dark Star** (third attribute): The enemy army burns for 7% of your army's damage each second
 
 **Special moves**
-- **Black Hole** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+- **Black Hole** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Singularity** (execute, 100% meter; prestige 1: defeat 5,000 enemies with specials): Enemies below 31% health fall at once; the rest lose 13% (leaders 6%)
+- **Dark Matter** (drain, 90% meter; prestige 2: defeat 50,000 enemies): Every enemy loses 19% of their health (leaders 4%) and your army heals 31%
 
 **In the ranks** (after the endgame): fighter, hits hard and lasts long. Event Horizon: Every hit also splashes nearby enemies for 7% damage
 
@@ -2246,8 +2379,9 @@ The Creator of everything, as artists have painted Him for centuries: white-bear
 - **Resurrection** (third attribute): Fallen soldiers get back up once, after 10 seconds
 
 **Special moves**
-- **Divine Judgment** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
-- **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Divine Judgment** (barrage, 100% meter; starts unlocked): Every enemy loses 38% of their health (leaders 8%)
+- **Light of Creation** (heal, 80% meter; prestige 1: win 7 battles): Your whole army heals 56% of its health
+- **Raise the Fallen** (revive, 90% meter; prestige 2: win 777 battles without falling): 44% of your fallen soldiers get back up
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Let There Be Light: Every hit also splashes nearby enemies for 11% damage, and your army heals 0.7% health every second
 

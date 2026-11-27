@@ -34,17 +34,24 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   assassin, Robo Hitler, an android queen, a neon shogun, a space admiral, the Archon) and, once time shatters, the Devil, Santa Claus and God.
 - **Commanders on the battlefield.** Your commander and two partners fight in the battle as full-body sprites. If one
   falls, their attributes switch off for the rest of that battle.
-- **Front lines or behind the army.** Choose where each leader fights in the Commanders tab. Warriors, conquerors,
+- **Front lines or behind the army.** Choose where each leader fights in the Team tab. Warriors, conquerors,
   revolutionaries and defenders excel at the front (+20% attribute strength and +50% damage there); strategists, tyrants,
   statesmen, peacemakers and orators excel commanding from behind (+20% attribute strength and a 30% faster special meter,
   out of the fighting). Each leader starts where they excel.
 - **Special meters and special moves.** Each of your three leaders has a meter that fills when your army defeats an
   enemy, by that unit's share of the enemy army: a heavy unit (4 capacity) is worth four infantry, so beating weak units
   fills it slowly. The commander charges at the full rate, partners at 80%, and meters carry over between battles.
-  Tap a leader's chip to choose a special: their **signature special** (full meter, 25% stronger, unique to each of the
-  137 leaders) or their **class special** (60% of the meter). There are 12 kinds, from barrages, charges and snipes on
-  the enemy leader to rallies, fortify, mass heals, revives, stuns, terror, infernos, war tributes and reinforcements.
-  Auto specials fires a full signature after 6 seconds. Enemy leaders have a meter too and fire their signature at you.
+  Every leader has **three specials of their own** (411 in all) and equips one at a time; its kind sets the meter it
+  needs, from 70% (stuns, tributes) to 100% (barrages, charges, infernos, executions). There are 15 kinds, from barrages,
+  charges and snipes on the enemy leader to rallies, fortify, mass heals, revives, stuns, terror, infernos, war tributes,
+  reinforcements, executions, life drain and shields. Tap a leader's chip to fire it or swap to another unlocked one.
+  Auto specials fires a charged special after 4 seconds. Enemy leaders have a meter too; once time shatters they may use
+  any of their three.
+- **Leader prestige.** Leaders start with only their first special. Each has two prestige goals of their own, counted
+  while they command, partner or fight in the ranks: the Devil prestiges after 666 and then 6,666 defeated enemies,
+  Leonidas after 300 infantry and then 300 wins at the front, Sargon after his 34 victories, Napoleon after beating 7
+  enemy leaders, God after 7 wins and then 777 flawless ones. Prestiging unlocks and equips the next special and adds +25%
+  strength on the field and +20% attribute strength. Prestige is kept through Time Rifts.
 - **Leader attributes.** Every leader also has three always-on attributes, each explained in plain words.
   Your commander brings all three plus a class bonus; each of your two partners brings one. The full list of leaders with
   every attribute and special is in [LEADERS.md](LEADERS.md).
@@ -73,10 +80,10 @@ version, your stage moves to the matching era and you get a full army of that er
 | File | What's in it |
 | --- | --- |
 | `index.html` | Page layout and all styling |
-| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders, their signature specials, the class specials and the 31 doctrines |
-| `LEADERS.md` | Every leader with their class, best position, attributes, special moves and what they bring in the ranks |
-| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader positions, leaders in the ranks, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
-| `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
+| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders, their three specials each, their prestige goals and the 31 doctrines |
+| `LEADERS.md` | Every leader with their class, best position, attributes, three special moves, prestige goals and what they bring in the ranks |
+| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader prestige and its stats, leader positions, leaders in the ranks, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
+| `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the full-screen era scene around it, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
 | `js/bodies.js` | The animated base figure (embedded sheet), body-part detection, the dressing of every leader and foot soldier, and the vehicles, animals and riders |
 | `js/ui.js` | Battlefield rendering and its HUD overlay, the army builder, command deck, panels, dialogs, sound effects, autosave and offline progress |
 
@@ -86,11 +93,14 @@ on whichever soldier or upgrade adds the most strength. Even that bot starts los
 hits walls every few eras where it has to save up and train, reaches its first Time Rift after about 2 to 2.5 hours,
 and opens Shattered Time after about 10 to 11 hours.
 
-On a phone turned sideways the battlefield fills the whole screen (full battle mode), with the shortcuts down the right
-edge, your commanders bottom left and the menus opening as a side drawer. Everywhere else the menus are a row of
-shortcuts under the battlefield (Army, Commanders, Leaders, Doctrines, Time Rift, Options) that open as a sheet.
+The battlefield fills the whole screen on every device. A slim bar on top shows the era, stage and resources; the dock at
+the bottom holds your leaders (tap one for their special), the next-leader tracker and a six-button bar: **Army**, **Team**
+(commanders, positions, specials and prestige), **Codex** (every leader, searchable, with their attributes, specials and
+prestige goals), **Doctrines**, **Rift** and **Settings** (auto-advance, auto specials, sound, saves). Held upright, the
+battle zooms in a little and the era's scene carries on above and below it; turned sideways, the console shrinks to one
+slim row along the bottom and the menus open as a side drawer.
 
-Saves are stored in the browser's `localStorage` on each device. Use **Options → Export save** to move a game between devices.
+Saves are stored in the browser's `localStorage` on each device. Use **Settings → Export save** to move a game between devices.
 
 ## Art and performance
 
@@ -111,9 +121,14 @@ mechs. Each has moving frames (legs, wheels, tracks or rotors) and a firing fram
 The battlefield is a tilted top-down view: soldiers further away are drawn smaller and higher up. Sprites are prepared
 at a handful of fixed sizes so they grow in clean pixel steps as they move toward the camera instead of shimmering, and
 fallen soldiers are painted once onto the ground layer instead of being redrawn every frame. Shadows are pre-made at each
-size, and the HUD is a light page overlay rather than canvas text. The field is drawn on a fixed 768x432 pixel grid that the
-browser scales up, so the work per frame stays the same on any screen size. In headless Chromium (software drawing, no GPU),
-a late-game battle with about 350 animated soldiers and vehicles on the field runs at about 60 fps with the CPU throttled 4x.
+size, and the HUD is a light page overlay rather than canvas text. The field is drawn on a 768x432 pixel grid; the canvas takes
+the shape of the screen at that scale, and the era scene is carried on around the field (`CW.scene` in `js/art.js`): the sky
+climbs above the backdrop, its scenery repeats mirrored to the sides and the ground keeps coming towards the camera with
+bigger props up close, all with a colour lift and gently darkened edges. A light ambient layer animates each era (clouds and
+birds by day, twinkles and shooting stars at night, snow, embers, fireflies, desert dust, neon rain or crystal motes), faint
+over the battle and fuller around it. In headless Chromium (software drawing, no GPU), a late-game battle with about 350
+animated soldiers and vehicles runs at about 65 fps on a laptop-shaped screen and about 50 fps on an upright phone screen
+with the CPU throttled 4x.
 
 The menus around the battlefield use a quiet, modern style (Manrope, graphite panels, one brass accent); the pixel art
 stays on the battlefield and the portraits.

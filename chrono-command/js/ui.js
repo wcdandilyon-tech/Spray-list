@@ -40,6 +40,41 @@
   function attrRows(lid, idxs, k) {
     return idxs.map((i) => `<li><b>${esc(CW.attr(lid, i).name)}</b><span>${esc(CW.attrText(lid, i, k))}</span></li>`).join('');
   }
+  const KIND = { barrage: 'Barrage', charge: 'Charge', snipe: 'Snipe', rally: 'Rally', fortify: 'Fortify', heal: 'Heal', revive: 'Revive', stun: 'Stun', terror: 'Terror', inferno: 'Inferno', tribute: 'Tribute', reinforce: 'Reinforce', execute: 'Execute', drain: 'Drain', shield: 'Shield' };
+  const nfmt = (n) => Math.floor(n).toLocaleString('en-US');
+  const pips = (lid) => '<span class="pips" title="Prestige ' + CW.prestige(lid) + ' of 2">' + [1, 2].map((i) => `<i class="${CW.prestige(lid) >= i ? 'on' : ''}"></i>`).join('') + '</span>';
+  // a leader's three specials: the equipped one, the others they've unlocked, and what it takes to unlock the rest
+  function specialRows(lid, mine) {
+    const rank = CW.prestige(lid);
+    const goals = CW.PRESTIGE[lid];
+    return CW.specials(lid)
+      .map((sp, i) => {
+        const head = `<b>${esc(sp.name)}</b><em>${KIND[sp.t]} · ${sp.cost}% meter</em><span>${esc(CW.specialText(sp))}</span>`;
+        if (sp.unlocked) {
+          const act = !mine ? '' : sp.equipped ? '<span class="eqd">Equipped</span>' : `<button class="btn ghost sm" data-act="eqsp" data-id="${lid}" data-i="${i}">Equip</button>`;
+          return `<li class="${sp.equipped && mine ? 'on' : ''}"><div>${head}</div>${act}</li>`;
+        }
+        const g = goals[i - 1];
+        const next = i - 1 === rank;
+        const have = next ? Math.min(g[1], CW.statVal(lid, g[0])) : 0;
+        const ready = next && mine && have >= g[1];
+        const goal = `<small class="goal">Prestige ${i}: ${esc(CW.goalTextFor(g[0], g[1]))}${next ? '' : ' (after prestige ' + (i - 1) + ')'}</small>` +
+          (next ? `<span class="gbar"><i data-gbar="${lid}" style="width:${((100 * have) / g[1]).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(have)} / ${nfmt(g[1])}</small>` : '');
+        return `<li class="lock"><div>${head}${goal}</div>${ready ? `<button class="btn sm" data-act="prestige" data-id="${lid}">Prestige</button>` : '<span class="lk">Locked</span>'}</li>`;
+      })
+      .join('');
+  }
+  // live progress numbers for prestige goals already on screen
+  function updateGoals(root) {
+    root.querySelectorAll('[data-gnum]').forEach((n) => {
+      const gl = CW.prestigeGoal(n.dataset.gnum);
+      if (gl) setText(n, nfmt(gl.have) + ' / ' + nfmt(gl.n));
+    });
+    root.querySelectorAll('[data-gbar]').forEach((n) => {
+      const gl = CW.prestigeGoal(n.dataset.gbar);
+      if (gl) setW(n, gl.have / gl.n);
+    });
+  }
 
   // ------------------------------------------------------------ audio
   const SFX = (() => {
@@ -114,21 +149,54 @@
   })();
 
   // ------------------------------------------------------------ canvas
-  // The field is drawn on a fixed 768x432 grid (2 device pixels per field unit), which matches the 2x-detail art.
-  // The browser scales that up, so each frame fills a small fixed number of pixels whatever the screen size.
+  // The field is drawn on a 768x432 grid (2 device pixels per field unit), which matches the 2x-detail art.
+  // The canvas takes the shape of the screen: the field sits at (OX, OY) inside it and the era scene carries on around it
+  // (CW.scene in art.js), so the battle fills the screen upright or sideways. Upright, it zooms in a little.
   // The battle is seen from a raised, angled camera: far rows are smaller and higher up (CW.proj in art.js).
   const cv = $('#cv');
   const screenEl = $('#screen');
   const K = 2;
-  cv.width = FW * K;
-  cv.height = FH * K;
+  let VW = FW * K;
+  let VH = FH * K;
+  let OX = 0;
+  let OY = 0;
+  cv.width = VW;
+  cv.height = VH;
   const g = cv.getContext('2d', { alpha: false });
   function resize() {
     const r = screenEl.getBoundingClientRect();
+    if (r.width < 10 || r.height < 10) return;
+    // fit the 768x432 field into the screen above the dock (upright screens zoom in a little and crop the far sides),
+    // then let the canvas cover the rest of the screen at the same scale
+    const dock = document.getElementById('dock');
+    const d = dock ? dock.getBoundingClientRect().height : 0;
+    const z = r.width < r.height ? 1.18 : 1;
+    const sc = Math.min((r.width * z) / (FW * K), Math.max(0.2, r.height - d * 0.8) / (FH * K));
+    let vw = Math.min(Math.round(r.width / sc), FW * K * 2.4);
+    let vh = Math.min(Math.round(r.height / sc), vw * 3);
+    const ox = Math.round((vw - FW * K) / 2);
+    const oy = Math.round((vh - (d / sc) * 0.8 - FH * K) / 2);
+    vw -= vw % 2;
+    vh -= vh % 2;
+    if (vw !== VW || vh !== VH || ox !== OX || oy !== OY) {
+      VW = cv.width = vw;
+      VH = cv.height = vh;
+      OX = ox;
+      OY = oy;
+      ground.width = VW;
+      ground.height = VH;
+      groundOf = null; // repaint the ground at the new size
+      ambient.length = 0;
+    }
     cv.style.imageRendering = r.width * (window.devicePixelRatio || 1) >= cv.width ? 'pixelated' : 'auto';
+    // banners sit over the battle wherever it is on screen
+    screenEl.style.setProperty('--bannerY', (((OY + 150) / VH) * 100).toFixed(1) + '%');
+    document.documentElement.style.setProperty('--dockH', Math.round(d) + 'px');
   }
-  const ro = new ResizeObserver(resize);
+  addEventListener('resize', () => resize());
+  const ro = new ResizeObserver(() => resize());
   ro.observe(screenEl);
+  ro.observe(document.getElementById('dock'));
   let fieldVisible = true;
   try {
     const io = new IntersectionObserver((es) => (fieldVisible = es[es.length - 1].isIntersecting));
@@ -251,16 +319,22 @@
 
   // ---- per-battle ground: the field plus everything that has fallen on it (bodies, wrecks, scorch marks)
   const ground = document.createElement('canvas');
-  ground.width = FW * K;
-  ground.height = FH * K;
+  ground.width = VW;
+  ground.height = VH;
   const gg = ground.getContext('2d');
   let groundOf = null;
+  let sceneEra = -1;
+  let sceneNight = false;
   const ents = new Map();
   function newBattle(B) {
     groundOf = B;
+    gg.setTransform(1, 0, 0, 1, 0, 0);
     gg.imageSmoothingEnabled = false;
     gg.globalAlpha = 1;
-    gg.drawImage(CW.field(B.info.era), 0, 0);
+    gg.drawImage(CW.scene(B.info.era, VW, VH, OX, OY), 0, 0);
+    gg.setTransform(1, 0, 0, 1, OX, OY); // bodies and scorch marks are baked in field pixels
+    sceneEra = B.info.era;
+    sceneNight = CW.sceneInfo(B.info.era).night;
     ents.clear();
     for (const q of B.ents) ents.set(q.id, q);
     booms.length = 0;
@@ -398,8 +472,8 @@
   }
 
   // a special move: its name across the field, a flash in its colour, and effects on whoever it touches
-  const SP_COL = { barrage: '#ffd23f', charge: '#ffb060', snipe: '#ff5a4a', rally: '#ffd23f', fortify: '#9ad8ff', heal: '#7dffb0', revive: '#7dffb0', stun: '#fff6a0', terror: '#b070ff', inferno: '#ff7a3a', tribute: '#ffd23f', reinforce: '#ffffff' };
-  const ON_FOES = new Set(['barrage', 'charge', 'snipe', 'stun', 'inferno', 'terror']);
+  const SP_COL = { barrage: '#ffd23f', charge: '#ffb060', snipe: '#ff5a4a', rally: '#ffd23f', fortify: '#9ad8ff', heal: '#7dffb0', revive: '#7dffb0', stun: '#fff6a0', terror: '#b070ff', inferno: '#ff7a3a', tribute: '#ffd23f', reinforce: '#ffffff', execute: '#ff5a4a', drain: '#c070ff', shield: '#9ad8ff' };
+  const ON_FOES = new Set(['barrage', 'charge', 'snipe', 'stun', 'inferno', 'terror', 'execute', 'drain']);
   let sbT = 0;
   function showSpecial(e, B) {
     const ally = e.side === 'a';
@@ -793,6 +867,109 @@
     setClass(hud.banner, c + (t ? ' on' : ''));
   }
 
+  // ---- the living scene: clouds and birds by day, stars by night, snow, embers, fireflies, dust or neon rain by era.
+  // Most of it lives in the sky, the foreground and out to the sides; over the battle itself it is faint and sparse.
+  const ambient = [];
+  function ambientKind() {
+    const d = ERAS[sceneEra] ? ERAS[sceneEra].decor : 'grass';
+    if (d === 'snow') return 'snow';
+    if (d === 'crater') return 'ember';
+    if (d === 'neon') return 'rain';
+    if (d === 'crystal') return 'mote';
+    if (d === 'rock') return sceneNight ? 'firefly' : 'dust';
+    return sceneNight ? 'firefly' : 'pollen';
+  }
+  function drawAmbient(dt, t, back) {
+    if (sceneEra < 0) return;
+    const x0 = -OX / K;
+    const x1 = (VW - OX) / K;
+    const y0 = -OY / K;
+    const y1 = (VH - OY) / K;
+    const w = x1 - x0;
+    const h = y1 - y0;
+    const kind = ambientKind();
+    if (back) {
+      // sky life behind everything: drifting clouds or birds by day, twinkles and the odd shooting star at night
+      const skyB = 96;
+      if (sceneNight) {
+        for (let i = 0; i < 14; i++) {
+          const x = x0 + ((i * 97.3) % w);
+          const y = y0 + ((i * 53.7) % Math.max(10, skyB - y0 - 10));
+          if (Math.sin(t * 2.2 + i * 1.7) > 0.6) R(x, y, 1, 1, '#ffffff');
+        }
+        const sp = (t * 0.12) % 1;
+        if (sp < 0.12) {
+          const k = sp / 0.12;
+          const sx = x0 + w * (0.15 + 0.6 * ((Math.floor(t * 0.12) * 0.37) % 1)) + k * 60;
+          const sy = y0 + 10 + k * 22;
+          g.globalAlpha = 1 - k;
+          R(sx, sy, 3, 1, '#ffffff');
+          R(sx - 4, sy - 1, 4, 1, 'rgba(255,255,255,.5)');
+          g.globalAlpha = 1;
+        }
+      } else if (kind !== 'rain') {
+        for (let i = 0; i < 3; i++) {
+          // a small flock crossing the sky, wings flapping
+          const span = w + 80;
+          const x = x0 - 40 + ((t * (7 + i * 2) + i * 157) % span);
+          const y = y0 + Math.max(8, (skyB - y0) * (0.25 + i * 0.18)) + Math.sin(t * 0.8 + i) * 3;
+          const up = Math.floor(t * 6 + i) % 2;
+          for (let b = 0; b < 3; b++) {
+            const bx = x - b * 6;
+            const by = y + (b % 2) * 3;
+            R(bx - 2, by - up, 2, 1, '#2a2a33');
+            R(bx, by, 1, 1, '#2a2a33');
+            R(bx + 1, by - up, 2, 1, '#2a2a33');
+          }
+        }
+      }
+      return;
+    }
+    // particles over everything: few over the battle band, more around it
+    const want = Math.round(Math.min(70, 18 + (w * h) / 900));
+    while (ambient.length < want) ambient.push({ x: x0 + Math.random() * w, y: y0 + Math.random() * h, s: Math.random(), p: Math.random() * 6 });
+    for (const a of ambient) {
+      if (kind === 'snow') {
+        a.y += (8 + a.s * 10) * dt;
+        a.x += Math.sin(t + a.p) * 4 * dt;
+      } else if (kind === 'ember') {
+        a.y -= (6 + a.s * 8) * dt;
+        a.x += (2 + Math.sin(t * 1.3 + a.p) * 3) * dt;
+      } else if (kind === 'rain') {
+        a.y += (70 + a.s * 50) * dt;
+        a.x -= 10 * dt;
+      } else if (kind === 'dust') {
+        a.x += (8 + a.s * 8) * dt;
+        a.y += Math.sin(t + a.p) * 2 * dt;
+      } else {
+        a.x += Math.sin(t * 0.7 + a.p) * 5 * dt;
+        a.y += Math.cos(t * 0.6 + a.p) * 3 * dt - 1.5 * dt;
+      }
+      if (a.y > y1 + 4) a.y = y0 - 2;
+      if (a.y < y0 - 4) a.y = y1 + 2;
+      if (a.x > x1 + 4) a.x = x0 - 2;
+      if (a.x < x0 - 4) a.x = x1 + 2;
+      const inBand = a.y > 92 && a.y < 212 && a.x > 0 && a.x < FW;
+      let al = inBand ? 0.3 : 0.85;
+      let col = '#ffffff';
+      let sz = 1;
+      if (kind === 'snow') col = '#f4f8ff';
+      else if (kind === 'ember') col = a.s > 0.5 ? '#ffb060' : '#ff7a3a';
+      else if (kind === 'rain') col = a.s > 0.5 ? '#2ee6ff' : '#ff3cac';
+      else if (kind === 'dust') col = '#f0dcae';
+      else if (kind === 'mote') col = a.s > 0.5 ? '#9ff0ff' : '#d0a8ff';
+      else if (kind === 'firefly') {
+        col = '#f4ff8a';
+        al *= 0.5 + 0.5 * Math.sin(t * 3 + a.p * 5);
+      } else col = '#fff6c8';
+      if (!inBand && a.s > 0.7 && kind !== 'rain') sz = 2;
+      g.globalAlpha = al;
+      if (kind === 'rain') R(a.x, a.y, 1, 4, col);
+      else R(a.x, a.y, sz, sz, col);
+    }
+    g.globalAlpha = 1;
+  }
+
   const order = [];
   const byDepth = (a, b) => (a.air ? 1000 : 0) + a.z - ((b.air ? 1000 : 0) + b.z);
   function render(dt, t) {
@@ -805,20 +982,12 @@
       sbT -= dt;
       if (sbT <= 0) setClass(hud.sb, 'sbanner');
     }
-    g.setTransform(K, 0, 0, K, 0, 0);
+    g.setTransform(1, 0, 0, 1, 0, 0);
     g.imageSmoothingEnabled = false;
     g.globalAlpha = 1;
-    g.drawImage(ground, 0, 0, FW, FH);
-    const era = B.info.era;
-    // drifting embers, neon motes or star dust in a few eras
-    if (era === 8 || era === 11 || era === 13) {
-      const c = era === 8 ? '#ffb060' : era === 11 ? '#2ee6ff' : '#d0b0ff';
-      for (let i = 0; i < 16; i++) {
-        const x = (((i * 53 + t * (era === 8 ? 9 : 12)) % FW) + FW) % FW;
-        const y = (((i * 37 + t * (era === 8 ? -12 : 5)) % 120) + 120) % 120;
-        R(x, y, 1, 1, c);
-      }
-    }
+    g.drawImage(ground, 0, 0);
+    g.setTransform(K, 0, 0, K, OX, OY);
+    drawAmbient(dt, t, true);
     let sx = 0;
     let sy = 0;
     if (shake > 0) {
@@ -897,12 +1066,15 @@
     }
     g.globalAlpha = 1;
     g.restore();
+    drawAmbient(dt, t, false);
     drawHud(B, st);
     if (flashT > 0) {
+      g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalAlpha = Math.min(0.3, flashT * 0.3);
       g.fillStyle = flashCol;
-      g.fillRect(0, 0, FW, FH);
+      g.fillRect(0, 0, VW, VH);
       g.globalAlpha = 1;
+      g.setTransform(K, 0, 0, K, OX, OY);
       flashT -= dt * 3;
     }
   }
@@ -915,8 +1087,8 @@
     if (now - lastTap < 60) return;
     lastTap = now;
     const r = cv.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * FW;
-    const y = ((e.clientY - r.top) / r.height) * FH;
+    const x = (((e.clientX - r.left) / r.width) * VW - OX) / K;
+    const y = (((e.clientY - r.top) / r.height) * VH - OY) / K;
     let dmg;
     if (y > proj(0, 0).y) {
       const w = CW.unproj(x, y);
@@ -940,7 +1112,7 @@
   const el = {
     gold: $('#gold'), gps: $('#gps'), shards: $('#shards'), era: $('#eraName'), year: $('#year'), stage: $('#stage'),
     nextImg: $('#nextImg'), nextBar: $('#nextBar'), nextTxt: $('#nextTxt'), challenge: $('#btnChallenge'), council: $('#btnCouncil'),
-    deck: $('#deck'), panel: $('#panel'), sheet: $('#sheet'), sheetTitle: $('#sheetTitle'), shortcuts: $('#shortcuts'), autoPush: $('#autoPush'), modal: $('#modal'), dlg: $('#dlg'),
+    deck: $('#deck'), panel: $('#panel'), sheet: $('#sheet'), sheetTitle: $('#sheetTitle'), shortcuts: $('#shortcuts'), modal: $('#modal'), dlg: $('#dlg'),
   };
   $('#icoGold').src = CW.icon('coin');
   $('#icoShard').src = CW.icon('shard');
@@ -1006,7 +1178,7 @@
     deckEls = null;
     el.deck.innerHTML = [st.main, st.partners[0], st.partners[1]]
       .filter(Boolean)
-      .map((lid, i) => `<button class="chip ${i === 0 ? 'main' : ''}" data-card="${lid}" title="${esc(LEADER[lid].name)}: tap for specials"><img class="px" src="${CW.headURL(lid)}" alt=""><span>${esc(short(lid))}<span class="hp${i === 0 ? ' main' : ''}"><i data-hp="${lid}"></i></span><span class="spm"><i data-sp="${lid}"></i></span></span></button>`)
+      .map((lid, i) => `<button class="chip ${i === 0 ? 'main' : ''}" data-card="${lid}" title="${esc(LEADER[lid].name)}: tap for their special"><img class="px" src="${CW.headURL(lid)}" alt=""><span><span class="cn">${esc(short(lid))}</span><span class="hp${i === 0 ? ' main' : ''}"><i data-hp="${lid}"></i></span><span class="spm"><i data-sp="${lid}"></i></span></span></button>`)
       .join('');
     if (!el.sheet.hidden && tab === 'command') renderPanel();
   }
@@ -1022,15 +1194,15 @@
       const pos = CW.leaderPos(lid);
       const pref = CW.prefPos(lid);
       const pb = (v, label) => `<button data-act="pos" data-id="${lid}" data-pos="${v}" aria-pressed="${pos === v}">${label}${pref === v ? '<span class="fit">★</span>' : ''}</button>`;
-      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small></div>
+      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)} ${pips(lid)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small></div>
         <div class="pos" role="group" aria-label="Where ${esc(short(lid))} fights">${pb('front', 'Front lines')}${pb('back', 'Behind the army')}</div>
         <p class="excel">${esc(CW.posText(lid))}</p>
         <ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul>
-        <ul class="sps">${CW.specials(lid).map((sp) => `<li><b>${esc(sp.name)}</b>${esc(CW.specialText(sp))}<em>${sp.sig ? 'signature' : 'class'} special, ${sp.cost}% meter</em></li>`).join('')}</ul></div>`;
+        <ul class="sps2">${specialRows(lid, true)}</ul></div>`;
     };
-    return `<div class="phead"><h2>Commanders</h2>${st.council ? '<button class="btn blue" data-act="council">Change at the War Council</button>' : ''}</div>
+    return `<div class="phead"><h2>Team</h2>${st.council ? '<button class="btn blue" data-act="council">Change at the War Council</button>' : ''}</div>
       <div class="cards">${card(st.main, 0)}${card(st.partners[0], 1)}${card(st.partners[1], 2)}</div>
-      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. ★ marks where a leader excels; positions apply from the next battle. Special meters fill as your soldiers defeat enemies (tougher enemies fill them faster); tap a leader under the battlefield to use one.</p>`;
+      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. ★ marks where a leader excels; positions apply from the next battle. Each leader equips one special at a time; their meter fills as your soldiers defeat enemies. Prestige a leader by meeting their goal to unlock their next special (+25% strength on the field and +20% attributes each time).</p>`;
   }
   let deckEls = null;
   function updateDeck() {
@@ -1045,12 +1217,14 @@
     }
     for (const m of deckEls.sps) {
       const v = CW.meter(m.lid);
-      setW(m.i, v / 100);
+      const cost = CW.special(m.lid).cost;
+      setW(m.i, Math.min(1, v / cost));
       const c = m.i.closest('.chip');
-      const st = v >= 100 ? 'ready' : v >= 60 ? 'half' : '';
+      const gl = CW.prestigeGoal(m.lid);
+      const st = (v >= cost ? 'ready' : v >= cost * 0.6 ? 'half' : '') + (gl && gl.done ? ' pre' : '');
       if (c._st !== st) {
-        c.classList.remove('ready', 'half');
-        if (st) c.classList.add(st);
+        c.classList.remove('ready', 'half', 'pre');
+        st.split(' ').filter(Boolean).forEach((k) => c.classList.add(k));
         c._st = st;
       }
     }
@@ -1079,14 +1253,24 @@
     if (spLid === c.dataset.card && !el.spop.hidden) closeSpecials();
     else openSpecials(c.dataset.card, c);
   });
-  // ---- the special choice: a leader's signature move or their class move
+  // ---- a leader's special: use the equipped one, swap to another unlocked one, or see what unlocks the rest
   el.spop = $('#spop');
   let spLid = null;
+  let spChip = null;
   function openSpecials(lid, chip) {
+    // the chips are rebuilt when a leader prestiges, so find this leader's current chip
+    if (!chip || !chip.isConnected) chip = el.deck.querySelector(`[data-card="${lid}"]`) || el.deck;
     spLid = lid;
-    const sps = CW.specials(lid);
-    el.spop.innerHTML = `<h4>${esc(LEADER[lid].name)}<span data-spv></span></h4><div class="m"><i data-spm></i></div>
-      ${sps.map((sp, i) => `<button class="spb" data-spi="${i}"><b>${esc(sp.name)}<span>${sp.sig ? 'Signature' : 'Class'} · ${sp.cost}%</span></b><small>${esc(CW.specialText(sp))}</small></button>`).join('')}
+    spChip = chip;
+    const sp = CW.special(lid);
+    const all = CW.specials(lid);
+    const gl = CW.prestigeGoal(lid);
+    const others = all.filter((x) => x.unlocked && !x.equipped);
+    const locked = all.filter((x) => !x.unlocked);
+    el.spop.innerHTML = `<h4><span>${esc(LEADER[lid].name)} ${pips(lid)}</span><span data-spv></span></h4><div class="m"><i data-spm></i></div>
+      <button class="spb" data-use><b>${esc(sp.name)}<span>${KIND[sp.t]} · ${sp.cost}%</span></b><small>${esc(CW.specialText(sp))}</small></button>
+      ${others.map((x) => `<button class="spe" data-eq="${x.i}"><span>Equip <b>${esc(x.name)}</b></span><em>${KIND[x.t]} · ${x.cost}%</em></button>`).join('')}
+      ${locked.length ? `<div class="splock">${gl ? `<span>Prestige ${gl.rank} unlocks <b>${esc(locked[0].name)}</b>: ${esc(CW.goalText(gl))}</span><span class="gbar"><i data-gbar="${lid}" style="width:${((100 * gl.have) / gl.n).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(gl.have)} / ${nfmt(gl.n)}</small>` : ''}${gl && gl.done ? `<button class="btn sm" data-pre>Prestige now</button>` : ''}</div>` : '<p class="splock done">All three specials unlocked</p>'}
       <button class="more" data-more>Leader details</button>`;
     el.spop.hidden = false;
     const r = chip.getBoundingClientRect();
@@ -1100,26 +1284,38 @@
     const v = CW.meter(spLid);
     const B = CW.battle();
     const live = B && B.phase === 'fight' && CW.heroAlive(spLid);
+    const sp = CW.special(spLid);
     setText(el.spop.querySelector('[data-spv]'), Math.floor(v) + '%');
     setW(el.spop.querySelector('[data-spm]'), v / 100);
-    const sps = CW.specials(spLid);
-    el.spop.querySelectorAll('[data-spi]').forEach((b) => {
-      const dis = !live || v < sps[+b.dataset.spi].cost;
-      if (b.disabled !== dis) b.disabled = dis;
-    });
+    const b = el.spop.querySelector('[data-use]');
+    const dis = !live || v < sp.cost;
+    if (b && b.disabled !== dis) b.disabled = dis;
+    updateGoals(el.spop);
   }
   function closeSpecials() {
     el.spop.hidden = true;
     spLid = null;
   }
   el.spop.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-spi]');
-    if (b && spLid && CW.useSpecial(spLid, +b.dataset.spi)) {
-      closeSpecials();
+    const lid = spLid;
+    if (!lid) return;
+    if (e.target.closest('[data-use]')) {
+      if (CW.useSpecial(lid)) closeSpecials();
+      return;
+    }
+    const eq = e.target.closest('[data-eq]');
+    if (eq) {
+      CW.equipSpecial(lid, +eq.dataset.eq);
+      SFX.play('buy');
+      openSpecials(lid, spChip);
+      return;
+    }
+    if (e.target.closest('[data-pre]')) {
+      CW.doPrestige(lid);
+      openSpecials(lid, spChip);
       return;
     }
     if (e.target.closest('[data-more]')) {
-      const lid = spLid;
       closeSpecials();
       openLeader(lid);
     }
@@ -1128,21 +1324,17 @@
     if (!el.spop.hidden && !e.target.closest('#spop') && !e.target.closest('.chip')) closeSpecials();
   });
 
-  el.autoPush.addEventListener('change', () => CW.setAuto('push', el.autoPush.checked));
-  el.autoSpecial = $('#autoSpecial');
-  el.autoSpecial.addEventListener('change', () => CW.setAuto('special', el.autoSpecial.checked));
   el.challenge.addEventListener('click', () => {
     SFX.ensure();
     CW.challenge();
   });
   el.council.addEventListener('click', () => openCouncil());
   function syncControls() {
-    el.autoPush.checked = S().auto.push;
-    el.autoSpecial.checked = S().auto.special !== false;
+    if (!el.sheet.hidden && tab === 'options') renderPanel();
   }
 
   // ------------------------------------------------------------ panels
-  const TITLES = { army: 'Army', command: 'Commanders', leaders: 'Leaders', doctrines: 'Doctrines', rift: 'Time Rift', options: 'Options' };
+  const TITLES = { army: 'Army', command: 'Team', leaders: 'Codex', doctrines: 'Doctrines', rift: 'Time Rift', options: 'Settings' };
   function openSheet(t) {
     tab = t;
     setText(el.sheetTitle, TITLES[t]);
@@ -1179,10 +1371,25 @@
     setText(scEls.doctrines, st.council && st.council.picks ? 'Pick one' : String(Object.keys(st.doctrines).length));
     const n = CW.riftShards();
     setText(scEls.rift, n ? '+' + fmt(n) : 'Stage 40');
-    setText(scEls.options, fmt(st.shards) + ' shards');
+    setText(scEls.options, st.sound ? 'Sound on' : 'Sound off');
     const alertD = !!(st.council && st.council.picks);
     const b = el.shortcuts.querySelector('[data-sc="doctrines"]');
     if (b._a !== alertD) b.classList.toggle('alert', (b._a = alertD));
+    // a dot on Team or Codex when a leader can prestige
+    const cmd = [st.main].concat(st.partners);
+    let teamP = false;
+    let anyP = false;
+    for (const id in st.roster) {
+      const gl = CW.prestigeGoal(id);
+      if (gl && gl.done) {
+        anyP = true;
+        if (cmd.includes(id)) teamP = true;
+      }
+    }
+    const bt = el.shortcuts.querySelector('[data-sc="command"]');
+    if (bt._a !== teamP) bt.classList.toggle('alert', (bt._a = teamP));
+    const bc = el.shortcuts.querySelector('[data-sc="leaders"]');
+    if (bc._a !== anyP) bc.classList.toggle('alert', (bc._a = anyP));
   }
 
   function panelSig() {
@@ -1193,11 +1400,12 @@
       base.push(ids.join(','), st.eraReached, st.buyMode, JSON.stringify(st.uattr), ids.map((id) => CW.uslots(id)).join(''));
       base.push((st.champs || []).join(','), CW.champSlots(), CW.champMax(), st.best > CW.PATH_LEN);
     }
-    if (tab === 'leaders') base.push(Object.entries(st.roster).map(([k, r]) => k + r.stars).join(','));
-    if (tab === 'command') base.push(deckSig, !!st.council, JSON.stringify(st.pos));
+    const presSig = () => JSON.stringify(st.prest) + JSON.stringify(st.spEq);
+    if (tab === 'leaders') base.push(Object.entries(st.roster).map(([k, r]) => k + r.stars).join(','), presSig());
+    if (tab === 'command') base.push(deckSig, !!st.council, JSON.stringify(st.pos), presSig(), [st.main].concat(st.partners).map((id) => { const gl = CW.prestigeGoal(id); return gl && gl.done ? 1 : 0; }).join(''));
     if (tab === 'doctrines') base.push(JSON.stringify(st.doctrines), !!st.council);
     if (tab === 'rift') base.push(st.runMax, Math.floor(Math.log10(st.shards + 1) * 20));
-    if (tab === 'options') base.push(st.sound);
+    if (tab === 'options') base.push(st.sound, st.auto.push, st.auto.special);
     return base.join('|');
   }
 
@@ -1205,6 +1413,7 @@
     lastSig = panelSig();
     const f = { army: renderArmy, command: renderCommand, leaders: renderLeaders, doctrines: renderDoctrines, rift: renderRift, options: renderOptions }[tab];
     el.panel.innerHTML = f();
+    if (tab === 'leaders' && cxQuery) filterCodex();
     updatePanel();
   }
   function updatePanel() {
@@ -1264,12 +1473,7 @@
         if (b.disabled !== dis) b.disabled = dis;
       });
     }
-    if (tab === 'leaders') {
-      el.panel.querySelectorAll('[data-lvl]').forEach((s) => {
-        const r = st.roster[s.dataset.lvl];
-        if (r) setText(s, 'Lv ' + r.lv);
-      });
-    }
+    if (tab === 'command') updateGoals(el.panel);
     if (tab === 'rift') {
       const b = el.panel.querySelector('[data-rift]');
       if (b) setText(b, fmt(CW.riftShards()));
@@ -1384,34 +1588,47 @@
     );
   }
 
+  // the Codex: every leader in the game, searchable, with their specials and prestige
+  let cxQuery = '';
   function renderLeaders() {
     const st = S();
-    let h = `<div class="phead"><h2>Leaders · ${Object.keys(st.roster).length}/${LEADERS.length}</h2></div>`;
+    const own = Object.keys(st.roster).length;
+    let h = `<div class="phead"><h2>Codex</h2></div>
+      <div class="cxtop"><input type="search" data-cx placeholder="Search leaders, attributes or specials" aria-label="Search the codex" value="${esc(cxQuery)}"><span>${own} / ${LEADERS.length} recruited</span></div>
+      <p class="note">Every leader in the game. Tap one for their attributes, their three specials and what it takes to prestige them.</p>`;
     for (let e = 0; e <= NERA; e++) {
       const ls = LEADERS.filter((l) => l.era === e);
       if (!ls.length) continue;
-      if (e === NERA) {
-        h += `<div class="erahead"><span>Mysteries</span></div><div class="lgrid">${ls
-          .map((l) => {
-            const r = st.roster[l.id];
-            return r
-              ? `<button class="lcard ${l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : ''}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small data-lvl="${l.id}"></small>${stars(r.stars)}</button>`
-              : `<button class="lcard locked" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id, 'mystery')}" alt=""><span class="nm">???</span><small>Shattered Time</small></button>`;
-          })
-          .join('')}</div>`;
-        continue;
-      }
-      h += `<div class="erahead"><span>${ERAS[e].name}</span></div><div class="lgrid">${ls
+      const got = ls.filter((l) => st.roster[l.id]).length;
+      h += `<div class="cxera"><div class="erahead">${e < NERA ? esc(ERAS[e].roman + ' · ' + ERAS[e].name) : 'Mysteries · Shattered Time'}<span>${got} / ${ls.length}</span></div><div class="cxlist">${ls
         .map((l) => {
           const r = st.roster[l.id];
+          const mystery = e === NERA && !r;
+          if (mystery) return `<button class="cx locked" data-act="leader" data-id="${l.id}" data-hay="mystery"><img class="px" src="${CW.portraitURL(l.id, 'mystery')}" alt=""><span class="cx-b"><b>???</b><small>Waits beyond the end of time</small></span></button>`;
+          const sp = CW.special(l.id);
+          const gl = r && CW.prestigeGoal(l.id);
           const cls = !r ? 'locked' : l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : '';
-          const where = l.starter ? 'Starter' : 'Stage ' + CW.bossStageOf(l.id);
-          return `<button class="lcard ${cls}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small ${r ? `data-lvl="${l.id}"` : ''}>${r ? '' : esc(where)}</small>${r ? stars(r.stars) : ''}</button>`;
+          const hay = [l.name, l.title, CLASSES[l.cls].name, ERAS[Math.min(l.era, NERA - 1)].name].concat([0, 1, 2].map((i) => CW.attr(l.id, i).name), CW.SPECIALS[l.id].map((x) => x[0])).join(' ').toLowerCase();
+          const sub = esc(CLASSES[l.cls].name) + ' · ' + (CW.prefPos(l.id) === 'front' ? 'front' : 'behind') + (r ? '' : ' · ' + (l.starter ? 'starter' : 'stage ' + CW.bossStageOf(l.id)));
+          return `<button class="cx ${cls}${gl && gl.done ? ' pre' : ''}" data-act="leader" data-id="${l.id}" data-hay="${esc(hay)}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="cx-b"><b>${esc(l.name)}</b><small>${sub}</small><small class="cx-sp">${esc(sp.name)}</small></span><span class="cx-r">${r ? pips(l.id) + stars(r.stars) : ''}</span></button>`;
         })
-        .join('')}</div>`;
+        .join('')}</div></div>`;
     }
-    return h;
+    return h + '<p class="foot">Real people appear here as pixel caricatures in a work of fiction. Inclusion is not endorsement; the dictators\' bios note their crimes.</p>';
   }
+  function filterCodex() {
+    const q = cxQuery.trim().toLowerCase();
+    el.panel.querySelectorAll('.cxera').forEach((grp) => {
+      let n = 0;
+      grp.querySelectorAll('.cx').forEach((c) => {
+        const ok = !q || c.dataset.hay.includes(q);
+        c.hidden = !ok;
+        if (ok) n++;
+      });
+      grp.hidden = n === 0;
+    });
+  }
+
 
   function renderDoctrines() {
     const st = S();
@@ -1432,12 +1649,17 @@
   function renderOptions() {
     const st = S();
     const s = st.stats;
-    return `<div class="phead"><h2>Options</h2></div>
-      <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound</label>
+    return `<div class="phead"><h2>Settings</h2></div>
+      <div class="sets">
+        <label class="tog"><input type="checkbox" data-act="autopush" ${st.auto.push ? 'checked' : ''}><span>Auto-advance<small>Push on to the next stage after each win; off keeps you farming this one</small></span></label>
+        <label class="tog"><input type="checkbox" data-act="autospecial" ${st.auto.special !== false ? 'checked' : ''}><span>Auto specials<small>A charged special fires by itself after a few seconds</small></span></label>
+        <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound</label>
+      </div>
       <p><button class="btn ghost" data-act="save">Save now</button> <button class="btn ghost" data-act="export">Export save</button> <button class="btn ghost" data-act="import">Import save</button></p>
       <div id="saveBox"></div>
       <p class="note">${Math.floor(s.time / 3600)}h ${Math.floor((s.time % 3600) / 60)}m played · ${fmt(s.bosses)} leaders beaten · ${fmt(s.kills)} enemy soldiers defeated</p>
-      <p><button class="btn red" data-act="reset">Reset game</button></p>`;
+      <p><button class="btn red" data-act="reset">Reset game</button></p>
+      <p class="foot">Real people appear here as pixel caricatures in a work of fiction. Inclusion is not endorsement; the dictators' bios note their crimes.</p>`;
   }
 
   el.panel.addEventListener('click', (e) => {
@@ -1465,6 +1687,13 @@
       updatePanel();
     } else if (act === 'uaslot') openUAttr(b.dataset.id, +b.dataset.i);
     else if (act === 'champ') openRanks();
+    else if (act === 'eqsp') {
+      if (CW.equipSpecial(b.dataset.id, +b.dataset.i)) SFX.play('buy');
+      renderPanel();
+    } else if (act === 'prestige') {
+      CW.doPrestige(b.dataset.id);
+      renderPanel();
+    }
     else if (act === 'rmchamp') {
       CW.setChamp(b.dataset.id, false);
       renderPanel();
@@ -1532,7 +1761,21 @@
     holdT = setTimeout(rep, gap);
   });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => el.panel.addEventListener(ev, stopHold));
+  el.panel.addEventListener('input', (e) => {
+    if (e.target.matches('[data-cx]')) {
+      cxQuery = e.target.value;
+      filterCodex();
+    }
+  });
   el.panel.addEventListener('change', (e) => {
+    if (e.target.dataset.act === 'autopush') {
+      CW.setAuto('push', e.target.checked);
+      return;
+    }
+    if (e.target.dataset.act === 'autospecial') {
+      CW.setAuto('special', e.target.checked);
+      return;
+    }
     if (e.target.dataset.act === 'autobuild') {
       CW.setAuto('build', e.target.checked);
       renderPanel();
@@ -1566,7 +1809,7 @@
     if (e.target === el.modal) closeModal();
   });
   document.addEventListener('keydown', (e) => {
-    if (e.target.matches && e.target.matches('input,textarea,select')) return;
+    if (e.target.matches && e.target.matches('input,textarea,select') && (e.key !== 'Escape' || e.target.matches('textarea'))) return;
     if (modalKind) {
       if (e.key === 'Escape') closeModal();
       return;
@@ -1644,6 +1887,12 @@
       el.modal.hidden = true;
     } else if (act === 'train') {
       if (CW.train(b.dataset.id)) SFX.play('buy');
+      openLeader(b.dataset.id);
+    } else if (act === 'eqsp') {
+      if (CW.equipSpecial(b.dataset.id, +b.dataset.i)) SFX.play('buy');
+      openLeader(b.dataset.id);
+    } else if (act === 'prestige') {
+      CW.doPrestige(b.dataset.id);
       openLeader(b.dataset.id);
     } else if (act === 'dorift') {
       const n = CW.rift();
@@ -1757,7 +2006,8 @@
       `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:128px;height:128px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === NERA ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
       <p class="bio">${esc(l.bio)}</p>
       <h3>Attributes · always on</h3><div class="sklist">${[0, 1, 2].map((i) => `<div class="sk"><em>${labels[i]}</em><b>${esc(CW.attr(id, i).name)}</b>: ${esc(CW.attrText(id, i, r ? CW.attrStrength(id, i === 1 && st.main !== id ? 'partner' : 'main') : 1))}</div>`).join('')}<div class="sk"><em>Commander bonus · ${esc(cl.name)}</em>${esc(cl.d)}</div></div>
-      <h3>Special moves · charged in battle</h3><div class="sklist">${CW.specials(id).map((sp) => `<div class="sk"><em>${sp.sig ? 'Signature special · full meter' : 'Class special · 60% of the meter'}</em><b>${esc(sp.name)}</b>: ${esc(CW.specialText(sp))}</div>`).join('')}<div class="sk"><em>Best position · ${CW.prefPos(id) === 'front' ? 'front lines' : 'behind the army'}</em>${esc(CW.posText(id))}</div></div>
+      <h3>Specials · one equipped at a time ${pips(id)}</h3><ul class="sps2">${specialRows(id, !!r)}</ul>
+      <div class="sklist" style="margin-top:6px"><div class="sk"><em>Best position · ${CW.prefPos(id) === 'front' ? 'front lines' : 'behind the army'}</em>${esc(CW.posText(id))}</div>${CW.prestige(id) ? `<div class="sk"><em>Prestige ${CW.prestige(id)}</em>+${25 * CW.prestige(id)}% strength on the field, +${20 * CW.prestige(id)}% attribute strength, stronger specials</div>` : ''}</div>
       <p class="note">They work while this leader is standing. When you fight them, they power the enemy army instead.</p>
       <div class="acts">${r ? `<button class="btn" data-act="train" data-id="${id}" ${CW.trainCost(id) > st.gold ? 'disabled' : ''}>Train to Lv ${r.lv + 1} · ${fmt(CW.trainCost(id))}</button>` : ''}<button class="btn ghost" data-act="close">Close</button></div>`
     );
@@ -1795,6 +2045,11 @@
     SFX.play('era');
     toast('Time shatters: random eras ahead', 'red');
     setTimeout(() => toast('Leaders can now join the ranks · Army', 'blue'), 1600);
+  });
+  CW.on('prestige', (e) => {
+    SFX.play('era');
+    toast(short(e.lid) + ' reached prestige ' + e.rank + ': ' + CW.SPECIALS[e.lid][e.rank][0] + ' unlocked', 'blue');
+    renderDeck();
   });
   CW.on('champSlot', (n) => toast('New slot for a leader in the ranks (' + n + ')', 'blue'));
   CW.on('defeat', (d) => {
