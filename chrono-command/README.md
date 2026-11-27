@@ -95,10 +95,20 @@ on whichever soldier or upgrade adds the most strength. Even that bot starts los
 hits walls every few eras where it has to save up and train, reaches its first Time Rift after about 2 to 2.5 hours,
 and opens Shattered Time after about 10 to 11 hours.
 
+**A guide that teaches as you go.** Short tips in plain words (written so a kid can follow them) appear the first time
+something new matters: how to strike, what gold is for, room in your army, leader battles, losing, the War Council,
+special moves, front or back, soldier skills, new eras, the Codex, Time Rifts, the end of the story, prestige and leaders
+in the ranks. Your commander "says" each one, the button or bar it talks about glows, and **Show me** opens the right menu.
+Every tip you have seen is kept on the **Guide** page (the **?** button), which fills in as you play. Tips can be turned off
+or started again in Settings; saves from before the guide skip the basics.
+
+The **Codex** only shows the leaders you have found so far, with a count of how many are still hidden in each era you have
+reached. Later eras and the mystery leaders stay secret until you get there.
+
 The battlefield fills the whole screen on every device. A slim bar on top shows the era, stage and resources; the dock at
 the bottom holds your leaders (tap one for their special), the next-leader tracker and a six-button bar: **Army**, **Team**
-(commanders, positions, specials and prestige), **Codex** (every leader, searchable, with their attributes, specials and
-prestige goals), **Doctrines**, **Rift** and **Settings** (auto-advance, auto specials, sound, saves). Held upright, the
+(commanders, positions, specials and prestige), **Codex** (the leaders you have found, searchable, with their attributes,
+specials and prestige goals), **Doctrines**, **Rift** and **Settings** (auto-advance, auto specials, sound, saves). Held upright, the
 battle zooms in a little and the era's scene carries on above and below it; turned sideways, the console shrinks to one
 slim row along the bottom and the menus open as a side drawer.
 

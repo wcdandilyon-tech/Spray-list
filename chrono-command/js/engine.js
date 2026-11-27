@@ -180,6 +180,7 @@
       prest: {}, // each leader's prestige rank, 0-2 (kept through Time Rifts)
       spEq: {}, // which of their unlocked specials each leader has equipped
       lstats: {}, // what each leader has done, counted towards prestige
+      guide: { seen: {}, on: true }, // the how-to-play tips already shown (ui.js)
       owned: START_ARMY(),
       uattr: {},
       unitLv: {},
@@ -260,6 +261,7 @@
     S.prest = S.prest || {};
     S.spEq = S.spEq || {};
     S.lstats = S.lstats || {};
+    S.guide = S.guide && S.guide.seen ? S.guide : { seen: {}, on: true };
     if (!S.seed) S.seed = (Math.random() * 1e9) | 0;
     infoCache = new Map();
     S.stats = Object.assign(base.stats, obj.stats || {});

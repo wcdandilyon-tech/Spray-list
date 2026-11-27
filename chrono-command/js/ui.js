@@ -1275,6 +1275,10 @@
       ${locked.length ? (gl && gl.locked ? `<div class="splock"><span>Prestige opens after the main story: finish the Galactic Age. Then <b>${esc(locked[0].name)}</b> unlocks when ${esc(LEADER[lid].name)} meets their goal: ${esc(CW.goalText(gl).charAt(0).toLowerCase() + CW.goalText(gl).slice(1))}.</span></div>` : `<div class="splock">${gl ? `<span>Prestige ${gl.rank} unlocks <b>${esc(locked[0].name)}</b>: ${esc(CW.goalText(gl))}</span><span class="gbar"><i data-gbar="${lid}" style="width:${((100 * gl.have) / gl.n).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(gl.have)} / ${nfmt(gl.n)}</small>` : ''}${gl && gl.done ? `<button class="btn sm" data-pre>Prestige now</button>` : ''}</div>`) : '<p class="splock done">All three specials unlocked</p>'}
       <button class="more" data-more>Leader details</button>`;
     el.spop.hidden = false;
+    if (gCur) {
+      guideEl.hidden = true;
+      unlight();
+    }
     const r = chip.getBoundingClientRect();
     const w = el.spop.offsetWidth;
     el.spop.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px';
@@ -1336,7 +1340,7 @@
   }
 
   // ------------------------------------------------------------ panels
-  const TITLES = { army: 'Army', command: 'Team', leaders: 'Codex', doctrines: 'Doctrines', rift: 'Time Rift', options: 'Settings' };
+  const TITLES = { army: 'Army', command: 'Team', leaders: 'Codex', doctrines: 'Doctrines', rift: 'Time Rift', options: 'Settings', guide: 'Guide' };
   function openSheet(t) {
     tab = t;
     setText(el.sheetTitle, TITLES[t]);
@@ -1357,6 +1361,11 @@
     else openSheet(b.dataset.sc);
   });
   $('#sheetClose').addEventListener('click', closeSheet);
+  $('#btnGuide').addEventListener('click', () => {
+    SFX.ensure();
+    if (!el.sheet.hidden && tab === 'guide') closeSheet();
+    else openSheet('guide');
+  });
   el.sheet.addEventListener('click', (e) => {
     if (e.target === el.sheet) return closeSheet();
     const b = e.target.closest('.stabs [data-sc]');
@@ -1407,13 +1416,14 @@
     if (tab === 'command') base.push(deckSig, !!st.council, JSON.stringify(st.pos), presSig(), [st.main].concat(st.partners).map((id) => { const gl = CW.prestigeGoal(id); return gl && gl.done ? 1 : 0; }).join(''));
     if (tab === 'doctrines') base.push(JSON.stringify(st.doctrines), !!st.council);
     if (tab === 'rift') base.push(st.runMax, Math.floor(Math.log10(st.shards + 1) * 20));
-    if (tab === 'options') base.push(st.sound, st.auto.push, st.auto.special);
+    if (tab === 'options') base.push(st.sound, st.auto.push, st.auto.special, st.guide && st.guide.on);
+    if (tab === 'guide') base.push(Object.keys(st.guide.seen).length, st.guide.on);
     return base.join('|');
   }
 
   function renderPanel() {
     lastSig = panelSig();
-    const f = { army: renderArmy, command: renderCommand, leaders: renderLeaders, doctrines: renderDoctrines, rift: renderRift, options: renderOptions }[tab];
+    const f = { army: renderArmy, command: renderCommand, leaders: renderLeaders, doctrines: renderDoctrines, rift: renderRift, options: renderOptions, guide: renderGuide }[tab];
     el.panel.innerHTML = f();
     if (tab === 'leaders' && cxQuery) filterCodex();
     updatePanel();
@@ -1595,27 +1605,30 @@
   function renderLeaders() {
     const st = S();
     const own = Object.keys(st.roster).length;
+    const reach = st.best > CW.PATH_LEN ? NERA : st.eraReached;
     let h = `<div class="phead"><h2>Codex</h2></div>
-      <div class="cxtop"><input type="search" data-cx placeholder="Search leaders, attributes or specials" aria-label="Search the codex" value="${esc(cxQuery)}"><span>${own} / ${LEADERS.length} recruited</span></div>
-      <p class="note">Every leader in the game. Tap one for their attributes, their three specials and what it takes to prestige them${CW.prestigeUnlocked() ? '' : ' (prestige opens once the main story is over)'}.</p>`;
+      <div class="cxtop"><input type="search" data-cx placeholder="Search your leaders" aria-label="Search the codex" value="${esc(cxQuery)}"><span>${own} of ${LEADERS.length} found</span></div>
+      <p class="note">Every leader you have beaten is here. Tap one to see their skills, their special moves and what it takes to prestige them${CW.prestigeUnlocked() ? '' : ' (prestige opens once the main story is over)'}. Win leader battles to find the rest.</p>`;
     for (let e = 0; e <= NERA; e++) {
       const ls = LEADERS.filter((l) => l.era === e);
       if (!ls.length) continue;
-      const got = ls.filter((l) => st.roster[l.id]).length;
-      h += `<div class="cxera"><div class="erahead">${e < NERA ? esc(ERAS[e].roman + ' · ' + ERAS[e].name) : 'Mysteries · Shattered Time'}<span>${got} / ${ls.length}</span></div><div class="cxlist">${ls
+      const got = ls.filter((l) => st.roster[l.id]);
+      // eras you haven't reached stay a secret
+      if (e > reach && !got.length) continue;
+      const left = ls.length - got.length;
+      h += `<div class="cxera"><div class="erahead">${e < NERA ? esc(ERAS[e].roman + ' · ' + ERAS[e].name) : 'Mysteries · Shattered Time'}<span>${got.length} / ${ls.length}</span></div><div class="cxlist">${got
         .map((l) => {
           const r = st.roster[l.id];
-          const mystery = e === NERA && !r;
-          if (mystery) return `<button class="cx locked" data-act="leader" data-id="${l.id}" data-hay="mystery"><img class="px" src="${CW.portraitURL(l.id, 'mystery')}" alt=""><span class="cx-b"><b>???</b><small>Waits beyond the end of time</small></span></button>`;
           const sp = CW.special(l.id);
-          const gl = r && CW.prestigeGoal(l.id);
-          const cls = !r ? 'locked' : l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : '';
+          const gl = CW.prestigeGoal(l.id);
+          const cls = l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : '';
           const hay = [l.name, l.title, CLASSES[l.cls].name, ERAS[Math.min(l.era, NERA - 1)].name].concat([0, 1, 2].map((i) => CW.attr(l.id, i).name), CW.SPECIALS[l.id].map((x) => x[0])).join(' ').toLowerCase();
-          const sub = esc(CLASSES[l.cls].name) + ' · ' + (CW.prefPos(l.id) === 'front' ? 'front' : 'behind') + (r ? '' : ' · ' + (l.starter ? 'starter' : 'stage ' + CW.bossStageOf(l.id)));
-          return `<button class="cx ${cls}${gl && gl.done ? ' pre' : ''}" data-act="leader" data-id="${l.id}" data-hay="${esc(hay)}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="cx-b"><b>${esc(l.name)}</b><small>${sub}</small><small class="cx-sp">${esc(sp.name)}</small></span><span class="cx-r">${r ? pips(l.id) + stars(r.stars) : ''}</span></button>`;
+          const sub = esc(CLASSES[l.cls].name) + ' · ' + (CW.prefPos(l.id) === 'front' ? 'front' : 'behind');
+          return `<button class="cx ${cls}${gl && gl.done ? ' pre' : ''}" data-act="leader" data-id="${l.id}" data-hay="${esc(hay)}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="cx-b"><b>${esc(l.name)}</b><small>${sub}</small><small class="cx-sp">${esc(sp.name)}</small></span><span class="cx-r">${pips(l.id)}${stars(r.stars)}</span></button>`;
         })
-        .join('')}</div></div>`;
+        .join('')}${left ? `<div class="cx locked hidden-left" data-hay=""><span class="cx-q">?</span><span class="cx-b"><b>${left} still to find</b><small>${e === NERA ? 'They wait beyond the end of time' : 'Beat this era\'s leader battles'}</small></span></div>` : ''}</div></div>`;
     }
+    if (reach < NERA - 1) h += `<p class="note">More eras are waiting further along the time pathway.</p>`;
     return h + '<p class="foot">Real people appear here as pixel caricatures in a work of fiction. Inclusion is not endorsement; the dictators\' bios note their crimes.</p>';
   }
   function filterCodex() {
@@ -1623,7 +1636,7 @@
     el.panel.querySelectorAll('.cxera').forEach((grp) => {
       let n = 0;
       grp.querySelectorAll('.cx').forEach((c) => {
-        const ok = !q || c.dataset.hay.includes(q);
+        const ok = !q ? true : !c.classList.contains('hidden-left') && c.dataset.hay.includes(q);
         c.hidden = !ok;
         if (ok) n++;
       });
@@ -1656,7 +1669,9 @@
         <label class="tog"><input type="checkbox" data-act="autopush" ${st.auto.push ? 'checked' : ''}><span>Auto-advance<small>Push on to the next stage after each win; off keeps you farming this one</small></span></label>
         <label class="tog"><input type="checkbox" data-act="autospecial" ${st.auto.special !== false ? 'checked' : ''}><span>Auto specials<small>A charged special fires by itself after a few seconds</small></span></label>
         <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound</label>
+        <label class="tog"><input type="checkbox" data-act="tips" ${st.guide.on !== false ? 'checked' : ''}><span>Show tips<small>Short how-to-play tips when something new happens. They are all kept in the Guide (the ? button).</small></span></label>
       </div>
+      <p><button class="btn ghost" data-act="guidereset">Start the guide again</button></p>
       <p><button class="btn ghost" data-act="save">Save now</button> <button class="btn ghost" data-act="export">Export save</button> <button class="btn ghost" data-act="import">Import save</button></p>
       <div id="saveBox"></div>
       <p class="note">${Math.floor(s.time / 3600)}h ${Math.floor((s.time % 3600) / 60)}m played · ${fmt(s.bosses)} leaders beaten · ${fmt(s.kills)} enemy soldiers defeated</p>
@@ -1689,6 +1704,11 @@
       updatePanel();
     } else if (act === 'uaslot') openUAttr(b.dataset.id, +b.dataset.i);
     else if (act === 'champ') openRanks();
+    else if (act === 'guidereset') {
+      st.guide = { seen: {}, on: true };
+      toast('The guide starts again', 'blue');
+      renderPanel();
+    }
     else if (act === 'eqsp') {
       if (CW.equipSpecial(b.dataset.id, +b.dataset.i)) SFX.play('buy');
       renderPanel();
@@ -1776,6 +1796,10 @@
     }
     if (e.target.dataset.act === 'autospecial') {
       CW.setAuto('special', e.target.checked);
+      return;
+    }
+    if (e.target.dataset.act === 'tips') {
+      S().guide.on = e.target.checked;
       return;
     }
     if (e.target.dataset.act === 'autobuild') {
@@ -2093,6 +2117,7 @@
   let lastT = performance.now();
   let hudT = 0;
   let panelT = 0;
+  let guideT = 0;
   let saveT = 0;
   function frame(now) {
     const dt = Math.min(0.25, Math.max(0, (now - lastT) / 1000));
@@ -2109,6 +2134,11 @@
       if (hudT > 0.12) {
         hudT = 0;
         updateHUD();
+      }
+      guideT += dt;
+      if (guideT > 0.25) {
+        guideTick(guideT);
+        guideT = 0;
       }
       panelT += dt;
       if (panelT > 0.4) {
@@ -2127,6 +2157,182 @@
     requestAnimationFrame(frame);
   }
 
+
+  // ------------------------------------------------------------ the guide
+  // Short tips in plain words that appear the first time something matters, voiced by your commander. Each one is
+  // kept in the Guide page once seen, so the page fills up as you play. "Show me" opens the right menu.
+  const B_ = () => CW.battle();
+  const cheapestRecruit = () => Math.min(...CW.unlockedUnits().map((u) => CW.recruitCost(u.id, 1)));
+  const anyReady = () => [S().main].concat(S().partners).some((id) => CW.heroAlive(id) && CW.meter(id) >= CW.special(id).cost);
+  const prestigeReady = () => Object.keys(S().roster).find((id) => { const gl = CW.prestigeGoal(id); return gl && gl.done; });
+  const TIPS = [
+    { id: 'welcome', sec: 'Basics', t: 'Welcome, Commander!', d: () => 'Your army fights all by itself. Your job is to make it stronger, so it can win more battles and travel through time.', when: () => true },
+    { id: 'tap', sec: 'Basics', t: 'Tap to strike', d: () => 'Tap anywhere on the battlefield to drop a strike on the enemy. Try it now!', target: '#screen', when: () => B_().phase === 'fight', done: (st) => st.stats.taps > 0 },
+    { id: 'bars', sec: 'Basics', t: 'Who is winning?', d: () => 'The bar at the top left shows your soldiers in blue and the enemy in red. Beat every enemy to win the stage.', target: '.ov-l', when: (st) => st.stage >= 2 },
+    { id: 'gold', sec: 'Army', t: 'Gold buys soldiers', d: () => 'Every enemy you beat drops gold. Open Army and tap Recruit to buy more soldiers.', target: '[data-sc="army"]', tab: 'army', when: (st) => (st.stage >= 2 || st.stats.kills >= 12) && st.gold >= cheapestRecruit() },
+    { id: 'room', sec: 'Army', t: 'Room in your army', d: () => 'Your army only has so much room. Foot soldiers take 1 space, riders take 2 and big machines take 4. Every new era gives you more room.', target: '.capline', when: () => !el.sheet.hidden && tab === 'army' },
+    { id: 'train', sec: 'Army', t: 'Recruit or train?', d: () => 'Recruit buys one more soldier. Train +1 makes every soldier of that kind stronger. Auto-build always sends your best soldiers into battle.', target: '.buys', when: (st) => !el.sheet.hidden && tab === 'army' && st.guide.seen.room },
+    { id: 'boss', sec: 'Leaders', t: 'A famous leader!', d: () => 'Every third stage a famous leader fights you. Beat them before the timer runs out and they join your side.', target: '#hudBoss', when: () => B_().info.isBoss && !B_().info.mystery },
+    { id: 'lose', sec: 'Basics', t: 'Lost? That is okay!', d: () => 'Your army steps back to an easier stage to earn more gold. Buy and train soldiers, and it will try again by itself.', ev: 'defeat' },
+    { id: 'council', sec: 'Leaders', t: 'War Council', d: () => 'You won! Pick one doctrine. It is a bonus for your whole army that lasts until your next Time Rift.', modal: 'council', when: (st) => !!st.council && modalKind === 'council' },
+    { id: 'special', sec: 'Leaders', t: 'Special move ready!', d: () => "When a leader's picture glows, their special move is charged. Tap the picture, then tap the special to use it.", target: '#deck .chip.ready', when: anyReady, ev2: 'special' },
+    { id: 'team', sec: 'Leaders', t: 'Your team', d: () => 'You lead with one commander and two partners. Open Team to swap them. Your commander gives the biggest bonus.', target: '[data-sc="command"]', tab: 'command', when: (st) => Object.keys(st.roster).length > 3 },
+    { id: 'position', sec: 'Leaders', t: 'Front or back?', d: () => 'Fighters are best at the front of the army. Thinkers are best behind it. Change it in Team. A star shows each leader’s best place.', target: '[data-sc="command"]', tab: 'command', when: (st) => st.guide.seen.team && st.stage >= 12 },
+    { id: 'skills', sec: 'Army', t: 'Soldier skills', d: () => 'Each kind of soldier can carry skills like Sharpened or Shield Wall. Open Army and tap + Equip. More slots open at level 10 and 30.', target: '[data-sc="army"]', tab: 'army', when: (st) => st.stage >= 9 },
+    { id: 'era', sec: 'Army', t: 'A new era!', d: () => 'You travelled forward in time. New soldiers are ready to recruit. They cost more, so save up your gold.', target: '[data-sc="army"]', tab: 'army', ev: 'era' },
+    { id: 'codex', sec: 'Leaders', t: 'The Codex', d: () => 'Every leader you beat goes into the Codex. Look there to see their skills and special moves. Can you find them all?', target: '[data-sc="leaders"]', tab: 'leaders', when: (st) => Object.keys(st.roster).length >= 5 },
+    { id: 'auto', sec: 'Basics', t: 'Auto buttons', d: () => 'In Settings you can turn off Auto-advance to stay and farm one stage, or turn off Auto specials to fire specials yourself.', target: '[data-sc="options"]', tab: 'options', when: (st) => st.stage >= 20 },
+    { id: 'rift', sec: 'Later', t: 'Time Rift', d: () => 'Stuck? A Time Rift sends you back to the start, but gives you Chrono Shards. Each shard makes everything 5% stronger forever, and you keep your leaders.', target: '[data-sc="rift"]', tab: 'rift', when: (st) => CW.riftShards() > 0 && (st.farming || st.stage >= 80) },
+    { id: 'afterrift', sec: 'Later', t: 'Back to the start', d: () => 'Your shards make you stronger now, so you will go further and faster this time.', ev: 'rift' },
+    { id: 'mystery', sec: 'Later', t: 'Mystery boss!', d: () => 'Nobody knows who this is until the fight starts. Mystery bosses are extra tough.', target: '#hudBoss', when: () => B_().info.mystery },
+    { id: 'story', sec: 'Later', t: 'You beat the story!', d: () => 'Time is broken now. The eras come in a random order and the enemies keep getting stronger, forever.', when: (st) => st.best > CW.PATH_LEN },
+    { id: 'prestige', sec: 'Later', t: 'Leader prestige', d: () => 'Leaders can unlock new special moves now. Each leader has a goal, like beating 666 enemies. Meet it, then tap Prestige.', target: '[data-sc="command"]', tab: 'command', when: () => CW.prestigeUnlocked() },
+    { id: 'ranks', sec: 'Later', t: 'Leaders in the ranks', d: () => 'You can swap soldiers for leaders now. Open Army and add a leader to fight on the front line.', target: '[data-sc="army"]', tab: 'army', when: () => CW.champUnlocked() },
+    { id: 'ready', sec: 'Later', t: 'Ready to prestige!', d: () => { const id = prestigeReady(); return (id ? LEADER[id].name : 'A leader') + ' met their goal. Open Team or the Codex, then tap Prestige to unlock a new special.'; }, target: '[data-sc="command"]', tab: 'command', when: () => !!prestigeReady() },
+  ];
+  const SECS = ['Basics', 'Army', 'Leaders', 'Later'];
+  const guideEl = $('#guide');
+  const gEvents = new Set();
+  let gCur = null;
+  let gWait = 1.2;
+  let gLit = [];
+  function guideOn() {
+    const st = S();
+    return st && st.guide && st.guide.on !== false;
+  }
+  function unlight() {
+    gLit.forEach((n) => n.classList.remove('glow'));
+    gLit = [];
+  }
+  function light() {
+    unlight();
+    if (!gCur || !gCur.target) return;
+    gLit = Array.from(document.querySelectorAll(gCur.target)).slice(0, 3);
+    gLit.forEach((n) => n.classList.add('glow'));
+  }
+  function showTip(tip) {
+    gCur = tip;
+    const st = S();
+    const n = TIPS.filter((x) => st.guide.seen[x.id]).length + 1;
+    guideEl.innerHTML = `<img class="px" src="${CW.headURL(st.main)}" alt=""><div class="g-b"><small>${esc(short(st.main))} says · tip ${n} of ${TIPS.length}</small><b>${esc(tip.t)}</b><p>${esc(tip.d(st))}</p><div class="g-acts"><button class="btn sm" data-g="ok">Got it</button>${tip.tab ? '<button class="btn ghost sm" data-g="show">Show me</button>' : ''}</div></div>`;
+    guideEl.hidden = false;
+    placeGuide();
+    SFX.play('coin');
+  }
+  function finishTip() {
+    if (!gCur) return;
+    const st = S();
+    st.guide.seen[gCur.id] = 1;
+    if (gCur.ev) gEvents.delete(gCur.ev);
+    gCur = null;
+    guideEl.hidden = true;
+    unlight();
+    gWait = 2.5;
+    if (!el.sheet.hidden && tab === 'guide') renderPanel();
+  }
+  function placeGuide() {
+    // over the battle above the dock; inside an open menu, or just above the War Council, so it never covers them
+    let host = document.body;
+    let mode = '';
+    if (gCur && gCur.modal && modalKind === gCur.modal) {
+      host = el.modal;
+      mode = 'inm';
+    } else if (!el.sheet.hidden) {
+      host = el.sheet.querySelector('.sheet-in');
+      mode = 'ins';
+    }
+    if (guideEl.parentNode !== host) {
+      if (mode === 'ins') host.insertBefore(guideEl, el.panel);
+      else if (mode === 'inm') host.insertBefore(guideEl, el.dlg);
+      else document.body.appendChild(guideEl);
+    }
+    if (guideEl._mode !== mode) {
+      guideEl.classList.remove('ins', 'inm');
+      if (mode) guideEl.classList.add(mode);
+      guideEl._mode = mode;
+    }
+    light();
+  }
+  function guideTick(dt) {
+    const st = S();
+    if (!st || !started || !st.guide) return;
+    if (!guideOn()) {
+      if (gCur) {
+        gCur = null;
+        guideEl.hidden = true;
+        unlight();
+      }
+      return;
+    }
+    // step aside while a leader's special popup is open
+    const busy = !el.spop.hidden;
+    if (gCur && guideEl.hidden !== busy) {
+      guideEl.hidden = busy;
+      if (busy) unlight();
+    }
+    if (busy && !gCur) return;
+    if (gCur) {
+      if ((gCur.done && gCur.done(st)) || (gCur.modal && modalKind !== gCur.modal) || (!gCur.modal && modalKind)) {
+        if (gCur.done && gCur.done(st)) finishTip();
+        else {
+          // the moment passed (a dialog opened or closed): put it back for later
+          gCur = null;
+          guideEl.hidden = true;
+          unlight();
+        }
+        return;
+      }
+      if (!busy) placeGuide();
+      return;
+    }
+    gWait -= dt;
+    if (gWait > 0) return;
+    for (const tip of TIPS) {
+      if (st.guide.seen[tip.id]) continue;
+      if (modalKind && tip.modal !== modalKind) continue;
+      if (!modalKind && tip.modal) continue;
+      let ok = false;
+      try {
+        ok = tip.ev ? gEvents.has(tip.ev) : tip.when(st);
+      } catch (e) {
+        ok = false;
+      }
+      if (ok) {
+        showTip(tip);
+        return;
+      }
+    }
+  }
+  guideEl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-g]');
+    if (!b) return;
+    SFX.ensure();
+    const tip = gCur;
+    finishTip();
+    if (b.dataset.g === 'show' && tip && tip.tab) openSheet(tip.tab);
+  });
+  // tips that wait for a moment in the game
+  CW.on('defeat', () => gEvents.add('defeat'));
+  CW.on('era', () => gEvents.add('era'));
+  CW.on('rift', () => gEvents.add('rift'));
+  CW.on('special', (e) => {
+    if (e.side === 'a' && gCur && gCur.ev2 === 'special') finishTip();
+  });
+  // the Guide page: every tip seen so far, by topic
+  function renderGuide() {
+    const st = S();
+    const seen = TIPS.filter((x) => st.guide.seen[x.id]);
+    let h = `<div class="phead"><h2>Guide</h2></div><p class="note">How to play, in small steps. A new page unlocks each time something new happens in your game · ${seen.length} of ${TIPS.length} pages.</p>`;
+    for (const sec of SECS) {
+      const all = TIPS.filter((x) => x.sec === sec);
+      const got = all.filter((x) => st.guide.seen[x.id]);
+      h += `<div class="gsec"><div class="erahead">${sec}<span>${got.length} / ${all.length}</span></div><div class="glist">${got
+        .map((x) => `<div class="gpage"><b>${esc(x.t)}</b><p>${esc(x.d(st))}</p></div>`)
+        .join('')}${got.length < all.length ? `<div class="gpage locked"><b>${all.length - got.length} more ${all.length - got.length === 1 ? 'page' : 'pages'}</b><p>Keep playing to unlock ${all.length - got.length === 1 ? 'it' : 'them'}.</p></div>` : ''}</div></div>`;
+    }
+    return h + `<p class="note">Tips are ${st.guide.on !== false ? 'on' : 'off'}. You can turn them off, or start the guide again, in Settings.</p>`;
+  }
+
   function boot(data) {
     let saved = data && data.save;
     if (!saved) {
@@ -2137,6 +2343,8 @@
     }
     if (saved && CW.load(saved)) {
       started = true;
+      // a save from before the guide: skip what this player has clearly already learned
+      if (!saved.guide && CW.state().best > 6) TIPS.forEach((x) => { if (['Basics', 'Army'].includes(x.sec) || ['boss', 'council', 'special', 'team', 'position', 'codex'].includes(x.id)) CW.state().guide.seen[x.id] = 1; });
       const away = (Date.now() - (saved.savedAt || Date.now())) / 1000;
       if (away > 60) {
         const o = CW.offlineGain(away);
