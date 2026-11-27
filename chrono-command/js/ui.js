@@ -527,7 +527,6 @@
   function showSpecial(e, B) {
     const ally = e.side === 'a';
     setText(hud.sbT, e.name);
-    if (hud.sbI._t !== e.t) hud.sbI.src = 'img/kinds/' + (hud.sbI._t = e.t) + '.png';
     setText(hud.sbS, ally ? LEADER[e.lid].name : 'Enemy ' + short(e.lid));
     setClass(hud.sb, 'sbanner on' + (ally ? '' : ' foe'));
     sbT = 1.8;
@@ -873,7 +872,7 @@
   const hud = {
     label: $('#hudLabel'), sub: $('#hudSub'), tug: $('#hudTug'), a: $('#hudA'), e: $('#hudE'), boss: $('#hudBoss'), bossName: $('#hudBossName'),
     time: $('#hudTime'), bossHp: $('#hudBossHp'), bossT: $('#hudBossT'), banner: $('#banner'), bt: $('#bannerT'), bs: $('#bannerS'),
-    bossSp: $('#hudBossSp'), sb: $('#sbanner'), sbT: $('#sbT'), sbS: $('#sbS'), sbI: $('#sbI'),
+    bossSp: $('#hudBossSp'), sb: $('#sbanner'), sbT: $('#sbT'), sbS: $('#sbS'),
   };
   function setW(node, f) {
     const w = (Math.max(0, Math.min(1, f || 0)) * 100).toFixed(1) + '%';

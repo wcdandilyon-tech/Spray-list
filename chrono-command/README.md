@@ -45,7 +45,8 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   needs, from 70% (stuns, tributes) to 100% (barrages, charges, infernos, executions). There are 15 kinds, from barrages,
   charges and snipes on the enemy leader to rallies, fortify, mass heals, revives, stuns, terror, infernos, war tributes,
   reinforcements, executions, life drain and shields. Each kind has its own pixel icon (`img/kinds/`), shown on the
-  leader chips, in the special popup, on the Team page, in the Codex and on the banner when a special fires.
+  leader chips, in the special popup, on the Team page and in the Codex. When a special fires, the battle shows just
+  the leader and the move name.
   Tap a leader's chip to fire it or swap to another unlocked one.
   Auto specials fires a charged special after 4 seconds. Enemy leaders have a meter too; once time shatters they may use
   any of their three.
