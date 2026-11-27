@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chrono Command</title>
+<meta name="description" content="An 8-bit idle war game: lead history's commanders and dictators on an endless campaign through time.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* VOICE occasion: a loud, bright 8-bit war game
+   IDEA a time-travelling war-room cartridge: olive field cases, brass plates, a pixel battlefield screen
+   PICTURE the live battlefield canvas with era scenery, squads and the enemy leader
+   COLOUR olive-drab ground, khaki ink, brass for gold and actions, cyan for your side, red for the enemy
+   TYPE Press Start 2P for display and numbers + VT323 for text
+   LAYOUT laptop: resource bar, full-width battlefield, command deck in one row, tabbed panel; phone: same order, deck stacked */
+:root{color-scheme:dark;--bg:#171b12;--bg2:#1f2518;--panel:#283020;--panel2:#323b28;--edge:#4a5636;--edge2:#5e6c44;--ink:#f0e6c4;--dim:#b4ab8c;--brass:#f2c14e;--brass2:#c8901e;--ally:#5ad1ff;--foe:#ff5a4a;--good:#7ddc6a;--epic:#d08aff;--rare:#6ab8ff;--shadow:#0b0d08}
+@media (prefers-color-scheme:light){:root:not([data-theme="light"]){color-scheme:dark}}
+:root[data-theme="light"]{color-scheme:dark}
+:root[data-theme="dark"]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:20px/1.2 VT323,ui-monospace,monospace;overflow-x:clip;background:radial-gradient(ellipse at 50% -10%,#2a3220 0,var(--bg) 60%) fixed var(--bg)}
+button,input,textarea,select{font:inherit;color:inherit}
+img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+.wrap{max-width:1120px;margin:0 auto;padding-block:12px 40px;padding-left:max(3vw,16px,env(safe-area-inset-left,0px));padding-right:max(3vw,16px,env(safe-area-inset-right,0px))}
+.d{font-family:"Press Start 2P",ui-monospace,monospace;letter-spacing:0}
+.notch{clip-path:polygon(0 6px,6px 6px,6px 0,calc(100% - 6px) 0,calc(100% - 6px) 6px,100% 6px,100% calc(100% - 6px),calc(100% - 6px) calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 6px),0 calc(100% - 6px))}
+.box{background:var(--panel);box-shadow:inset 0 0 0 3px var(--edge),inset 0 -6px 0 0 rgba(0,0,0,.18)}
+
+/* header */
+.hud{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin-bottom:10px}
+.logo{margin:0;font-size:clamp(18px,3.2vw,30px);line-height:1.15;color:var(--brass);text-shadow:3px 3px 0 #6a3a10,6px 6px 0 var(--shadow)}
+.logo span{display:block;font-size:.42em;color:var(--dim);text-shadow:none;margin-top:6px;line-height:1.4}
+.res{display:grid;grid-template-columns:repeat(4,minmax(0,auto));gap:6px}
+.stat{padding:8px 12px 7px;display:grid;grid-template-columns:auto 1fr;gap:0 7px;align-items:center}
+.stat img{width:16px;height:16px;grid-row:span 2}
+.stat b{font:13px "Press Start 2P",monospace;white-space:nowrap}
+.stat small{font-size:16px;color:var(--dim);line-height:1}
+.stat.gold b{color:var(--brass)}
+.stat.shard b{color:#8ae8ff}
+
+/* battlefield cabinet */
+.cab{padding:10px;background:var(--bg2);box-shadow:inset 0 0 0 3px var(--edge2),inset 0 0 0 6px var(--shadow)}
+.strip{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;padding:4px 6px 10px}
+.strip .era{font:11px/1.4 "Press Start 2P",monospace;color:var(--brass)}
+.strip .yr{font-size:22px}
+.strip .stg{font-size:22px;color:var(--dim)}
+.next{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:180px}
+.next img{width:28px;height:28px;box-shadow:0 0 0 2px var(--edge2)}
+.next .bar{flex:1;height:10px;background:var(--shadow);box-shadow:inset 0 0 0 2px var(--edge);position:relative;min-width:80px}
+.next .bar i{position:absolute;inset:2px auto 2px 2px;background:var(--foe);width:0}
+.next small{font-size:18px;color:var(--dim);white-space:nowrap}
+.screen{position:relative;aspect-ratio:384/216;background:#000;box-shadow:0 0 0 3px var(--shadow);cursor:crosshair;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.screen canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:auto}
+.toast{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);display:grid;gap:6px;justify-items:center;pointer-events:none;width:94%}
+.toast div{font:clamp(9px,1.3vw,12px)/1.6 "Press Start 2P",monospace;background:rgba(11,13,8,.86);padding:7px 12px;box-shadow:0 0 0 2px var(--brass);text-align:center;animation:pop 3.2s forwards}
+.toast div.red{box-shadow:0 0 0 2px var(--foe)}
+.toast div.blue{box-shadow:0 0 0 2px var(--ally)}
+@keyframes pop{0%{opacity:0;transform:translateY(6px)}8%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
+.controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding-top:10px}
+.btn{border:0;cursor:pointer;padding:9px 14px 8px;background:var(--brass);color:#241806;font:11px/1.3 "Press Start 2P",monospace;box-shadow:inset 0 -4px 0 var(--brass2),0 4px 0 var(--shadow);transition:transform .05s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(3px);box-shadow:inset 0 -2px 0 var(--brass2),0 1px 0 var(--shadow)}
+.btn:disabled{background:#5a5a48;color:#2a2a20;box-shadow:inset 0 -4px 0 #44443a,0 4px 0 var(--shadow);cursor:not-allowed;filter:none}
+.btn.red{background:var(--foe);color:#2a0806;box-shadow:inset 0 -4px 0 #b02a20,0 4px 0 var(--shadow)}
+.btn.ghost{background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 2px var(--edge2),0 4px 0 var(--shadow)}
+.btn.blue{background:var(--ally);color:#06202a;box-shadow:inset 0 -4px 0 #2a90b8,0 4px 0 var(--shadow)}
+.btn:focus-visible,.skill:focus-visible,.tab:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.tog{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:20px;min-height:36px}
+.tog input{appearance:none;width:38px;height:20px;background:var(--shadow);box-shadow:inset 0 0 0 2px var(--edge2);position:relative;cursor:pointer;margin:0}
+.tog input::after{content:"";position:absolute;top:4px;left:4px;width:12px;height:12px;background:var(--dim);transition:left .1s}
+.tog input:checked{background:#2c4a1c}
+.tog input:checked::after{left:22px;background:var(--good)}
+.pulse{animation:pulse 1s steps(2) infinite}
+@keyframes pulse{50%{filter:brightness(1.35)}}
+.spacer{flex:1}
+.hint{font-size:18px;color:var(--dim)}
+
+/* command deck */
+.deck{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:12px}
+.lead{padding:12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;align-items:start}
+.lead>img{width:72px;height:72px;box-shadow:0 0 0 3px var(--shadow),0 0 0 5px var(--brass)}
+.partner .lead>img,.partner>img{width:48px;height:48px;box-shadow:0 0 0 3px var(--shadow),0 0 0 5px var(--ally)}
+.who b{display:block;font:11px/1.5 "Press Start 2P",monospace;color:var(--brass)}
+.partner .who b{color:var(--ally);font-size:9px}
+.who small{display:block;color:var(--dim);font-size:18px;line-height:1.1}
+.skills{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:8px}
+.skill{position:relative;overflow:hidden;border:0;cursor:pointer;text-align:left;padding:8px 9px 9px;min-height:64px;background:var(--panel2);box-shadow:inset 0 0 0 2px var(--edge2),0 4px 0 var(--shadow);display:flex;flex-direction:column;gap:3px}
+.skill em{font:8px/1.4 "Press Start 2P",monospace;font-style:normal;color:var(--dim)}
+.skill b{font-weight:normal;font-size:20px;line-height:1}
+.skill small{font-size:16px;line-height:1.05;color:var(--dim)}
+.skill::after{content:"";position:absolute;inset:0;background:rgba(5,6,4,.72);transform-origin:bottom;transform:scaleY(var(--cd,0));pointer-events:none}
+.skill .t{position:absolute;right:7px;top:6px;font:9px "Press Start 2P",monospace;color:#fff;z-index:2}
+.skill.ready{box-shadow:inset 0 0 0 2px var(--brass),0 4px 0 var(--shadow)}
+.skill.ult{background:#3c3418}
+.skill.ult.ready{box-shadow:inset 0 0 0 3px var(--brass),0 0 12px rgba(242,193,78,.35),0 4px 0 var(--shadow)}
+.skill:active{transform:translateY(3px)}
+.partner{padding:12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-content:start}
+.partner .skill{grid-column:1/-1}
+.nw{white-space:nowrap}
+.kbd{font:8px "Press Start 2P",monospace;color:var(--dim);background:var(--shadow);padding:2px 4px;margin-left:4px}
+
+/* tabs + panel */
+.tabs{display:flex;gap:6px;margin-top:16px;overflow-x:auto;scrollbar-width:none}
+.tab{border:0;cursor:pointer;padding:10px 14px 9px;background:var(--bg2);color:var(--dim);font:10px/1.3 "Press Start 2P",monospace;box-shadow:inset 0 0 0 2px var(--edge);white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--panel);color:var(--brass);box-shadow:inset 0 0 0 2px var(--edge2),inset 0 -4px 0 var(--brass)}
+.panel{padding:16px;margin-top:6px;min-height:240px}
+.panel h2{font:13px/1.5 "Press Start 2P",monospace;color:var(--brass);margin:0}
+.panel h3{font:10px/1.5 "Press Start 2P",monospace;color:var(--ink);margin:18px 0 8px}
+.phead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.note{color:var(--dim);margin:6px 0 10px;font-size:19px}
+.seg{display:flex;gap:4px;align-items:center}
+.seg button{border:0;cursor:pointer;padding:6px 9px 5px;font:9px "Press Start 2P",monospace;background:var(--bg2);color:var(--dim);box-shadow:inset 0 0 0 2px var(--edge)}
+.seg button[aria-pressed="true"]{background:var(--brass);color:#241806;box-shadow:none}
+.formation{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.slot{background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge);padding:6px 4px 4px;text-align:center;font-size:16px;line-height:1}
+.slot img{width:48px;height:36px;display:block;margin:0 auto 3px}
+.slot.empty{color:var(--dim)}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.ucard{background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge);padding:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center}
+.ucard.on{box-shadow:inset 0 0 0 2px var(--edge2),inset 4px 0 0 var(--ally)}
+.ucard img{width:64px;height:48px;grid-row:span 2;background:#2c3a22;box-shadow:inset 0 0 0 2px var(--shadow)}
+.ucard .nm{font:9px/1.5 "Press Start 2P",monospace}
+.ucard .meta{font-size:17px;color:var(--dim);line-height:1.05}
+.ucard .tr{grid-column:1/-1;font-size:17px;color:var(--ink);line-height:1.05}
+.ucard .row{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.ucard .st{font-size:18px;white-space:nowrap}
+.ucard .btn{padding:8px 10px 7px;font-size:9px}
+.tag{font:8px "Press Start 2P",monospace;padding:3px 5px 2px;background:var(--shadow);color:var(--dim);white-space:nowrap}
+.tag.inf{color:#ffb060}.tag.rng{color:var(--good)}.tag.hvy{color:#ff8a8a}
+.erahead{font:10px/1.5 "Press Start 2P",monospace;color:var(--dim);margin:18px 0 8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.lcard{border:0;cursor:pointer;text-align:left;background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge);padding:8px;display:grid;gap:4px;align-content:start;color:var(--ink)}
+.lcard img{width:48px;height:48px}
+.lcard .nm{font:8px/1.5 "Press Start 2P",monospace}
+.lcard small{font-size:16px;color:var(--dim);line-height:1}
+.lcard.locked img{filter:grayscale(1) brightness(.35)}
+.lcard.locked .nm{color:var(--dim)}
+.lcard.cur{box-shadow:inset 0 0 0 2px var(--foe)}
+.lcard.mine{box-shadow:inset 0 0 0 2px var(--edge2),inset 0 -4px 0 var(--ally)}
+.lcard.main{box-shadow:inset 0 0 0 2px var(--brass),inset 0 -4px 0 var(--brass)}
+.stars{color:var(--brass);font:8px "Press Start 2P",monospace;letter-spacing:1px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.doc{background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge);padding:10px;display:grid;gap:4px}
+.doc .nm{font:9px/1.5 "Press Start 2P",monospace}
+.doc.r1{box-shadow:inset 0 0 0 2px var(--rare)}.doc.r2{box-shadow:inset 0 0 0 2px var(--epic)}
+.doc .rar{font:8px "Press Start 2P",monospace;color:var(--dim)}
+.doc.r1 .rar{color:var(--rare)}.doc.r2 .rar{color:var(--epic)}
+.doc small{font-size:18px;line-height:1.05}
+button.doc{border:0;cursor:pointer;text-align:left;color:var(--ink)}
+button.doc:hover{filter:brightness(1.15)}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.sum{background:var(--shadow);padding:8px 10px;display:flex;justify-content:space-between;gap:8px;font-size:18px}
+.sum b{font-weight:normal;color:var(--good);white-space:nowrap}
+.big{font:clamp(20px,4vw,34px) "Press Start 2P",monospace;color:#8ae8ff;margin:8px 0}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+ul.plain{margin:6px 0;padding-left:20px}
+ul.plain li{margin:3px 0}
+textarea{width:100%;min-height:90px;background:var(--shadow);border:0;box-shadow:inset 0 0 0 2px var(--edge);padding:8px;font-size:16px;resize:vertical}
+.foot{margin-top:18px;color:var(--dim);font-size:17px;line-height:1.2}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(6,8,4,.82);display:grid;place-items:center;padding:16px;z-index:50;overflow:auto}
+.dlg{width:min(860px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:20px;background:var(--panel);box-shadow:inset 0 0 0 3px var(--brass),inset 0 0 0 6px var(--shadow)}
+.dlg h2{font:clamp(13px,2.2vw,18px)/1.5 "Press Start 2P",monospace;color:var(--brass);margin:0 0 8px}
+.dlg h3{font:10px/1.5 "Press Start 2P",monospace;margin:18px 0 8px}
+.dlg .lead{padding:0}
+.dlg .acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:18px}
+.starters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.starter{border:0;cursor:pointer;text-align:left;color:var(--ink);background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge2),0 4px 0 var(--shadow);padding:12px;display:grid;gap:6px;align-content:start}
+.starter:hover{box-shadow:inset 0 0 0 3px var(--brass),0 4px 0 var(--shadow)}
+.starter img{width:72px;height:72px}
+.starter b{font:10px/1.5 "Press Start 2P",monospace;color:var(--brass)}
+.starter small{font-size:17px;color:var(--dim);line-height:1.05}
+.cmdrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pick{border:0;cursor:pointer;text-align:left;color:var(--ink);background:var(--bg2);box-shadow:inset 0 0 0 2px var(--edge2);padding:8px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center}
+.pick img{width:40px;height:40px}
+.pick em{font:8px/1.5 "Press Start 2P",monospace;font-style:normal;color:var(--dim);display:block}
+.pick b{font-weight:normal;display:block;line-height:1}
+.pick.sel{box-shadow:inset 0 0 0 3px var(--brass)}
+.chooser{margin-top:8px;padding:10px;background:var(--shadow);display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;max-height:320px;overflow:auto}
+.chooser .pick img{width:36px;height:30px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.slots .pick img{width:40px;height:30px}
+.bio{font-size:20px;line-height:1.2;margin:8px 0}
+.sklist{display:grid;gap:6px}
+.sk{background:var(--bg2);padding:8px 10px;box-shadow:inset 0 0 0 2px var(--edge)}
+.sk em{font:8px/1.6 "Press Start 2P",monospace;font-style:normal;color:var(--dim);display:block}
+.sk b{font-weight:normal;color:var(--brass)}
+@media (max-width:760px){
+  .deck{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .deck .lead{grid-column:1/-1}
+  .res{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .next{margin-left:0;width:100%}
+}
+@media (max-width:600px){
+  .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .cab{padding:6px}
+  .skills{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .skill.ult{grid-column:1/-1}
+  .starters,.cmdrow{grid-template-columns:minmax(0,1fr)}
+  .starter{grid-template-columns:auto minmax(0,1fr);gap:4px 10px}
+  .starter img{grid-row:span 3;width:56px;height:56px}
+  .lead>img{width:56px;height:56px}
+  .partner{padding:10px}
+  .ugrid{grid-template-columns:minmax(0,1fr)}
+  .tab{padding:9px 10px 8px;font-size:9px}
+  .dlg{padding:14px}
+  .skill small{display:none}
+  .tabs{flex-wrap:wrap}
+  .kbd{display:none}
+}
+@media (hover:none){.kbd{display:none}}
+@media (prefers-reduced-motion:reduce){.pulse,.toast div{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="hud">
+    <h1 class="logo d">Chrono Command<span>Leaders of history at war, across all of time</span></h1>
+    <div class="res">
+      <div class="stat gold box notch"><img class="px" id="icoGold" alt=""><b id="gold">0</b><small>gold</small></div>
+      <div class="stat box notch"><img class="px" id="icoClock" alt=""><b id="gps">0</b><small>per second</small></div>
+      <div class="stat shard box notch"><img class="px" id="icoShard" alt=""><b id="shards">0</b><small>chrono shards</small></div>
+      <div class="stat box notch"><img class="px" id="icoSword" alt=""><b id="dps">0</b><small>army damage/s</small></div>
+    </div>
+  </header>
+
+  <section class="cab notch" aria-label="Battlefield">
+    <div class="strip">
+      <span class="era" id="eraName">Era I · Bronze Age</span>
+      <span class="yr" id="year">3000 BC</span>
+      <span class="stg" id="stage">Stage 1</span>
+      <div class="next" title="Progress to the next leader battle">
+        <img class="px" id="nextImg" alt="">
+        <div class="bar"><i id="nextBar"></i></div>
+        <small id="nextTxt">Next leader</small>
+      </div>
+    </div>
+    <div class="screen" id="screen"><canvas id="cv" aria-label="Battlefield. Click or tap to strike the enemy."></canvas><div class="toast" id="toast" aria-live="polite"></div></div>
+    <div class="controls">
+      <button class="btn red" id="btnChallenge" hidden>Challenge</button>
+      <button class="btn blue pulse" id="btnCouncil" hidden>War Council</button>
+      <label class="tog"><input type="checkbox" id="autoPush" checked> Auto-advance</label>
+      <label class="tog"><input type="checkbox" id="autoCast" checked> Auto skills</label>
+      <span class="spacer"></span>
+      <span class="hint" id="hint">Tap the battlefield to strike · keys 1-5 cast skills</span>
+    </div>
+  </section>
+
+  <section class="deck" id="deck" aria-label="Command deck"></section>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-tab="army" aria-selected="true">Army</button>
+    <button class="tab" role="tab" data-tab="leaders" aria-selected="false">Leaders</button>
+    <button class="tab" role="tab" data-tab="doctrines" aria-selected="false">Doctrines</button>
+    <button class="tab" role="tab" data-tab="rift" aria-selected="false">Time Rift</button>
+    <button class="tab" role="tab" data-tab="options" aria-selected="false">Options</button>
+  </nav>
+  <section class="panel box notch" id="panel" role="tabpanel"></section>
+
+  <p class="foot">Real historical figures appear here as pixel caricatures in a fictional game. Including someone is not an endorsement: several were dictators responsible for war crimes and genocide, and their bios say so.</p>
+</main>
+
+<div class="modal" id="modal" hidden><div class="dlg notch" id="dlg" role="dialog" aria-modal="true"></div></div>
+
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/art.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
