@@ -341,21 +341,44 @@
     return B.phase === 'deploy' ? B.pt > 0.05 : B.phase === 'fight' && q.moving;
   }
 
+  // where each fighter stands on screen this frame: computed once, reused by its shadow and sprite
+  function place(q, B) {
+    const P = q._P || (q._P = { x: 0, y: 0, s: 1 });
+    const x = q.x + marchOff(B, q);
+    const t = Math.max(0, Math.min(1, q.z / 120));
+    P.s = 0.6 + 0.45 * t;
+    P.x = 192 + (x - 180) * P.s;
+    P.y = 104 + 104 * t * (0.5 + 0.5 * t);
+  }
+  // soft ground shadows, pre-made at each width so they're copied, never scaled
+  const shadows = new Map();
+  function shadowOf(wpx) {
+    let c = shadows.get(wpx);
+    if (!c) {
+      c = document.createElement('canvas');
+      c.width = wpx;
+      c.height = Math.max(4, Math.round(wpx * 0.3));
+      const x = c.getContext('2d');
+      x.imageSmoothingEnabled = true;
+      x.drawImage(CW.shadowImg, 0, 0, c.width, c.height);
+      shadows.set(wpx, c);
+    }
+    return c;
+  }
   function drawShadow(q, B) {
-    const P = proj(q.x + marchOff(B, q), q.z);
+    const P = q._P;
     let w;
     if (q.isBoss) w = 44;
     else if (q.isHero) w = 18;
     else w = (unitImg(q).w || 10) * 0.85 * (UNIT[q.uid].size || 1);
-    w *= P.s;
-    const h = Math.max(2, w * 0.3);
-    g.globalAlpha = q.air ? 0.6 : 1;
-    g.drawImage(CW.shadowImg, q2(P.x - w / 2), q2(P.y - h / 2), q2(w), q2(h));
-    g.globalAlpha = 1;
+    const c = shadowOf(Math.max(4, Math.round(w * P.s * K)));
+    if (q.air) g.globalAlpha = 0.6;
+    blit(c, P.x - c.width / (2 * K), P.y - c.height / (2 * K));
+    if (q.air) g.globalAlpha = 1;
   }
 
   function drawUnit(q, t, B) {
-    const P = proj(q.x + marchOff(B, q), q.z);
+    const P = q._P;
     const sp = unitImg(q);
     const img = sized(sp.c, unitScale(q, P.s));
     const w = img.width / K;
@@ -381,7 +404,7 @@
   function drawHero(q, t, B) {
     const isBoss = q.isBoss;
     const info = B.info;
-    const P = proj(q.x + marchOff(B, q), q.z);
+    const P = q._P;
     const hs = CW.heroSprite(q.lid, q.side, isBoss ? info.variant : '');
     const ds = P.s * (isBoss ? 1.4 : 0.75);
     const img = sized(hs.c, ds);
@@ -496,56 +519,62 @@
     }
   }
 
+  // the HUD is a light DOM overlay on top of the canvas: stage, who's winning, the enemy leader and big banners
+  const hud = {
+    label: $('#hudLabel'), sub: $('#hudSub'), tug: $('#hudTug'), a: $('#hudA'), e: $('#hudE'), boss: $('#hudBoss'), bossName: $('#hudBossName'),
+    time: $('#hudTime'), bossHp: $('#hudBossHp'), bossT: $('#hudBossT'), banner: $('#banner'), bt: $('#bannerT'), bs: $('#bannerS'),
+  };
+  function setW(node, f) {
+    const w = (Math.max(0, Math.min(1, f || 0)) * 100).toFixed(1) + '%';
+    if (node._w !== w) node.style.width = node._w = w;
+  }
+  function setClass(node, c) {
+    if (node._c !== c) node.className = node._c = c;
+  }
   function drawHud(B, st) {
     const info = B.info;
-    const label = info.isBoss ? (info.mystery ? 'MYSTERY BOSS' : info.variant === 'echo' ? 'ECHO BATTLE' : 'LEADER BATTLE') : 'STAGE ' + st.stage;
-    text(label, 8, 6, info.isBoss ? '#ff8a7a' : '#ffffff', 2, 'l');
-    // who's winning: soldiers left on each side
+    setText(hud.label, info.isBoss ? (info.mystery ? 'Mystery boss' : info.variant === 'echo' ? 'Echo battle' : 'Leader battle') : 'Stage ' + st.stage);
+    setHidden(hud.sub, !st.farming);
     const a = B.aliveA;
     const e = B.aliveE;
-    const bw = 110;
-    const k = a + e ? a / (a + e) : 0.5;
-    R(7.5, 19.5, bw + 1, 5, '#0b0d08');
-    R(8, 20, bw * k, 4, '#5ad1ff');
-    R(8 + bw * k, 20, bw * (1 - k), 4, '#ff5a4a');
-    R(8, 20, bw, 1, 'rgba(255,255,255,.25)');
-    text(String(a), 8, 27, '#9ae4ff', 1, 'l');
-    text(String(e), 8 + bw, 27, '#ff9a8a', 1, 'r');
-    if (st.farming) text('REGROUPING', 8 + bw / 2, 27, '#ffd23f', 1, 'c');
+    setW(hud.tug, a + e ? a / (a + e) : 0.5);
+    setText(hud.a, a + ' yours');
+    setText(hud.e, e + ' enemy');
+    setHidden(hud.boss, !B.boss);
     if (B.boss) {
-      const nm = info.mystery && B.phase === 'deploy' ? '???' : short(B.boss.lid).toUpperCase();
-      text(nm, FW - 8, 6, '#ffffff', 2, 'r');
-      const bw2 = 130;
-      const bx = FW - 8 - bw2;
-      const bq = B.boss;
-      const hpS = bq.hpS === undefined ? 1 : bq.hpS;
-      R(bx - 1, 18, bw2 + 2, 7, '#0b0d08');
-      if (bq.hpT > hpS + 0.003) R(bx + bw2 * hpS, 19, bw2 * (bq.hpT - hpS), 5, '#f4e8c8');
-      R(bx, 19, bw2 * Math.max(0, hpS), 5, '#ff5a4a');
-      R(bx, 19, bw2 * Math.max(0, hpS), 1, '#ff9a8a');
-      const low = B.bossT < 10;
-      text(Math.max(0, Math.ceil(B.bossT)) + 'S', FW - 8, 28, low ? '#ff5a4a' : '#ffd23f', 2, 'r');
-      R(bx, 30, (bw2 - 22) * Math.max(0, B.bossT / B.bossTMax), 3, low ? '#ff5a4a' : '#ffd23f');
+      const hidden = info.mystery && B.phase === 'deploy';
+      setText(hud.bossName, hidden ? '???' : short(B.boss.lid));
+      setW(hud.bossHp, B.boss.hpS === undefined ? 1 : B.boss.hpS);
+      setText(hud.time, Math.max(0, Math.ceil(B.bossT)) + 's');
+      setClass(hud.time, B.bossT < 10 ? 'low' : '');
+      setW(hud.bossT, B.bossT / B.bossTMax);
     }
+    let t = '';
+    let sub = '';
+    let c = 'banner';
     if (B.phase === 'deploy') {
-      g.globalAlpha = Math.min(1, B.pt * 2);
       if (info.isBoss) {
-        text('VS ' + (info.mystery ? '???' : short(info.bossId).toUpperCase()), FW / 2, 56, info.mystery ? '#e8d0ff' : '#ff8a7a', 3, 'c');
-        text(fmtYear(info.yr), FW / 2, 78, '#ffffff', 2, 'c');
-      } else text('STAGE ' + st.stage, FW / 2, 60, '#ffffff', 3, 'c');
-      g.globalAlpha = 1;
+        t = 'vs ' + (info.mystery ? '???' : LEADER[info.bossId].name);
+        sub = fmtYear(info.yr);
+        c += ' boss';
+      } else {
+        t = 'Stage ' + st.stage;
+        sub = ERAS[info.era].name + ', ' + fmtYear(info.yr);
+      }
+    } else if (B.phase === 'victory') {
+      t = 'Victory';
+      c += ' win';
+      if (B.reward) sub = B.reward.res === 'recruit' ? LEADER[B.reward.lid].name + ' joins you' : B.reward.res === 'star' ? short(B.reward.lid) + ' earns a star' : '+1 Chrono Shard';
+    } else if (B.phase === 'defeat') {
+      t = B.loseWhy === 'time' ? 'Out of time' : 'Retreat';
+      sub = 'Regroup and grow stronger';
+      c += ' lose';
     }
-    if (B.phase === 'victory') {
-      const kk = Math.min(1, ((B.info.isBoss ? 1.8 : 1.1) - B.pt) * 4);
-      g.globalAlpha = kk;
-      text('VICTORY!', FW / 2, 52 - (1 - kk) * 6, '#ffd23f', 4, 'c');
-      if (B.reward) text(B.reward.res === 'recruit' ? short(B.reward.lid).toUpperCase() + ' JOINS YOU' : B.reward.res === 'star' ? short(B.reward.lid).toUpperCase() + ' +1 STAR' : '+1 CHRONO SHARD', FW / 2, 80, '#ffffff', 2, 'c');
-      g.globalAlpha = 1;
+    if (t) {
+      setText(hud.bt, t);
+      setText(hud.bs, sub);
     }
-    if (B.phase === 'defeat') {
-      text(B.loseWhy === 'time' ? 'OUT OF TIME!' : 'RETREAT!', FW / 2, 52, '#ff5a4a', 4, 'c');
-      text('REGROUP AND GROW STRONGER', FW / 2, 82, '#ffffff', 1, 'c');
-    }
+    setClass(hud.banner, c + (t ? ' on' : ''));
   }
 
   const order = [];
@@ -583,7 +612,10 @@
     order.length = 0;
     for (const q of B.ents) {
       animate(q, dt);
-      if (q.alive || (q.isHero && q.side === 'a')) order.push(q);
+      if (q.alive || (q.isHero && q.side === 'a')) {
+        place(q, B);
+        order.push(q);
+      }
     }
     for (const q of order) if (q.alive) drawShadow(q, B);
     order.sort(byDepth);
@@ -747,12 +779,12 @@
     deckSig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars).join(',')].join('|');
     deckEls = null;
     const card = (lid, i) => {
-      if (!lid) return '<div class="partner box notch"><div class="who"><b>Open slot</b></div></div>';
+      if (!lid) return '<div class="partner box"><div class="who"><b>Open slot</b></div></div>';
       const L = LEADER[lid];
       const r = st.roster[lid];
       const main = i === 0;
       const cl = CLASSES[L.cls];
-      return `<div class="${main ? 'lead' : 'partner'} box notch" data-card="${lid}" title="Tap for details"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small><span class="hp${main ? ' main' : ''}"><i data-hp="${lid}"></i></span></div><ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul></div>`;
+      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}" title="Tap for details"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small><span class="hp${main ? ' main' : ''}"><i data-hp="${lid}"></i></span></div><ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul></div>`;
     };
     el.deck.innerHTML = card(st.main, 0) + card(st.partners[0], 1) + card(st.partners[1], 2);
   }
@@ -803,7 +835,6 @@
     const b = e.target.closest('[data-tab]');
     if (!b) return;
     tab = b.dataset.tab;
-    shownIds = [];
     document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
     renderPanel();
   });
@@ -812,7 +843,7 @@
     const st = S();
     const base = [tab, st.main, st.partners.join(',')];
     if (tab === 'army') {
-      const ids = armyList();
+      const ids = ownedList();
       base.push(ids.join(','), st.eraReached, st.buyMode, JSON.stringify(st.uattr), ids.map((id) => CW.uslots(id)).join(''));
     }
     if (tab === 'leaders') base.push(Object.entries(st.roster).map(([k, r]) => k + r.stars).join(','));
@@ -832,14 +863,27 @@
     if (panelSig() !== lastSig) return renderPanel();
     const st = S();
     if (tab === 'army') {
+      // recruit and train buttons fill up as you save towards them
+      const money = (b, cost, label) => {
+        const ok = cost <= st.gold;
+        setClass(b, 'buy ' + (ok ? 'ok' : 'save'));
+        if (b.disabled === ok) b.disabled = !ok;
+        if (!ok) {
+          const p = Math.floor((100 * st.gold) / cost) + '%';
+          if (b._p !== p) b.style.setProperty('--p', (b._p = p));
+        }
+        setText(b.firstChild, ok ? label : label + ' · ' + Math.floor((100 * st.gold) / cost) + '%');
+        setText(b.lastChild, fmt(cost));
+      };
+      el.panel.querySelectorAll('[data-act="recruit"]').forEach((b) => {
+        const id = b.dataset.id;
+        const n = st.buyMode === 'max' ? Math.max(1, CW.maxRecruit(id)) : st.buyMode;
+        money(b, CW.recruitCost(id, n), 'Recruit ' + n);
+      });
       el.panel.querySelectorAll('[data-act="buy"]').forEach((b) => {
         const id = b.dataset.id;
-        let n = st.buyMode === 'max' ? CW.maxBuy(id) : st.buyMode;
-        const showN = Math.max(1, n);
-        const cost = CW.unitCost(id, showN);
-        setText(b, '+' + showN + ' · ' + fmt(cost));
-        const dis = cost > st.gold;
-        if (b.disabled !== dis) b.disabled = dis;
+        const n = st.buyMode === 'max' ? Math.max(1, CW.maxBuy(id)) : st.buyMode;
+        money(b, CW.unitCost(id, n), 'Train +' + n);
       });
       el.panel.querySelectorAll('[data-stat]').forEach((s) => {
         const id = s.dataset.stat;
@@ -847,19 +891,20 @@
         setText(s, 'Lv ' + CW.unitLevel(id) + ' · DMG ' + fmt(u.atk) + ' · HP ' + fmt(u.hp));
       });
       el.panel.querySelectorAll('[data-n]').forEach((s) => setText(s, String(st.army[s.dataset.n] || 0)));
+      el.panel.querySelectorAll('[data-own]').forEach((s) => setText(s, 'of ' + CW.owned(s.dataset.own) + ' owned'));
       const used = CW.armyUsed();
       const cap = CW.capacity();
       const capEl = el.panel.querySelector('[data-cap]');
       if (capEl) setText(capEl, used + ' / ' + cap);
+      const ownEl = el.panel.querySelector('[data-owned]');
+      if (ownEl) setText(ownEl, 'You own ' + CW.ownedSize() + ' soldiers');
       const bar = el.panel.querySelector('[data-capbar]');
-      if (bar) {
-        const w = Math.min(100, (100 * used) / Math.max(1, cap)).toFixed(1) + '%';
-        if (bar._w !== w) bar.style.width = bar._w = w;
-      }
+      if (bar) setW(bar, used / Math.max(1, cap));
       const ab = el.panel.querySelector('[data-act="autobuild"]');
       if (ab && ab.checked !== st.auto.build) ab.checked = st.auto.build;
-      el.panel.querySelectorAll('[data-act="inc"],[data-act="fill"]').forEach((b) => {
-        const dis = cap - used < CW.cpCost(b.dataset.id);
+      el.panel.querySelectorAll('[data-act="inc"]').forEach((b) => {
+        const id = b.dataset.id;
+        const dis = cap - used < CW.cpCost(id) || (st.army[id] || 0) >= CW.owned(id);
         if (b.disabled !== dis) b.disabled = dis;
       });
       el.panel.querySelectorAll('[data-act="dec"]').forEach((b) => {
@@ -884,25 +929,25 @@
     if (e.target.matches && e.target.matches('details.reserve')) reserveOpen = e.target.open;
   }, true);
   const ROLE_ORDER = { inf: 0, rng: 1, cav: 2, hvy: 3 };
-  // unit types listed as "in the army": the current army, plus any you just emptied, so cards don't jump around while you edit
-  let shownIds = [];
-  function armyList() {
+  // unit types you own soldiers of
+  function ownedList() {
     const st = S();
-    if (st.auto.build) shownIds = Object.keys(st.army); // auto-build owns the army, so show it exactly
-    const ids = new Set(shownIds.filter((id) => UNIT[id] && UNIT[id].era <= st.eraReached));
-    Object.keys(st.army).forEach((id) => ids.add(id));
-    return Array.from(ids).sort();
+    return Object.keys(st.owned)
+      .filter((id) => st.owned[id] > 0 && UNIT[id] && UNIT[id].era <= st.eraReached)
+      .sort();
   }
-  // the army builder: how many of each unit type march into battle, their levels and their equipped attributes
+  // the army: soldiers you own (bought with gold), how many of each march into battle, their training and attributes
   function renderArmy() {
     const st = S();
     const units = CW.unlockedUnits().slice().sort((a, b) => b.era - a.era || ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
-    shownIds = armyList();
-    const inArmy = units.filter((u) => shownIds.includes(u.id)).sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || b.era - a.era);
-    const reserve = units.filter((u) => !shownIds.includes(u.id));
+    const mine = ownedList();
+    const own = units.filter((u) => mine.includes(u.id)).sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || b.era - a.era);
+    const rest = units.filter((u) => !mine.includes(u.id));
+    const topEra = rest.length ? rest[0].era : -1;
+    const fresh = rest.filter((u) => u.era === topEra);
+    const older = rest.filter((u) => u.era !== topEra);
     const card = (u) => {
-      const on = shownIds.includes(u.id);
-      const cp = CW.cpCost(u.id);
+      const on = mine.includes(u.id);
       const slots = CW.uslots(u.id);
       const eq = st.uattr[u.id] || [];
       const ua = on
@@ -916,17 +961,21 @@
             })
             .join('')}</div>`
         : '';
-      return `<div class="ucard ${on ? 'on' : ''}"><img class="px" src="${CW.unitURL(u.id)}" alt=""><div class="nm">${esc(u.name)}</div><div class="meta"><span class="tag ${u.role}">${ROLES[u.role].name}</span> ${esc(ERAS[u.era].name)} · ${cp} cap each</div><div class="tr">${esc(TRAITS[u.trait])}</div>
-        <div class="cnt" aria-label="Soldiers in the army"><button class="sq" data-act="dec" data-id="${u.id}" data-hold aria-label="One fewer">-</button><b data-n="${u.id}">${st.army[u.id] || 0}</b><button class="sq" data-act="inc" data-id="${u.id}" data-hold aria-label="One more">+</button><button class="sq wide" data-act="fill" data-id="${u.id}">Fill</button></div>
-        <div class="row"><span class="st" data-stat="${u.id}"></span><button class="btn" data-act="buy" data-id="${u.id}">+1</button></div>${ua}</div>`;
+      const ctl = on
+        ? `<div class="row"><div class="cnt" aria-label="Soldiers marching into battle"><button class="sq" data-act="dec" data-id="${u.id}" data-hold aria-label="One fewer in battle">−</button><b data-n="${u.id}">${st.army[u.id] || 0}</b><button class="sq" data-act="inc" data-id="${u.id}" data-hold aria-label="One more in battle">+</button><span class="of" data-own="${u.id}"></span></div><span class="st" data-stat="${u.id}"></span></div>`
+        : '';
+      return `<div class="ucard ${on ? 'on' : ''}"><img class="px" src="${CW.unitURL(u.id)}" alt=""><div class="nm">${esc(u.name)} <span class="tag ${u.role}">${ROLES[u.role].name}</span></div><div class="meta">${esc(ERAS[u.era].name)} · ${CW.cpCost(u.id)} capacity each</div><div class="tr">${esc(TRAITS[u.trait])}</div>${ctl}
+        <div class="buys ${on ? '' : 'one'}"><button class="buy" data-act="recruit" data-id="${u.id}"><span></span><b></b></button>${on ? `<button class="buy" data-act="buy" data-id="${u.id}"><span></span><b></b></button>` : ''}</div>${ua}</div>`;
     };
-    return `<div class="phead"><h2>Army</h2><div class="seg" role="group" aria-label="Upgrade amount">${[1, 10, 'max']
-      .map((m) => `<button data-act="mode" data-m="${m}" aria-pressed="${st.buyMode === m}">${m === 'max' ? 'Max' : 'x' + m}</button>`)
+    return `<div class="phead"><h2>Army</h2><div class="seg" role="group" aria-label="How many to buy">${[1, 10, 'max']
+      .map((m) => `<button data-act="mode" data-m="${m}" aria-pressed="${st.buyMode === m}">${m === 'max' ? 'Max' : '×' + m}</button>`)
       .join('')}</div></div>
-      <div class="capline"><span>Capacity</span><div class="capbar"><i data-capbar></i></div><b data-cap></b></div>
-      <div class="armyopts"><label class="tog"><input type="checkbox" data-act="autobuild" ${st.auto.build ? 'checked' : ''}> Auto-build</label><span class="note">Fills your capacity with your strongest units and any empty attribute slots. Changes join the next battle.</span></div>
-      <div class="ugrid">${inArmy.map(card).join('')}</div>
-      ${reserve.length ? `<details class="reserve" ${reserveOpen ? 'open' : ''}><summary>More units · ${reserve.length}</summary><div class="ugrid">${reserve.map(card).join('')}</div></details>` : ''}`;
+      <div class="capline"><span>In battle</span><div class="capbar"><i data-capbar></i></div><b data-cap></b><span data-owned></span></div>
+      <div class="armyopts"><label class="tog"><input type="checkbox" data-act="autobuild" ${st.auto.build ? 'checked' : ''}> Auto-build</label><span class="note">Sends your strongest soldiers into each battle and fills empty attribute slots.</span></div>
+      <p class="note">Soldiers cost gold and stay yours until a Time Rift. Newer eras cost more, so save up for them.</p>
+      <div class="ugrid">${own.map(card).join('')}</div>
+      ${fresh.length ? `<div class="sub">Recruit from the ${esc(ERAS[topEra].name)}</div><div class="ugrid">${fresh.map(card).join('')}</div>` : ''}
+      ${older.length ? `<details class="reserve" ${reserveOpen ? 'open' : ''}><summary>Older units · ${older.length}</summary><div class="ugrid">${older.map(card).join('')}</div></details>` : ''}`;
   }
 
   function renderLeaders() {
@@ -1000,10 +1049,8 @@
       updatePanel();
     } else if (act === 'inc' || act === 'dec') {
       if (!b.hasAttribute('data-hold') || e.detail === 0) armyStep(b);
-    } else if (act === 'fill') {
-      const id = b.dataset.id;
-      const room = Math.floor((CW.capacity() - CW.armyUsed()) / CW.cpCost(id));
-      if (room > 0 && CW.setCount(id, (st.army[id] || 0) + room)) SFX.play('buy');
+    } else if (act === 'recruit') {
+      if (CW.recruit(b.dataset.id, st.buyMode === 'max' ? 'max' : st.buyMode)) SFX.play('buy');
       updatePanel();
     } else if (act === 'uaslot') openUAttr(b.dataset.id, +b.dataset.i);
     else if (act === 'council') openCouncil();
@@ -1073,7 +1120,6 @@
   el.panel.addEventListener('change', (e) => {
     if (e.target.dataset.act === 'autobuild') {
       CW.setAuto('build', e.target.checked);
-      shownIds = [];
       renderPanel();
       return;
     }

@@ -1,6 +1,6 @@
 # Chrono Command
 
-An 8-bit idle war game and battle simulator. History's commanders, conquerors, dictators and peacemakers are scattered across time.
+An idle war game and pixel-art battle simulator. History's commanders, conquerors, dictators and peacemakers are scattered across time.
 Pick a commander, raise an army, and fight an endless campaign from the Stone Age to the far future, and beyond.
 
 Open `index.html` in any browser to play. No build step, no installs, no server needed.
@@ -11,10 +11,14 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   two armies of individual soldiers march in from opposite sides, pick targets, charge, shoot arrows, fire cannons
   and drop bombs. Fallen soldiers stay on the field until the battle ends. Tap or click anywhere on the field to call
   in a strike at that spot.
-- **Build your army.** Your army has a capacity (more with every era you reach). Infantry and ranged soldiers take 1,
-  cavalry 2 and heavy units 4. In the **Army** tab, add or remove soldiers of any unlocked unit type (hold + or -
-  to repeat, or Fill to top up), mix eras freely, and level each unit type up with gold. **Auto-build** keeps the
-  army filled with your strongest units if you'd rather not manage it.
+- **Buy your army with gold.** Soldiers are recruited with gold and stay yours until a Time Rift. Each unit type's price
+  is set by its era, so a new era's units are expensive at first: the recruit button fills up as you save towards them.
+  Each extra soldier of the same type costs 1% more. Gold also trains a unit type to higher levels.
+- **Build your battle line.** Your army has a capacity (30 at the start, 10 more with every era you reach). Infantry and
+  ranged soldiers take 1, cavalry 2 and heavy units 4. In the **Army** tab, choose how many of the soldiers you own march
+  into battle (hold + or - to repeat) and mix eras freely. **Auto-build** sends your strongest soldiers instead.
+- **Big battles.** Enemy armies grow through each era from 75% to 125% of your capacity, so late battles put 300 or more
+  soldiers on the field at once.
 - **Equip unit attributes.** Each unit type has attribute slots (a 2nd at level 10, a 3rd at level 30). Equip any of
   19 attributes you've unlocked, such as Sharpened, Shield Wall, Fire, Piercing, Blast, Lifesteal, Field Medic or
   Phase Shift, and every soldier of that type gets it. Each one says exactly what it does.
@@ -23,10 +27,11 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   trebuchets, samurai and cannons, landships, tanks and fighter planes, attack helicopters, stealth bombers, power armor,
   battle mechs, space marines and titan mechs. New units arrive already trained close to your best unit's level.
 - **Leader battles.** Every third stage you face a famous leader who fights as a giant on the field with a timer,
-  and whose attributes power their army. Win and they join your roster. 97 in all, from a Stone Age caveman, Otzi
-  and Ragnar to Alexander, Caesar, Genghis Khan, Napoleon, Hitler, Stalin, Mussolini, Mao, Pol Pot, Idi Amin,
-  Gandhi, Martin Luther King Jr., Mandela, Charlie Kirk and Donald Trump, plus a cyborg assassin, an alien overlord,
-  a machine overmind, a Martian warlord, a star empress, a hive queen, the Devil and Santa Claus.
+  and whose attributes power their army. Win and they join your roster. 134 in all, from a Stone Age caveman, Otzi,
+  Gilgamesh and Hatshepsut to Alexander, Caesar, Nero, Ragnar, Kublai Khan, Mehmed II, Napoleon, Frederick the Great,
+  Grant, Hitler, Stalin, Mussolini, Rommel, Zhukov, Mao, Khrushchev, Pol Pot, Idi Amin, Gandhi, Martin Luther King Jr.,
+  Mandela, Obama, Putin, Kim Jong Un, Zelenskyy, Charlie Kirk and Donald Trump, plus original future rulers (a cyborg
+  assassin, an android queen, a neon shogun, a space admiral, the Archon) and the Devil and Santa Claus.
 - **Commanders on the front line.** Your commander and two partners fight in the battle as full-body sprites next to
   their troops. If one falls, their attributes switch off for the rest of that battle.
 - **Leader attributes, not moves.** Every leader has three always-on attributes, each explained in plain words.
@@ -42,22 +47,25 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 - **Time Rift (prestige).** Once you reach stage 40, rift back to the start of time for Chrono Shards (+5% damage,
   health and gold each, forever). You keep your recruited leaders and their stars.
 
-Saves from the earlier squad version carry over: your stage moves to the matching era and your army is rebuilt automatically.
+Older saves carry over. From the previous version, the soldiers you had marching become soldiers you own. From the squad
+version, your stage moves to the matching era and you get a full army of that era's units.
 
 ## Files
 
 | File | What's in it |
 | --- | --- |
 | `index.html` | Page layout and all styling |
-| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 97 leaders and the 31 doctrines |
-| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
+| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 134 leaders and the 31 doctrines |
+| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
 | `js/portraits.js` | 64x64 leader portraits and full-body battlefield sprites for every leader |
-| `js/ui.js` | Battlefield rendering, the army builder, command deck, panels, dialogs, sound effects, autosave and offline progress |
+| `js/ui.js` | Battlefield rendering and its HUD overlay, the army builder, command deck, panels, dialogs, sound effects, autosave and offline progress |
 
-Balance knobs live in `CW.CFG` at the top of `js/engine.js` (enemy growth, era power, army capacity, costs, boss strength,
-rift reward). They were tuned with a headless bot that plays the real simulation: the first Time Rift usually comes
-after about 2 to 2.5 hours, Shattered Time opens after about 3.5 hours, and progress keeps moving deeper from there.
+Balance knobs live in `CW.CFG` at the top of `js/engine.js` (enemy growth, era power, army capacity, recruit and training
+costs, boss strength, rift reward). They were tuned with a headless bot that plays the real simulation and spends its gold
+on whichever soldier or upgrade adds the most strength. Even that bot starts losing battles within the first half hour,
+hits walls every few eras where it has to save up and train, reaches its first Time Rift after about 2 to 2.5 hours,
+and opens Shattered Time after about 10 to 11 hours.
 
 Saves are stored in the browser's `localStorage` on each device. Use **Options → Export save** to move a game between devices.
 
@@ -69,9 +77,13 @@ Units, battlefield leaders and era backdrops get the same 2x treatment.
 
 The battlefield is a tilted top-down view: soldiers further away are drawn smaller and higher up. Sprites are prepared
 at a handful of fixed sizes so they grow in clean pixel steps as they move toward the camera instead of shimmering, and
-fallen soldiers are painted once onto the ground layer instead of being redrawn every frame. The field is drawn on a fixed
-768x432 pixel grid that the browser scales up, so the work per frame stays the same on any screen size. In Chromium, a
-late-game battle with about 190 soldiers on the field runs at about 480 fps, or about 135 fps with the CPU throttled 4x.
+fallen soldiers are painted once onto the ground layer instead of being redrawn every frame. Shadows are pre-made at each
+size, and the HUD is a light page overlay rather than canvas text. The field is drawn on a fixed 768x432 pixel grid that the
+browser scales up, so the work per frame stays the same on any screen size. In headless Chromium (software drawing, no GPU),
+a late-game battle with about 350 soldiers on the field runs at about 390 fps, or about 75 fps with the CPU throttled 4x.
+
+The menus around the battlefield use a quiet, modern style (Manrope, graphite panels, one brass accent); the pixel art
+stays on the battlefield and the portraits.
 
 ## Publish it with GitHub Pages
 

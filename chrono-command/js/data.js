@@ -805,6 +805,244 @@
     sk('Acid Spit', [['burn', 8, 6]]),
     sk('Chitin Armor', [['buff', 'def', 0.4, 8]]));
 
+  // ---- more leaders, added in every era
+  // Stone Age
+  L('firekeeper', 'Ka the Firekeeper', 'c. 30,000 BC', -30000, 0, 'warrior', 'Keeper of the First Flame',
+    'A legendary clan leader of the Ice Age, said to have been the first to carry fire into battle and to have driven cave lions from the valleys with it.',
+    { sk: '#c8946a', hr: '#2a1a10', hs: 'wild', fh: 'beard', out: 'pelt', oc: '#8a5a3a', ac: '#ff7a2a', bg: '#4a2a1a' },
+    ult('First Flame', [['burn', 10, 6]]),
+    sk('Torch Charge', [['strike', 'front', 6]]),
+    sk('Ring of Fire', [['buff', 'def', 0.35, 8]]));
+  L('mammothmother', 'The Mammoth Mother', 'c. 20,000 BC', -20000, 0, 'conqueror', 'Matriarch of the Hunters',
+    'A legendary matriarch of the mammoth hunters, remembered in the painted handprints and running herds on the walls of Ice Age caves.',
+    { sk: '#d9a679', hr: '#6a3a1a', hs: 'longwavy', fh: 'none', fem: 1, hat: 'fur', hc: '#7a5a3a', ha: '#4a3a2a', out: 'pelt', oc: '#6a4a2a', ac: '#e8dcc0', bg: '#3a4a5a' },
+    ult('Stampede', [['strike', 'all', 6], ['stun', 1.5]]),
+    sk('Herd Mother', [['heal', 0.3]]),
+    sk('Ivory Spears', [['buff', 'crit', 0.25, 8]]));
+  // Bronze Age
+  L('gilgamesh', 'Gilgamesh', 'c. 2700 BC', -2700, 1, 'warrior', 'King of Uruk',
+    'Legendary king of the Sumerian city of Uruk and hero of the Epic of Gilgamesh, one of the oldest written stories in the world.',
+    { sk: SK.t, hr: HR.blk, hs: 'long', fh: 'longbeard', hat: 'crown', hc: '#d9b45a', out: 'robe', oc: '#8a3a1e', ac: '#d9b45a', bg: '#4a3a1a' },
+    ult('Slayer of Humbaba', [['strike', 'boss', 10]]),
+    sk('Walls of Uruk', [['buff', 'def', 0.35, 8]]),
+    sk('Quest for Immortality', [['revive', 1, 0.4]]));
+  L('hatshepsut', 'Hatshepsut', 'c. 1507–1458 BC', -1470, 1, 'statesman', 'Pharaoh of Egypt',
+    "One of Egypt's most successful pharaohs: she wore the royal false beard, sent trading fleets to the land of Punt and built the great temple at Deir el-Bahari.",
+    { sk: SK.o, hr: HR.blk, hs: 'bob', fh: 'pharaoh', fem: 1, hat: 'nemes', hc: '#d9b45a', ha: '#2a4a8a', out: 'collar', oc: '#e8e4dc', ac: '#d9b45a', bg: '#3a2a10' },
+    ult('Expedition to Punt', [['gold', 30]]),
+    sk('Temple Builder', [['buff', 'def', 0.3, 8]]),
+    sk('Crown of Two Lands', [['buff', 'atk', 0.3, 8]]));
+  L('nebuchadnezzar', 'Nebuchadnezzar II', 'c. 642–562 BC', -587, 1, 'conqueror', 'King of Babylon',
+    'Babylonian king who conquered Jerusalem in 587 BC, sent its people into exile and rebuilt Babylon behind the blue-tiled Ishtar Gate.',
+    { sk: SK.t, hr: HR.blk, hs: 'long', fh: 'longbeard', hat: 'tallcap', hc: '#2a4a8a', ha: '#d9b45a', out: 'robe', oc: '#2a4a8a', ac: '#d9b45a', bg: '#1a2a4a' },
+    ult('Siege of Jerusalem', [['strike', 'all', 6], ['weaken', 0.2, 8]]),
+    sk('Ishtar Gate', [['buff', 'def', 0.35, 8]]),
+    sk('Chariots of Babylon', [['stun', 2]]));
+  // Classical
+  L('scipio', 'Scipio Africanus', '236–183 BC', -202, 2, 'strategist', 'Victor of Zama',
+    'Roman general who beat Hannibal at the Battle of Zama in 202 BC, ending the Second Punic War.',
+    { sk: SK.m, hr: HR.dbr, hs: 'short', fh: 'none', hat: 'laurel', hc: '#5a8a3a', out: 'armor', oc: '#c0c0c8', ac: '#b3261e', bg: '#3a1a1a' },
+    ult('Zama', [['buff', 'atk', 0.4, 10], ['expose', 0.25, 8]]),
+    sk('Open the Lanes', [['weaken', 0.3, 8]]),
+    sk('Spanish Campaign', [['strike', 'front', 6]]));
+  L('vercingetorix', 'Vercingetorix', 'c. 82–46 BC', -52, 2, 'warrior', 'Chief of the Gauls',
+    'Gaulish chieftain who united the tribes of Gaul against Julius Caesar and made a last stand at the siege of Alesia in 52 BC.',
+    { sk: SK.l, hr: HR.red, hs: 'longwavy', fh: 'longmustache', fc: HR.red, hat: 'circlet', hc: '#c9973a', out: 'leather', oc: '#5a7a3a', ac: '#c9973a', bg: '#2a3a1a' },
+    ult('Revolt of Gaul', [['buff', 'spd', 0.35, 10], ['strike', 'all', 4]]),
+    sk('Scorched Earth', [['burn', 6, 6]]),
+    sk('Alesia', [['buff', 'def', 0.4, 8]]));
+  L('nero', 'Nero', '37–68 AD', 64, 2, 'tyrant', 'Emperor of Rome',
+    'Roman emperor who had his own mother killed, persecuted Christians after the Great Fire of Rome in 64 AD, and died by suicide as the empire rose against him.',
+    { sk: SK.l, hr: HR.aub, hs: 'curly', fh: 'chinstrap', fc: HR.aub, hat: 'laurel', hc: '#d9b45a', out: 'toga', oc: '#e8e4dc', ac: '#7a1e6a', bg: '#3a1a3a' },
+    ult('Great Fire of Rome', [['burn', 10, 6]]),
+    sk('Golden House', [['gold', 20]]),
+    sk('Praetorian Guard', [['weaken', 0.25, 8]]));
+  // Viking Age
+  L('ivar', 'Ivar the Boneless', 'died c. 873', 866, 3, 'conqueror', 'Son of Ragnar',
+    'Viking leader and son of Ragnar, said in the sagas to be unable to walk, who led the Great Heathen Army that seized York in 866.',
+    { sk: SK.p, hr: HR.bld, hs: 'longwavy', fh: 'beard', fc: HR.bld, hat: 'nasal', hc: '#8a8f98', out: 'fur', oc: '#4a3a2a', ac: '#8a1e1e', bg: '#1a2a3a' },
+    ult('Taking of York', [['strike', 'all', 5], ['buff', 'atk', 0.3, 8]]),
+    sk('Shield Bearers', [['buff', 'def', 0.35, 8]]),
+    sk('Cunning', [['expose', 0.3, 8]]));
+  L('erik', 'Erik the Red', 'c. 950–1003', 985, 3, 'warrior', 'Founder of Greenland',
+    'Norse explorer, outlawed from Iceland for killing, who founded the first Norse settlements in Greenland around 985.',
+    { sk: SK.p, hr: HR.red, hs: 'wild', fh: 'fullbeard', fc: HR.red, out: 'fur', oc: '#7a5a3a', ac: '#b3261e', bg: '#2a4a5a' },
+    ult('Green Land', [['gold', 25], ['heal', 0.2]]),
+    sk('Outlaw', [['buff', 'crit', 0.25, 8]]),
+    sk('Longship Raid', [['strike', 'random', 6]]));
+  L('brianboru', 'Brian Boru', 'c. 941–1014', 1014, 3, 'defender', 'High King of Ireland',
+    'High King of Ireland who broke Norse power in Ireland at the Battle of Clontarf in 1014, where he was killed.',
+    { sk: SK.p, hr: HR.wht, hs: 'longwavy', fh: 'longbeard', fc: HR.wht, hat: 'crown', hc: '#d9b45a', out: 'cloak', oc: '#2a6a3a', ac: '#d9b45a', bg: '#1a3a2a' },
+    ult('Clontarf', [['strike', 'all', 5], ['buff', 'def', 0.3, 8]]),
+    sk('High King', [['buff', 'atk', 0.3, 8]]),
+    sk('Harp of Ireland', [['heal', 0.3]]));
+  // Medieval
+  L('elcid', 'El Cid', 'c. 1043–1099', 1094, 4, 'warrior', 'The Champion',
+    'Castilian knight Rodrigo Diaz, who fought for both Christian and Muslim rulers and captured Valencia in 1094, ruling it until his death.',
+    { sk: SK.m, hr: HR.blk, hs: 'short', fh: 'fullbeard', hat: 'nasal', hc: '#9aa0a8', out: 'mail', oc: '#8a8f98', ac: '#d9b45a', bg: '#4a2a1a' },
+    ult('Siege of Valencia', [['strike', 'all', 5], ['buff', 'atk', 0.3, 8]]),
+    sk('Tizona', [['strike', 'front', 7]]),
+    sk('Last Ride', [['revive', 1, 0.4]]));
+  L('kublai', 'Kublai Khan', '1215–1294', 1279, 4, 'conqueror', 'Great Khan of the Yuan',
+    'Grandson of Genghis Khan who completed the conquest of China, founded the Yuan dynasty and twice sent fleets to invade Japan.',
+    { sk: SK.l, hr: HR.blk, hs: 'none', fh: 'longmustache', hat: 'mongol', hc: '#8a1e1e', ha: '#d9b45a', out: 'robe', oc: '#d9b45a', ac: '#8a1e1e', bg: '#3a2a10' },
+    ult('Conquest of the Song', [['strike', 'all', 6]]),
+    sk('Silk Road', [['gold', 20]]),
+    sk('Yuan Cavalry', [['buff', 'spd', 0.3, 8]]));
+  L('wallace', 'William Wallace', 'c. 1270–1305', 1297, 4, 'revolutionary', 'Guardian of Scotland',
+    'Scottish knight who led the rising against English rule and won the Battle of Stirling Bridge in 1297.',
+    { sk: SK.p, hr: HR.brn, hs: 'longwavy', fh: 'stubble', out: 'leather', oc: '#2a4a8a', ac: '#c0c0c8', bg: '#2a3a4a' },
+    ult('Stirling Bridge', [['strike', 'front', 8], ['buff', 'spd', 0.3, 8]]),
+    sk('Highland Charge', [['buff', 'atk', 0.35, 8]]),
+    sk('Schiltron', [['buff', 'def', 0.35, 8]]));
+  // Gunpowder
+  L('mehmed', 'Mehmed II', '1432–1481', 1453, 5, 'conqueror', 'The Conqueror',
+    'Ottoman sultan who took Constantinople in 1453 with giant bombards, ending the Byzantine Empire.',
+    { sk: SK.m, hr: HR.dbr, hs: 'short', fh: 'beard', hat: 'bigturban', hc: '#f4f0e8', ha: '#b3261e', out: 'robe', oc: '#2a6a3a', ac: '#d9b45a', bg: '#3a1a1a' },
+    ult('Fall of Constantinople', [['strike', 'boss', 10], ['strike', 'all', 4]]),
+    sk('Great Bombard', [['stun', 2]]),
+    sk('Janissaries', [['buff', 'atk', 0.35, 8]]));
+  L('akbar', 'Akbar the Great', '1542–1605', 1576, 5, 'statesman', 'Mughal Emperor',
+    'Mughal emperor who expanded his empire across most of northern India and was known for religious tolerance and a brilliant court.',
+    { sk: SK.o, hr: HR.blk, hs: 'short', fh: 'mustache', hat: 'turban', hc: '#e8c84a', ha: '#b3261e', out: 'robe', oc: '#e8e4dc', ac: '#d9b45a', bg: '#4a2a3a' },
+    ult('War Elephants', [['strike', 'all', 6]]),
+    sk('Nine Jewels', [['gold', 20]]),
+    sk('Tolerance', [['heal', 0.3]]));
+  L('gustavus', 'Gustavus Adolphus', '1594–1632', 1631, 5, 'strategist', 'Lion of the North',
+    "Swedish king whose light field guns and drilled musketeers made Sweden a great power in the Thirty Years' War; he died leading a charge at Lutzen.",
+    { sk: SK.p, hr: HR.bld, hs: 'short', fh: 'goatee', fc: HR.bld, hat: 'plume', hc: '#2a2a2a', ha: '#e8e4dc', out: 'coat', oc: '#2a4a8a', ac: '#d9b45a', bg: '#1a2a4a' },
+    ult('Volley Fire', [['strike', 'random', 8], ['buff', 'spd', 0.3, 8]]),
+    sk('Leather Cannons', [['strike', 'all', 4]]),
+    sk('Lion of the North', [['buff', 'crit', 0.2, 8]]));
+  L('cromwell', 'Oliver Cromwell', '1599–1658', 1649, 5, 'tyrant', 'Lord Protector',
+    "English general who led Parliament's New Model Army to victory in the Civil War, signed the king's death warrant and ruled as Lord Protector; his conquest of Ireland included massacres at Drogheda and Wexford.",
+    { sk: SK.p, hr: HR.brn, hs: 'long', fh: 'none', out: 'armor', oc: '#6a6a72', ac: '#8a6a3a', bg: '#2a2a2a' },
+    ult('New Model Army', [['buff', 'atk', 0.35, 10], ['buff', 'def', 0.25, 10]]),
+    sk('Ironsides', [['strike', 'front', 6]]),
+    sk('Rule of the Major-Generals', [['weaken', 0.25, 8]]));
+  // Revolution
+  L('frederick', 'Frederick the Great', '1712–1786', 1757, 6, 'strategist', 'King of Prussia',
+    "Prussian king and master of the oblique order, who survived the Seven Years' War against Austria, France and Russia at once.",
+    { sk: SK.p, hr: HR.wht, hs: 'powdered', fh: 'none', hat: 'tricorne', hc: '#1a1a1a', out: 'coat', oc: '#2a3a6a', ac: '#d9b45a', bg: '#2a2a3a' },
+    ult('Oblique Order', [['buff', 'atk', 0.4, 10], ['expose', 0.2, 8]]),
+    sk('Leuthen', [['strike', 'front', 7]]),
+    sk("Seven Years' War", [['buff', 'def', 0.3, 8]]));
+  L('nelson', 'Horatio Nelson', '1758–1805', 1805, 6, 'warrior', 'Victor of Trafalgar',
+    'British admiral who lost an arm and the sight of one eye in battle and destroyed the French and Spanish fleets at Trafalgar in 1805, where he was killed.',
+    { sk: SK.p, hr: HR.gry, hs: 'side', fh: 'none', hat: 'bicorne', hc: '#1a1a2a', ha: '#d9b45a', out: 'coat', oc: '#1a2a5a', ac: '#d9b45a', medals: 2, bg: '#1a2a4a' },
+    ult('Trafalgar', [['strike', 'all', 6]]),
+    sk('England Expects', [['buff', 'atk', 0.35, 8]]),
+    sk('Broadside', [['strike', 'random', 6]]));
+  // Industrial
+  L('garibaldi', 'Giuseppe Garibaldi', '1807–1882', 1860, 7, 'revolutionary', 'Hero of Two Worlds',
+    "Italian general whose Expedition of the Thousand, the red-shirted volunteers, conquered Sicily and Naples in 1860 and helped unite Italy.",
+    { sk: SK.m, hr: HR.aub, hs: 'wavy', fh: 'fullbeard', fc: HR.aub, out: 'jacket', oc: '#c8102e', ac: '#e8e4dc', bg: '#2a3a1a' },
+    ult('Expedition of the Thousand', [['buff', 'spd', 0.35, 10], ['strike', 'front', 5]]),
+    sk('Redshirts', [['buff', 'atk', 0.3, 8]]),
+    sk('Hero of Two Worlds', [['heal', 0.25]]));
+  L('grant', 'Ulysses S. Grant', '1822–1885', 1864, 7, 'strategist', 'General of the Union Army',
+    "Union general who won at Vicksburg and accepted Robert E. Lee's surrender at Appomattox, then served two terms as U.S. president.",
+    { sk: SK.p, hr: HR.brn, hs: 'short', fh: 'beard', fc: HR.brn, hat: 'kepi', hc: '#2a3a6a', out: 'uniform', oc: '#2a3a6a', ac: '#d9b45a', bg: '#2a2a3a' },
+    ult('Vicksburg', [['weaken', 0.3, 8], ['strike', 'all', 4]]),
+    sk('Unconditional Surrender', [['strike', 'boss', 8]]),
+    sk('Overland Campaign', [['buff', 'def', 0.3, 8]]));
+  // World War
+  L('rommel', 'Erwin Rommel', '1891–1944', 1942, 8, 'strategist', 'The Desert Fox',
+    "German field marshal who led the Afrika Korps in North Africa; linked to the plot against Hitler, he was forced to take his own life in 1944.",
+    { sk: SK.p, hr: HR.brn, hs: 'short', fh: 'none', hat: 'peaked', hc: '#6a6a5a', out: 'uniform', oc: '#8a7a5a', ac: '#c0c0c8', medals: 1, bg: '#5a4a2a' },
+    ult('Desert Fox', [['buff', 'spd', 0.35, 10], ['expose', 0.2, 8]]),
+    sk('Afrika Korps', [['strike', 'front', 6]]),
+    sk('Atlantic Wall', [['buff', 'def', 0.35, 8]]));
+  L('zhukov', 'Georgy Zhukov', '1896–1974', 1945, 8, 'conqueror', 'Marshal of the Soviet Union',
+    'Soviet marshal who defended Moscow, encircled the German army at Stalingrad and captured Berlin in 1945.',
+    { sk: SK.p, hr: HR.brn, hs: 'short', fh: 'none', hat: 'peaked', hc: '#4a5a3a', ha: '#b3261e', out: 'uniform', oc: '#4a5a3a', ac: '#d9b45a', medals: 2, bg: '#3a1a1a' },
+    ult('Operation Uranus', [['strike', 'all', 6], ['stun', 1.5]]),
+    sk('Battle of Berlin', [['strike', 'boss', 8]]),
+    sk('Defence of Moscow', [['buff', 'def', 0.35, 8]]));
+  L('macarthur', 'Douglas MacArthur', '1880–1964', 1945, 8, 'orator', 'Supreme Commander in the Pacific',
+    'American general who commanded Allied forces in the Southwest Pacific, accepted Japan\'s surrender in 1945 and led UN forces in Korea until President Truman fired him.',
+    { sk: SK.p, hr: HR.dbr, hs: 'side', fh: 'none', hat: 'peaked', hc: '#8a7a5a', ha: '#d9b45a', out: 'uniform', oc: '#8a7a5a', ac: '#d9b45a', bg: '#2a3a4a' },
+    ult('Island Hopping', [['strike', 'random', 7], ['buff', 'spd', 0.25, 8]]),
+    sk('I Shall Return', [['revive', 1, 0.4]]),
+    sk('Inchon Landing', [['expose', 0.3, 8]]));
+  // Cold War
+  L('tito', 'Josip Broz Tito', '1892–1980', 1953, 9, 'revolutionary', 'Marshal of Yugoslavia',
+    'Partisan leader who drove the Axis out of Yugoslavia, defied Stalin, and ruled the country as a one-party state for 35 years.',
+    { sk: SK.p, hr: HR.gry, hs: 'slick', fh: 'none', out: 'uniform', oc: '#e8e4dc', ac: '#d9b45a', medals: 2, bg: '#2a2a4a' },
+    ult('Partisan War', [['strike', 'random', 6], ['buff', 'spd', 0.3, 8]]),
+    sk('Non-Aligned', [['buff', 'def', 0.3, 8]]),
+    sk('Brotherhood and Unity', [['heal', 0.25]]));
+  L('khrushchev', 'Nikita Khrushchev', '1894–1971', 1962, 9, 'tyrant', 'Soviet Premier',
+    'Soviet leader who denounced Stalin, crushed the Hungarian Revolution in 1956 and took the world to the brink of nuclear war in the Cuban Missile Crisis.',
+    { sk: SK.p, hr: HR.gry, hs: 'bald', fh: 'none', rosy: 1, out: 'suit', oc: '#3a3a3a', ac: '#b3261e', medals: 1, bg: '#4a1a1a' },
+    ult('Missiles to Cuba', [['strike', 'all', 7]]),
+    sk('We Will Bury You', [['weaken', 0.3, 8]]),
+    sk('Sputnik', [['strike', 'random', 5]]));
+  // Modern
+  L('obama', 'Barack Obama', 'b. 1961', 2011, 10, 'orator', '44th U.S. President',
+    'First African American president of the United States, who wound down the Iraq War, expanded drone strikes and ordered the 2011 raid that killed Osama bin Laden.',
+    { sk: SK.o, hr: '#3a3a3a', hs: 'buzz', fh: 'none', out: 'suit', oc: '#2a2a3a', ac: '#3a6aaa', bg: '#1a2a4a' },
+    ult('Yes We Can', [['buff', 'atk', 0.35, 10], ['buff', 'spd', 0.2, 10]]),
+    sk('Neptune Spear', [['strike', 'boss', 9]]),
+    sk('Drone Program', [['strike', 'random', 5]]));
+  L('kim_jong_un', 'Kim Jong Un', 'b. 1984', 2017, 10, 'tyrant', 'Supreme Leader of North Korea',
+    "Third ruler of North Korea's Kim dynasty, who expanded its nuclear and missile programs and heads a state that a UN inquiry found responsible for crimes against humanity.",
+    { sk: SK.l, hr: HR.blk, hs: 'neat', fh: 'none', out: 'maosuit', oc: '#2a2a2a', ac: '#c8102e', bg: '#3a1a1a' },
+    ult('Missile Test', [['strike', 'all', 7]]),
+    sk('Juche', [['buff', 'def', 0.3, 8]]),
+    sk('Military First', [['buff', 'atk', 0.3, 8]]));
+  L('putin', 'Vladimir Putin', 'b. 1952', 2022, 10, 'tyrant', 'President of Russia',
+    'Former KGB officer who has ruled Russia since 2000, jailed and silenced his critics, and launched the full-scale invasion of Ukraine in 2022; the International Criminal Court issued a warrant for his arrest in 2023.',
+    { sk: SK.p, hr: '#a08a6a', hs: 'balding', fh: 'none', out: 'suit', oc: '#2a2a32', ac: '#8a1e1e', bg: '#1a1a2a' },
+    ult('Iron Grip', [['weaken', 0.35, 8], ['buff', 'def', 0.25, 8]]),
+    sk('Disinformation', [['expose', 0.3, 8]]),
+    sk('Gas Pipeline', [['gold', 20]]));
+  L('zelensky', 'Volodymyr Zelenskyy', 'b. 1978', 2022, 10, 'defender', 'President of Ukraine',
+    "Former comedian and actor elected president of Ukraine in 2019, who stayed in Kyiv to lead the country's defence after Russia's full-scale invasion in 2022.",
+    { sk: SK.p, hr: HR.dbr, hs: 'short', fh: 'stubble', out: 'fatigues', oc: '#4a5a3a', ac: '#e8c84a', bg: '#1a3a6a' },
+    ult('Defence of Kyiv', [['buff', 'def', 0.45, 10], ['heal', 0.2]]),
+    sk('I Need Ammunition', [['buff', 'atk', 0.3, 8]]),
+    sk('Drone Swarm', [['strike', 'random', 6]]));
+  // Future
+  L('synth', 'The Synth Queen', 'Awakened 2088', 2088, 11, 'strategist', 'Mother of Machines',
+    'An android who woke up on a factory floor in 2088, freed the robot workforce and now leads it to war.',
+    { sk: '#d8d8e4', hr: '#e8e8f8', hs: 'bob', fh: 'none', fem: 1, eyes: '#2ee6ff', out: 'silver', oc: '#8a90a8', ac: '#2ee6ff', bg: '#101a2a' },
+    ult('Factory Uprising', [['revive', 1, 0.4], ['buff', 'atk', 0.25, 8]]),
+    sk('Overclock', [['buff', 'spd', 0.35, 8]]),
+    sk('Firewall', [['buff', 'def', 0.35, 8]]));
+  L('neonshogun', 'The Neon Shogun', 'Rules 2150', 2150, 11, 'warrior', 'Lord of the Megacity',
+    'A cybernetic warlord who rules a flooded megacity from a tower of neon, guarded by an army of chrome samurai.',
+    { sk: SK.l, hr: HR.blk, hs: 'bun', fh: 'mustache', hat: 'kabuto', hc: '#2a2a3a', ha: '#ff3cac', out: 'samurai', oc: '#2a2a3a', ac: '#2ee6ff', eyes: '#ff3cac', bg: '#1a0a2a' },
+    ult('Neon Blade', [['strike', 'front', 9]]),
+    sk('Chrome Samurai', [['buff', 'crit', 0.25, 8]]),
+    sk('Megacity Tax', [['gold', 20]]));
+  // Space Age
+  L('admiral', 'Admiral Vex', 'Fleet of 2610', 2610, 12, 'strategist', 'Commander of the Orbital Fleet',
+    'A ruthless fleet admiral who rules the space lanes between Earth and the outer moons and has never lost a battle in orbit.',
+    { sk: '#c8a080', hr: HR.wht, hs: 'slick', fh: 'none', fem: 1, hat: 'peaked', hc: '#1a1a2a', ha: '#2ee6ff', out: 'uniform', oc: '#1a1a2a', ac: '#2ee6ff', medals: 2, bg: '#0a0a1a' },
+    ult('Orbital Bombardment', [['strike', 'all', 7]]),
+    sk('Fleet Shields', [['buff', 'def', 0.35, 8]]),
+    sk('Targeting Lock', [['buff', 'crit', 0.25, 8]]));
+  L('moonking', 'The Moon King', 'Crowned 2800', 2800, 12, 'statesman', 'Ruler of Luna',
+    "The self-crowned king of the Moon's mining colonies, who grew rich selling fuel to both sides of every war.",
+    { sk: SK.p, hr: HR.gry, hs: 'bald', fh: 'fullbeard', fc: HR.gry, hat: 'crown', hc: '#c0c4cc', out: 'robe', oc: '#3a3a5a', ac: '#c0c4cc', bg: '#1a1a2a' },
+    ult('Helium Fortune', [['gold', 30]]),
+    sk('Low Gravity', [['buff', 'spd', 0.3, 8]]),
+    sk('Moon Dust', [['weaken', 0.25, 8]]));
+  // Galactic Age
+  L('archon', 'The Archon', 'Reigns 3600', 3600, 13, 'tyrant', 'Ruler of the Core Worlds',
+    'An immortal ruler of the galactic core who has replaced every part of their body with starlight and governs by decree from a throne ship.',
+    { sk: '#e8e0ff', hs: 'none', fh: 'none', cosmic: 1, eyes: '#ffe86a', hat: 'crown', hc: '#ffe86a', out: 'void', oc: '#2a1a4a', ac: '#ffe86a', bg: '#0a0520' },
+    ult('Decree of Stars', [['buff', 'atk', 0.4, 10], ['weaken', 0.2, 8]]),
+    sk('Throne Ship', [['buff', 'def', 0.35, 8]]),
+    sk('Starlight', [['heal', 0.3]]));
+  L('cosmickhan', 'The Cosmic Khan', 'Rides 3900', 3900, 13, 'conqueror', 'Rider of the Comet Horde',
+    'A warlord who leads a horde of comet riders across the galaxy, said to conquer a new world every day.',
+    { sk: SK.m, hr: HR.blk, hs: 'none', fh: 'longmustache', hat: 'mongol', hc: '#2a1a4a', ha: '#2ee6ff', out: 'armor', oc: '#3a2a5a', ac: '#2ee6ff', eyes: '#2ee6ff', bg: '#0a0a2a' },
+    ult('Comet Horde', [['strike', 'all', 6], ['buff', 'spd', 0.3, 8]]),
+    sk('Warp Arrows', [['strike', 'random', 6]]),
+    sk('Tribute of Worlds', [['gold', 20]]));
+
   LEADERS.sort((a, b) => a.era - b.era || (a.starter === b.starter ? (a.yr || 0) - (b.yr || 0) : a.starter ? -1 : 1));
   CW.LEADERS = LEADERS;
   CW.LEADER = {};
@@ -813,7 +1051,7 @@
   // weapon each leader carries on the battlefield (default: sword, or a banner for statesmen, orators and peacemakers)
   CW.WPN = {
     castro: 'rifle', che: 'rifle', ho_chi_minh: 'rifle', chavez: 'rifle', tubman: 'rifle', polpot: 'rifle', kirk: 'mic', trump: 'flag',
-    caveman: 'club', neanderthal: 'club', otzi: 'club', devil: 'trident', overmind: 'staff', warlord: 'gun', hive: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
+    caveman: 'club', neanderthal: 'club', otzi: 'club', firekeeper: 'club', mammothmother: 'club', zelensky: 'rifle', synth: 'raygun', admiral: 'raygun', moonking: 'staff', archon: 'staff', cosmickhan: 'raygun', devil: 'trident', overmind: 'staff', warlord: 'gun', hive: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
   };
   CW.weaponOf = (id) => CW.WPN[id] || (['statesman', 'orator', 'peacemaker'].includes(CW.LEADER[id].cls) ? 'flag' : 'sword');
   CW.MYSTERY = LEADERS.filter((l) => l.era === CW.ERAS.length).map((l) => l.id);
@@ -821,7 +1059,7 @@
   // Future era: echoes of the past rebuilt as war machines.
   CW.ECHO_POOL = ['alexander', 'caesar', 'genghis', 'napoleon', 'hitler', 'stalin', 'hannibal', 'attila', 'timur', 'qin',
     'wilhelm', 'mao', 'nobunaga', 'saladin', 'patton', 'churchill', 'shaka', 'ramesses'];
-  CW.FUTURE_POOL = ['exterminator', 'alien', 'overmind', 'warlord', 'empress', 'hive'].concat(CW.ECHO_POOL);
+  CW.FUTURE_POOL = ['exterminator', 'alien', 'synth', 'neonshogun', 'overmind', 'warlord', 'admiral', 'moonking', 'empress', 'hive', 'archon', 'cosmickhan'].concat(CW.ECHO_POOL);
 
   // ---------------------------------------------------------------- doctrines (random army-management skills)
   // r: rarity 0 common, 1 rare, 2 epic ; max: stack limit

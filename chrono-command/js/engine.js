@@ -8,18 +8,18 @@
 
   // ------------------------------------------------------------ tuning
   const CFG = (CW.CFG = {
-    growth: 1.1, // enemy power per stage
+    growth: 1.11, // enemy power per stage
     eraPow: 2.6, // unit power per era
     lvlStep: 0.15, // +15% base per level
     lvlMilestone: 25, // x2 every 25 levels
-    costGrowth: 1.115,
-    costBase: 6,
+    costGrowth: 1.125,
+    costBase: 15,
     eraCost: 2.9,
-    enemyHp: 0.6,
-    enemyAtk: 0.55,
-    bossHp: 20,
+    enemyHp: 1.5,
+    enemyAtk: 1.25,
+    bossHp: 25,
     bossAtk: 2,
-    bounty: 1.25, // gold per capacity point of enemy killed
+    bounty: 0.7, // gold per capacity point of enemy killed
     winBonus: 3, // extra bounties for each won battle
     bossBounty: 30,
     stagesPerBoss: 3,
@@ -35,9 +35,11 @@
     mysteryAtk: 1.3,
     heroAtk: 4, // commanders on the field, relative to an average soldier
     heroHp: 6,
-    capBase: 14, // army capacity at the start
-    capPerEra: 6, // more capacity for every era reached
+    capBase: 30, // army capacity at the start
+    capPerEra: 10, // more capacity for every era reached
     enemyCap: 1,
+    recruitBase: 20, // price of one soldier, in enemy bounties at the start of its era
+    recruitGrowth: 1.01, // each extra soldier of the same type costs 1% more
     dt: 0.05,
   });
   CW.SAVE_KEY = 'chronoCommand.v1';
@@ -53,9 +55,9 @@
   // After it ends, time shatters: random eras, stronger foes and mystery bosses, forever.
   const BOSSES = [];
   for (let e = 0; e < 11; e++) BOSSES.push(LEADERS.filter((l) => l.era === e && !l.starter).map((l) => l.id));
-  BOSSES.push(['exterminator', null, null, null, null, 'alien']); // Future: nulls are echoes of the past
-  BOSSES.push(['overmind', null, 'warlord', null]); // Space Age
-  BOSSES.push(['empress', null, null, 'hive']); // Galactic Age
+  BOSSES.push(['exterminator', null, 'synth', null, 'neonshogun', null, 'alien']); // Future: nulls are echoes of the past
+  BOSSES.push(['overmind', null, 'admiral', 'warlord', null, 'moonking']); // Space Age
+  BOSSES.push(['empress', null, 'archon', null, 'cosmickhan', 'hive']); // Galactic Age
   const SPB = CFG.stagesPerBoss;
   const ERA_LEN = BOSSES.map((b) => b.length * SPB);
   const ERA_START = [];
@@ -157,7 +159,7 @@
     const roster = {};
     starters.forEach((id) => (roster[id] = { lv: 1, stars: 0 }));
     return {
-      v: 2,
+      v: 3,
       seed: (Math.random() * 1e9) | 0,
       gold: 0,
       shards: 0,
@@ -168,6 +170,7 @@
       farmCount: 0,
       auto: { push: true, build: true },
       army: START_ARMY(),
+      owned: START_ARMY(),
       uattr: {},
       unitLv: {},
       eraReached: 0,
@@ -194,9 +197,16 @@
     return S;
   };
 
-  // saves from before the battle simulator (v1): squads and 10 eras
+  // older saves: v1 had squads and 10 eras; v2 had free soldiers (every unlocked unit type, limited only by capacity)
   function migrate(o) {
-    if ((o.v || 1) >= 2) return;
+    if ((o.v || 1) === 2) {
+      // keep the soldiers that were marching; they become owned
+      o.owned = Object.assign({}, o.army || {});
+      if (!Object.keys(o.owned).length) o.grant = true;
+      o.v = 3;
+      return;
+    }
+    if ((o.v || 1) >= 3) return;
     const lens = [5, 7, 9, 7, 7, 9, 10, 13, 11, 6].map((n) => n * 3);
     const oldEra = (st) => {
       if (st > 252) return 99;
@@ -222,7 +232,9 @@
     o.uattr = {};
     o.farming = false;
     o.auto = { push: o.auto ? o.auto.push !== false : true, build: true };
-    o.v = 2;
+    o.owned = {};
+    o.grant = true; // given a full army of their era's best units on load
+    o.v = 3;
   }
 
   CW.load = function (obj) {
@@ -244,10 +256,15 @@
       if (!DOC[d]) delete S.doctrines[d];
     });
     S.army = S.army || {};
+    S.owned = S.owned || {};
     S.uattr = S.uattr || {};
     if (S.council && !Array.isArray(S.council.offers)) S.council = null;
     M = null;
     B = null;
+    if (S.grant) {
+      grantArmy();
+      delete S.grant;
+    }
     fixArmy();
     startBattle();
     return true;
@@ -313,8 +330,19 @@
     for (const id in S.army) n += S.army[id];
     return n;
   };
+  CW.owned = (id) => S.owned[id] || 0;
+  CW.ownedSize = function () {
+    let n = 0;
+    for (const id in S.owned) n += S.owned[id];
+    return n;
+  };
   function fixArmy() {
-    for (const id in S.army) if (!UNIT[id] || UNIT[id].era > S.eraReached || !(S.army[id] > 0)) delete S.army[id];
+    for (const id in S.owned) if (!UNIT[id] || !(S.owned[id] > 0)) delete S.owned[id];
+    for (const id in S.army) {
+      if (!UNIT[id] || UNIT[id].era > S.eraReached || !(S.army[id] > 0)) delete S.army[id];
+      else if (S.army[id] > CW.owned(id)) S.army[id] = CW.owned(id);
+      if (!S.army[id]) delete S.army[id];
+    }
     let over = CW.armyUsed() - CW.capacity();
     const ids = Object.keys(S.army).sort((a, b) => cpCost(b) - cpCost(a));
     for (const id of ids) {
@@ -324,12 +352,12 @@
       }
       if (!S.army[id]) delete S.army[id];
     }
-    if (!Object.keys(S.army).length) CW.autoBuild();
+    if (!Object.keys(S.army).length || S.auto.build) CW.autoBuild();
   }
-  // set how many soldiers of a unit type march into the next battle (limited by army capacity)
+  // set how many of your soldiers of a unit type march into battle (limited by how many you own and by army capacity)
   CW.setCount = function (id, n, keepAuto) {
     if (!UNIT[id] || UNIT[id].era > S.eraReached) return false;
-    n = Math.max(0, Math.floor(n));
+    n = Math.max(0, Math.min(CW.owned(id), Math.floor(n)));
     const cur = S.army[id] || 0;
     const room = CW.capacity() - CW.armyUsed() + cur * cpCost(id);
     n = Math.min(n, Math.floor(room / cpCost(id)));
@@ -340,33 +368,95 @@
     emit('army');
     return true;
   };
-  // fill the capacity with the best unit of each role: about 40% infantry, 25% ranged, 15% cavalry, 20% heavy
+  // value of one soldier per point of capacity, used to pick the strongest army
+  function unitValue(id, ctx) {
+    const st = unitStats(id, ctx);
+    return ((st.atk / st.int) * st.hp) / cpCost(id);
+  }
+  // fill the capacity with your strongest soldiers: about 40% infantry, 25% ranged, 15% cavalry, 20% heavy, then the best of the rest
   CW.autoBuild = function () {
     const cap = CW.capacity();
     const ctx = { combo: true, pride: 0, rally: 0 };
-    const best = {};
-    for (const u of CW.unlockedUnits()) {
-      const st = unitStats(u.id, ctx);
-      const v = ((st.atk / st.int) * st.hp) / ROLES[u.role].cost;
-      if (!best[u.role] || v > best[u.role].v) best[u.role] = { id: u.id, v };
-    }
+    const ids = Object.keys(S.owned).filter((id) => UNIT[id] && UNIT[id].era <= S.eraReached && S.owned[id] > 0);
+    const val = {};
+    ids.forEach((id) => (val[id] = unitValue(id, ctx)));
+    ids.sort((a, b) => val[b] - val[a]);
     S.army = {};
     let used = 0;
-    const share = { hvy: 0.2, cav: 0.15, rng: 0.25 };
-    for (const role in share) {
-      if (!best[role]) continue;
-      const n = Math.floor((cap * share[role]) / ROLES[role].cost);
+    const take = (id, budget) => {
+      const cp = cpCost(id);
+      const n = Math.min(S.owned[id] - (S.army[id] || 0), Math.floor(Math.min(budget, cap - used) / cp));
       if (n > 0) {
-        S.army[best[role].id] = n;
-        used += n * ROLES[role].cost;
+        S.army[id] = (S.army[id] || 0) + n;
+        used += n * cp;
       }
+      return n * cp;
+    };
+    const share = { hvy: 0.2, cav: 0.15, rng: 0.25, inf: 0.4 };
+    for (const role in share) {
+      let budget = Math.floor(cap * share[role]);
+      for (const id of ids) if (UNIT[id].role === role && budget > 0) budget -= take(id, budget);
     }
-    if (best.inf) S.army[best.inf.id] = (S.army[best.inf.id] || 0) + Math.max(0, cap - used);
+    for (const id of ids) if (used < cap) take(id, cap - used);
     S.auto.build = true;
     for (const id in S.army) autoEquip(id);
     M = null;
     emit('army');
   };
+  // old saves get a full army of their era's best units, so nobody loses what they had
+  function grantArmy() {
+    const cap = CW.capacity();
+    const best = {};
+    for (const u of CW.unlockedUnits()) if (!best[u.role] || u.era > best[u.role].era) best[u.role] = u;
+    S.owned = {};
+    let used = 0;
+    const share = { hvy: 0.2, cav: 0.15, rng: 0.25 };
+    for (const role in share) {
+      if (!best[role]) continue;
+      const n = Math.floor((cap * share[role]) / ROLES[role].cost);
+      if (n > 0) S.owned[best[role].id] = n;
+      used += n * ROLES[role].cost;
+    }
+    if (best.inf) S.owned[best.inf.id] = Math.max(1, cap - used);
+    S.army = {};
+  }
+
+  // ---- recruiting: soldiers are bought with gold and stay yours until a Time Rift.
+  // A unit type's price is set by its era (later eras cost much more), and each extra soldier of the same type costs a bit more.
+  function recruitBase(id) {
+    const u = UNIT[id];
+    return CFG.recruitBase * growth(ERA_START[u.era] + 1) * cpCost(id) * (1 - mods().cost) * Math.pow(CFG.recruitGrowth, CW.owned(id));
+  }
+  CW.recruitCost = function (id, n) {
+    n = n || 1;
+    const r = CFG.recruitGrowth;
+    return (recruitBase(id) * (Math.pow(r, n) - 1)) / (r - 1);
+  };
+  CW.maxRecruit = function (id) {
+    const r = CFG.recruitGrowth;
+    const n = Math.floor(Math.log((S.gold * (r - 1)) / recruitBase(id) + 1) / Math.log(r));
+    return Math.max(0, Math.min(n, 500));
+  };
+  CW.recruit = function (id, n) {
+    if (!UNIT[id] || UNIT[id].era > S.eraReached) return false;
+    if (n === 'max') n = CW.maxRecruit(id);
+    n = Math.floor(n || 0);
+    if (n < 1) return false;
+    const c = CW.recruitCost(id, n);
+    if (c > S.gold) return false;
+    S.gold -= c;
+    S.owned[id] = CW.owned(id) + n;
+    if (S.auto.build) CW.autoBuild();
+    else {
+      // new recruits march with the army if there's room
+      const room = Math.floor((CW.capacity() - CW.armyUsed()) / cpCost(id));
+      if (room > 0) S.army[id] = (S.army[id] || 0) + Math.min(n, room);
+    }
+    M = null;
+    emit('recruit', id);
+    return true;
+  };
+
   // auto-build also fills empty attribute slots with a sensible pick for the unit's role (it never replaces your choices)
   const UA_PREF = {
     inf: ['sharp', 'shield', 'vet', 'berserk', 'drainA', 'regenA'],
@@ -537,37 +627,48 @@
     });
   }
 
-  // battle lines: infantry in front, heavy behind them, ranged at the back, cavalry on both flanks
+  // battle lines: infantry in front, heavy behind them, ranged at the back, cavalry on both flanks.
+  // Big armies stack into more ranks instead of overlapping.
   function deploy(list, side) {
     const groups = { inf: [], rng: [], cav: [], hvy: [] };
     for (const q of list) groups[q.role].push(q);
-    const place = (arr, x0, zMin, zMax, colStep) => {
-      if (!arr.length) return;
+    let front = 132;
+    const band = (arr, zMin, zMax, gap, colStep) => {
+      if (!arr.length) return front;
       const span = zMax - zMin;
-      const per = Math.max(1, Math.min(arr.length, Math.floor(span / 7) + 1));
+      const per = Math.max(1, Math.min(arr.length, Math.floor(span / gap) + 1));
+      let x0 = front;
       arr.forEach((q, i) => {
         const col = Math.floor(i / per);
         const row = i % per;
         const n = Math.min(per, arr.length - col * per);
         const z = n === 1 ? (zMin + zMax) / 2 : zMin + (span * row) / (n - 1);
-        let x = x0 - col * colStep + (row % 2) * 2;
+        x0 = front - col * colStep;
+        let x = x0 + (row % 2) * 2;
         if (side === 'e') x = FX - x;
         q.x = x + (Math.random() - 0.5) * 2;
         q.z = z + (Math.random() - 0.5) * 2;
         q.face = side === 'a' ? 1 : -1;
       });
+      return x0;
     };
-    place(groups.inf, 122, 14, 106, 8);
-    place(groups.hvy, 88, 22, 98, 15);
-    place(groups.rng, 58, 12, 108, 7);
+    const after = (x, step) => (front = x - step);
+    after(band(groups.inf, 20, 100, 6, 7), 11);
+    after(band(groups.hvy, 24, 96, 10, 13), 11);
+    band(groups.rng, 16, 104, 6, 7);
+    front = 136;
     const half = Math.ceil(groups.cav.length / 2);
-    place(groups.cav.slice(0, half), 128, 3, 22, 10);
-    place(groups.cav.slice(half), 128, 98, 117, 10);
+    band(groups.cav.slice(0, half), 2, 15, 6, 9);
+    front = 136;
+    band(groups.cav.slice(half), 105, 118, 6, 9);
+    for (const q of list) if (side === 'a' ? q.x < -15 : q.x > FX + 15) q.x = side === 'a' ? -15 : FX + 15;
   }
 
+  // enemy armies grow through each era, from 75% to 125% of the capacity for that era (and bigger still once time shatters)
   function enemyCap(info) {
-    const era = info.chaos ? NERA - 1 : info.era;
-    return Math.floor((CFG.capBase + CFG.capPerEra * era) * CFG.enemyCap * (info.chaos ? 1.15 : 1));
+    if (info.chaos) return Math.floor((CFG.capBase + CFG.capPerEra * (NERA - 1)) * CFG.enemyCap * 1.3);
+    const prog = info.k / Math.max(1, ERA_LEN[info.era] - 1);
+    return Math.floor((CFG.capBase + CFG.capPerEra * info.era) * CFG.enemyCap * (0.75 + 0.5 * prog));
   }
   function enemyArmy(info, g) {
     let cap = enemyCap(info);
@@ -1317,7 +1418,7 @@
     infoCache = new Map();
     Object.assign(S, {
       gold: 0, stage: 1, runMax: 1, farming: false, farmCount: 0, unitLv: {}, eraReached: 0, doctrines: {}, council: null,
-      army: START_ARMY(), uattr: {},
+      army: START_ARMY(), owned: START_ARMY(), uattr: {},
     });
     S.auto.build = true;
     Object.values(S.roster).forEach((r) => (r.lv = 1));
