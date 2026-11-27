@@ -391,7 +391,7 @@
           burst(c.x, c.y, 6, '#7dffb0', 'up');
         }
       } else if (e.k === 'herofall') {
-        toast(short(e.lid) + ' is down', 'red');
+        if (!e.champ) toast(short(e.lid) + ' is down', 'red');
       } else if (e.k === 'special') showSpecial(e, B);
     }
     B.fx.length = 0;
@@ -524,7 +524,7 @@
     if (q.isBoss || q.isHero) {
       // leaders stand on a ring: gold for your commander, blue for partners, red for the enemy leader
       w = q.isBoss ? 40 : 20;
-      const ring = ringOf(Math.round(w * K), q.isBoss ? '#e0675a' : q.main ? '#e0be6a' : '#86b4d3');
+      const ring = ringOf(Math.round(w * K), q.isBoss ? '#e0675a' : q.main ? '#e0be6a' : q.champ ? '#b9a0d6' : '#86b4d3');
       g.globalAlpha = 0.75;
       blit(ring, P.x - ring.width / (2 * K), P.y - ring.height / (2 * K));
       g.globalAlpha = 1;
@@ -647,7 +647,7 @@
       g.globalAlpha = 1;
     }
     if (hidden) text('?', P.x, y + H * 0.3, '#e8d0ff', 4, 'c');
-    if (!isBoss) hpBar(q, P.x - 9, P.y + 1.5, 18, q.main ? '#ffd23f' : '#5ad1ff');
+    if (!isBoss) hpBar(q, P.x - 9, P.y + 1.5, 18, q.main ? '#ffd23f' : q.champ ? '#c9a8ff' : '#5ad1ff');
     if (q.stun > 0) stunStars(P.x, y + 2, t, 7);
   }
 
@@ -1191,6 +1191,7 @@
     if (tab === 'army') {
       const ids = ownedList();
       base.push(ids.join(','), st.eraReached, st.buyMode, JSON.stringify(st.uattr), ids.map((id) => CW.uslots(id)).join(''));
+      base.push((st.champs || []).join(','), CW.champSlots(), CW.champMax(), st.best > CW.PATH_LEN);
     }
     if (tab === 'leaders') base.push(Object.entries(st.roster).map(([k, r]) => k + r.stars).join(','));
     if (tab === 'command') base.push(deckSig, !!st.council, JSON.stringify(st.pos));
@@ -1236,6 +1237,10 @@
         const id = s.dataset.stat;
         const u = CW.unitStats(id);
         setText(s, 'Lv ' + CW.unitLevel(id) + ' · DMG ' + fmt(u.atk) + ' · HP ' + fmt(u.hp));
+      });
+      el.panel.querySelectorAll('[data-champ]').forEach((s) => {
+        const c = CW.champStats(s.dataset.champ);
+        setText(s, 'Lv ' + st.roster[s.dataset.champ].lv + ' · DMG ' + fmt(c.atk) + ' · HP ' + fmt(c.hp));
       });
       el.panel.querySelectorAll('[data-n]').forEach((s) => setText(s, String(st.army[s.dataset.n] || 0)));
       el.panel.querySelectorAll('[data-own]').forEach((s) => setText(s, 'of ' + CW.owned(s.dataset.own) + ' owned'));
@@ -1320,9 +1325,63 @@
       <div class="capline"><span>In battle</span><div class="capbar"><i data-capbar></i></div><b data-cap></b><span data-owned></span></div>
       <div class="armyopts"><label class="tog"><input type="checkbox" data-act="autobuild" ${st.auto.build ? 'checked' : ''}> Auto-build</label><span class="note">Sends your strongest soldiers into each battle and fills empty attribute slots.</span></div>
       <p class="note">Soldiers cost gold and stay yours until a Time Rift. Newer eras cost more, so save up for them.</p>
+      ${renderRanks()}
       <div class="ugrid">${own.map(card).join('')}</div>
       ${fresh.length ? `<div class="sub">Recruit from the ${esc(ERAS[topEra].name)}</div><div class="ugrid">${fresh.map(card).join('')}</div>` : ''}
       ${older.length ? `<details class="reserve" ${reserveOpen ? 'open' : ''}><summary>Older units · ${older.length}</summary><div class="ugrid">${older.map(card).join('')}</div></details>` : ''}`;
+  }
+
+  // leaders in the ranks: after the endgame, recruited leaders can take soldiers' places on the front line
+  function champLine(id) {
+    const at = CW.attr(id, 0);
+    return `${esc(at.name)}: ${esc(CW.attrText(id, 0, CW.champAttrK(id)))}`;
+  }
+  function champRole(id) {
+    return CW.champFighter(id) ? 'Fighter · hits hard, lasts long' : 'Thinker · brings more of their attribute';
+  }
+  function renderRanks() {
+    const st = S();
+    if (!CW.champUnlocked()) {
+      return `<div class="ranks locked"><div class="rk-h"><h3>Leaders in the ranks</h3><span class="tag">Shattered Time</span></div><p class="note">Finish the time pathway (through the Galactic Age) to swap soldiers for your recruited leaders on the front line.</p></div>`;
+    }
+    const slots = CW.champSlots();
+    const max = CW.champMax();
+    const on = CW.champs();
+    const cost = CW.champCost();
+    const next = CW.champNextSlot();
+    let cells = '';
+    for (let i = 0; i < slots; i++) {
+      const id = on[i];
+      if (id) {
+        const l = LEADER[id];
+        const r = st.roster[id];
+        cells += `<div class="rk"><img class="px" src="${CW.headURL(id)}" alt=""><div class="rk-b"><b>${esc(l.name)} ${stars(r.stars)}</b><small>${esc(CLASSES[l.cls].name)} · ${champRole(id)}</small><small class="at">${champLine(id)}</small><small class="st" data-champ="${id}"></small></div><button class="sq rm" data-act="rmchamp" data-id="${id}" aria-label="Send ${esc(l.name)} back to reserve">×</button></div>`;
+      } else if (i < max) cells += `<button class="rk add" data-act="champ"><b>+ Add a leader</b><small>Takes ${cost} capacity from your soldiers</small></button>`;
+      else cells += `<div class="rk lock"><b>Slot ${i + 1}</b><small>Needs ${(i + 1) * cost * 2} army capacity</small></div>`;
+    }
+    const waiting = (st.champs || []).length - on.length;
+    return `<div class="ranks"><div class="rk-h"><h3>Leaders in the ranks</h3><span>${on.length} of ${slots} · ${cost} capacity each</span></div>
+      <p class="note">Swap soldiers for recruited leaders. They fight on the front line and each one gives your army a share of their signature attribute while standing.${next ? ` Next slot at stage ${next}.` : ''}${waiting > 0 ? ` ${waiting} more wait${waiting === 1 ? 's' : ''} for capacity.` : ''}</p>
+      <div class="rkgrid">${cells}</div></div>`;
+  }
+  function openRanks() {
+    const st = S();
+    const cmd = [st.main].concat(st.partners);
+    const on = CW.champs();
+    const list = Object.keys(st.roster)
+      .filter((id) => !cmd.includes(id) && !on.includes(id))
+      .sort((a, b) => st.roster[b].stars - st.roster[a].stars || LEADER[b].era - LEADER[a].era);
+    showModal(
+      'ranks',
+      `<div class="who"><h2>Add a leader to the ranks</h2><small>They take ${CW.champCost()} capacity and fight on the front line. Fighters (warriors, conquerors, revolutionaries, defenders) hit harder and last longer; thinkers bring 50% more of their signature attribute.</small></div>
+      ${list.length ? `<div class="chooser rkchooser">${list
+        .map((id) => {
+          const l = LEADER[id];
+          return `<button class="pick" data-act="addchamp" data-id="${id}"><img class="px por" src="${CW.headURL(id)}" alt=""><span><em>${esc(CLASSES[l.cls].name)} · ${CW.champFighter(id) ? 'Fighter' : 'Thinker'}${st.roster[id].stars ? ' · ' + '★'.repeat(st.roster[id].stars) : ''}</em><b>${esc(l.name)}</b><small class="hint">${champLine(id)}</small></span></button>`;
+        })
+        .join('')}</div>` : '<p class="note">Every leader you have is already commanding or in the ranks. Beat more leaders to recruit them.</p>'}
+      <div class="acts"><button class="btn ghost" data-act="close">Close</button></div>`
+    );
   }
 
   function renderLeaders() {
@@ -1405,7 +1464,11 @@
       if (CW.recruit(b.dataset.id, st.buyMode === 'max' ? 'max' : st.buyMode)) SFX.play('buy');
       updatePanel();
     } else if (act === 'uaslot') openUAttr(b.dataset.id, +b.dataset.i);
-    else if (act === 'council') openCouncil();
+    else if (act === 'champ') openRanks();
+    else if (act === 'rmchamp') {
+      CW.setChamp(b.dataset.id, false);
+      renderPanel();
+    } else if (act === 'council') openCouncil();
     else if (act === 'leader') openLeader(b.dataset.id);
     else if (act === 'rift') openRiftConfirm();
     else if (act === 'save') {
@@ -1559,6 +1622,10 @@
       if (CW.equip(b.dataset.id, +b.dataset.i, b.dataset.a || null)) SFX.play('buy');
       closeModal();
       renderPanel();
+    } else if (act === 'addchamp') {
+      if (CW.setChamp(b.dataset.id, true)) SFX.play('buy');
+      closeModal();
+      renderPanel();
     } else if (act === 'setlead') {
       const st = S();
       const arr = [st.main, st.partners[0] || null, st.partners[1] || null];
@@ -1683,7 +1750,7 @@
       showModal('leader', `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id, 'mystery')}" alt="" style="width:128px;height:128px"><div class="who"><h2>???</h2><small>A mystery from beyond the end of time</small></div></div><p class="bio">Someone, or something, waits where the timeline breaks. Finish the pathway all the way to the Future and keep going to find out who.</p><div class="acts"><button class="btn ghost" data-act="close">Close</button></div>`);
       return;
     }
-    const role = id === st.main ? 'Your commander' : st.partners.includes(id) ? 'Your partner' : r ? 'In reserve' : l.starter ? 'Starter' : 'Not yet defeated · Stage ' + CW.bossStageOf(id);
+    const role = id === st.main ? 'Your commander' : st.partners.includes(id) ? 'Your partner' : CW.champs().includes(id) ? 'In the ranks' : r ? 'In reserve' : l.starter ? 'Starter' : 'Not yet defeated · Stage ' + CW.bossStageOf(id);
     const labels = ['Signature · as commander', 'As commander or partner', 'As commander'];
     showModal(
       'leader',
@@ -1727,7 +1794,9 @@
   CW.on('chaos', () => {
     SFX.play('era');
     toast('Time shatters: random eras ahead', 'red');
+    setTimeout(() => toast('Leaders can now join the ranks · Army', 'blue'), 1600);
   });
+  CW.on('champSlot', (n) => toast('New slot for a leader in the ranks (' + n + ')', 'blue'));
   CW.on('defeat', (d) => {
     SFX.play('lose');
   });

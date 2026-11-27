@@ -56,6 +56,12 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 - **Shattered Time.** Once the pathway is finished, time breaks: every era after that is picked at random, enemy armies
   are bigger and stronger, and every fourth leader battle is a **mystery boss** whose identity stays hidden until
   the fight starts. It never ends. Beating a leader again earns stars (+10% attribute strength each).
+- **Leaders in the ranks (post-endgame).** Once time shatters, the Army tab lets you swap soldiers for recruited leaders who
+  aren't commanding, so every army can be built differently. Each leader takes 6 capacity and fights in the front rank with a
+  bodyguard (half damage taken), cleaving the enemies around their target, and gives your whole army a share of their
+  signature attribute while standing. Fighters (warriors, conquerors, revolutionaries, defenders) hit harder and last longer
+  and share 35%; thinkers fight less well but share 55%. You start with 3 slots and gain one every 18 stages of Shattered Time,
+  up to 8, and leaders can use at most half your capacity (the rest wait in reserve after a Time Rift until capacity grows).
 - **Time Rift (prestige).** Once you reach stage 40, rift back to the start of time for Chrono Shards (+5% damage,
   health and gold each, forever). You keep your recruited leaders and their stars.
 
@@ -68,8 +74,8 @@ version, your stage moves to the matching era and you get a full army of that er
 | --- | --- |
 | `index.html` | Page layout and all styling |
 | `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders, their signature specials, the class specials and the 31 doctrines |
-| `LEADERS.md` | Every leader with their class, best position, attributes and special moves |
-| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader positions, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
+| `LEADERS.md` | Every leader with their class, best position, attributes, special moves and what they bring in the ranks |
+| `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader positions, leaders in the ranks, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
 | `js/bodies.js` | The animated base figure (embedded sheet), body-part detection, the dressing of every leader and foot soldier, and the vehicles, animals and riders |
 | `js/ui.js` | Battlefield rendering and its HUD overlay, the army builder, command deck, panels, dialogs, sound effects, autosave and offline progress |

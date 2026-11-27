@@ -7,6 +7,11 @@ All 137 leaders with their class, best position, three always-on attributes and 
 - **Special meter.** Your commander and two partners each have a meter that fills when your army defeats an enemy. Each defeat adds that unit's share of the enemy army: a heavy unit (4 capacity) is worth four infantry, so beating weak units fills it slowly. Wiping out a whole army fills about 95%. The commander charges at the full rate, partners at 80%. Meters carry over between battles.
 - **Two specials.** Tap a leader's chip in battle to choose. The **signature special** costs the full meter and hits 25% harder; the **class special** costs 60%. With Auto specials on, a full meter fires the signature after 6 seconds. Enemy leaders charge a meter too.
 - **Position.** Warriors, conquerors, revolutionaries and defenders excel at the **front**: +20% attribute strength and +50% damage there. Strategists, tyrants, statesmen, peacemakers and orators excel **behind the army**: +20% attribute strength and a 30% faster meter. Move any leader in the Commanders tab.
+- **Leaders in the ranks (after the endgame).** Once you finish the time pathway and time shatters, the Army tab lets you swap soldiers
+  for any recruited leader who isn't commanding. Each takes 6 capacity, fights in the front rank with a bodyguard (half damage taken)
+  and cleaves the enemies around their target. Fighters (the front-line classes) hit harder and last longer and give the army 35% of
+  their signature attribute; thinkers fight less well but give 55%. You start with 3 slots and gain one every 18 stages of Shattered
+  Time, up to 8; leaders can use at most half your army capacity.
 
 ## Classes
 
@@ -38,6 +43,8 @@ An Ice Age chieftain of the Neanderthals, the stocky, big-brained cousins of mod
 - **Cave Bear Ambush** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Ice Age Endurance: Your army takes 9% less damage, and your army heals 0.4% health every second
+
 ### Ka the Firekeeper
 *Keeper of the First Flame, c. 30,000 BC* · Warrior · best at the front
 
@@ -51,6 +58,8 @@ A legendary clan leader of the Ice Age, said to have been the first to carry fir
 **Special moves**
 - **Wildfire** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. First Flame: The enemy army burns for 4% of your army's damage each second
 
 ### The Mammoth Mother
 *Matriarch of the Hunters, c. 20,000 BC* · Conqueror · best at the front
@@ -66,6 +75,8 @@ A legendary matriarch of the mammoth hunters, remembered in the painted handprin
 - **Ivory Avalanche** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Stampede: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
+
 ### The Caveman
 *First Warlord of the Stone Age, c. 10,000 BC* · Warrior · best at the front
 
@@ -80,6 +91,8 @@ A Stone Age chieftain from before writing, cities or the wheel, who leads his cl
 - **Boulder Rain** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Discover Fire: The enemy army burns for 4% of your army's damage each second, and +6% army damage
+
 ### Otzi the Iceman
 *The Man from the Ice, c. 3350–3105 BC* · Warrior · best at the front
 
@@ -93,6 +106,8 @@ A Copper Age man whose naturally mummified body was found in an Alpine glacier i
 **Special moves**
 - **Glacier Arrow** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Copper Axe: +11% army damage, and +3% chance of critical hits
 
 ## II · Bronze Age (9)
 
@@ -110,6 +125,8 @@ Chinese general and philosopher credited with The Art of War, the most influenti
 - **Thirty-Six Stratagems** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. The Art of War: +17% army damage, and +8% attack speed
+
 ### Leonidas I
 *King of Sparta, c. 540–480 BC* · Defender · best at the front · starter
 
@@ -123,6 +140,8 @@ Spartan king who held the pass at Thermopylae against the vast Persian army with
 **Special moves**
 - **Hold the Hot Gates** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Thermopylae: Your army takes 9% less damage, and +6% army damage
 
 ### Gilgamesh
 *King of Uruk, c. 2700 BC* · Warrior · best at the front
@@ -138,6 +157,8 @@ Legendary king of the Sumerian city of Uruk and hero of the Epic of Gilgamesh, o
 - **Bull of Heaven** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Slayer of Humbaba: +18% damage to enemy leaders
+
 ### Sargon of Akkad
 *King of the Four Corners, c. 2334–2279 BC* · Conqueror · best at the front
 
@@ -151,6 +172,8 @@ Founded the Akkadian Empire, often called the first empire in history, by unitin
 **Special moves**
 - **Akkadian Onslaught** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. First Empire: +11% army damage, and your army takes 5% less damage
 
 ### Hammurabi
 *Lawgiver of Babylon, c. 1810–1750 BC* · Statesman · best behind the army
@@ -166,6 +189,8 @@ King of Babylon whose Code of Hammurabi is one of the oldest written law codes i
 - **Stele of Judgment** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Code of Laws: Enemies deal 11% less damage, and your army takes 8% less damage
+
 ### Hatshepsut
 *Pharaoh of Egypt, c. 1507–1458 BC* · Statesman · best behind the army
 
@@ -179,6 +204,8 @@ One of Egypt's most successful pharaohs: she wore the royal false beard, sent tr
 **Special moves**
 - **Gifts of Punt** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Expedition to Punt: +22% gold
 
 ### Ramesses II
 *Pharaoh of Egypt, c. 1303–1213 BC* · Conqueror · best at the front
@@ -194,6 +221,8 @@ The most celebrated pharaoh of Egypt; fought the Hittites at Kadesh and built mo
 - **Kadesh Chariots** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Battle of Kadesh: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
+
 ### Nebuchadnezzar II
 *King of Babylon, c. 642–562 BC* · Conqueror · best at the front
 
@@ -208,6 +237,8 @@ Babylonian king who conquered Jerusalem in 587 BC, sent its people into exile an
 - **Hanging Gardens** (signature, heal, 100% meter): Your whole army heals 56% of its health
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Siege of Jerusalem: Every hit also splashes nearby enemies for 7% damage, and enemies deal 4% less damage
+
 ### Cyrus the Great
 *King of Kings, c. 600–530 BC* · Statesman · best behind the army
 
@@ -221,6 +252,8 @@ Founder of the Persian Achaemenid Empire, remembered for tolerant rule and the C
 **Special moves**
 - **March of the Immortals** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. King of Kings: Fallen soldiers get back up once, after 11 seconds, and your army heals 0.7% health every second
 
 ## III · Classical (11)
 
@@ -238,6 +271,8 @@ Thracian gladiator who led the largest slave uprising against the Roman Republic
 - **Break the Chains** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Slave Revolt: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
+
 ### Alexander the Great
 *King of Macedon, 356–323 BC* · Conqueror · best at the front
 
@@ -251,6 +286,8 @@ Macedonian king who never lost a battle and built an empire from Greece to India
 **Special moves**
 - **Charge at Gaugamela** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Hammer and Anvil: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
 
 ### Ashoka the Great
 *Mauryan Emperor, c. 304–232 BC* · Peacemaker · best behind the army
@@ -266,6 +303,8 @@ Emperor of India who renounced conquest after the bloody Kalinga war and spread 
 - **Pillars of Ashoka** (signature, heal, 100% meter): Your whole army heals 56% of its health
 - **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Wheel of Dharma: Your army heals 1.1% health every second, and enemies deal 7% less damage
+
 ### Qin Shi Huang
 *First Emperor of China, 259–210 BC* · Tyrant · best behind the army
 
@@ -279,6 +318,8 @@ Unified China by force, standardized its writing and coins, began the Great Wall
 **Special moves**
 - **Terracotta Legion** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Terracotta Army: Fallen soldiers get back up once, after 11 seconds, and your army takes 8% less damage
 
 ### Hannibal Barca
 *General of Carthage, 247–183 BC* · Strategist · best behind the army
@@ -294,6 +335,8 @@ Carthaginian general who crossed the Alps with war elephants and crushed Rome at
 - **Over the Alps** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Crossing the Alps: +14% attack speed, and +10% army damage
+
 ### Scipio Africanus
 *Victor of Zama, 236–183 BC* · Strategist · best behind the army
 
@@ -307,6 +350,8 @@ Roman general who beat Hannibal at the Battle of Zama in 202 BC, ending the Seco
 **Special moves**
 - **Open the Ranks** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Zama: +17% army damage, and enemies take 7% more damage
 
 ### Vercingetorix
 *Chief of the Gauls, c. 82–46 BC* · Warrior · best at the front
@@ -322,6 +367,8 @@ Gaulish chieftain who united the tribes of Gaul against Julius Caesar and made a
 - **Gaulish Uprising** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Revolt of Gaul: +9% attack speed, and every hit also splashes nearby enemies for 4% damage
+
 ### Julius Caesar
 *Dictator of Rome, 100–44 BC* · Conqueror · best at the front
 
@@ -335,6 +382,8 @@ Roman general who conquered Gaul, crossed the Rubicon and made himself dictator 
 **Special moves**
 - **Tenth Legion** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Veni, Vidi, Vici: Every hit also splashes nearby enemies for 7% damage, and +6% army damage, and +5% attack speed
 
 ### Cleopatra VII
 *Queen of the Nile, 69–30 BC* · Statesman · best behind the army
@@ -350,6 +399,8 @@ Last active pharaoh of Ptolemaic Egypt, a shrewd ruler who allied with Julius Ca
 - **Nile Treasury** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Queen of the Nile: +22% gold, and your army heals 0.7% health every second
+
 ### Boudica
 *Queen of the Iceni, d. AD 61* · Warrior · best at the front
 
@@ -364,6 +415,8 @@ Queen of the British Iceni tribe who led a fierce uprising against the Roman occ
 - **Iceni Revolt** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Iceni Uprising: Every hit also splashes nearby enemies for 7% damage, and the enemy army burns for 3% of your army's damage each second
+
 ### Nero
 *Emperor of Rome, 37–68 AD* · Tyrant · best behind the army
 
@@ -377,6 +430,8 @@ Roman emperor who had his own mother killed, persecuted Christians after the Gre
 **Special moves**
 - **Emperor's Games** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Great Fire of Rome: The enemy army burns for 7% of your army's damage each second
 
 ## IV · Viking Age (11)
 
@@ -394,6 +449,8 @@ Ruler of the Huns who terrorized both halves of the Roman Empire from the Danube
 - **Hunnic Storm** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Scourge of God: Every hit also splashes nearby enemies for 7% damage, and enemies deal 4% less damage
+
 ### King Arthur
 *The Once and Future King, Legend, c. 6th century* · Defender · best at the front
 
@@ -407,6 +464,8 @@ Legendary king of the Britons who, in medieval romance, pulled the sword from th
 **Special moves**
 - **Sword from the Stone** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Excalibur: +18% damage to enemy leaders, and +3% chance of critical hits
 
 ### Charlemagne
 *Emperor of the Romans, 742–814* · Defender · best at the front
@@ -422,6 +481,8 @@ King of the Franks who united much of Western Europe and was crowned the first H
 - **Holy Roman Host** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Imperial Crown: Your army takes 9% less damage, and +6% army damage
+
 ### Ragnar Lodbrok
 *Legendary Viking King, 9th century* · Conqueror · best at the front
 
@@ -435,6 +496,8 @@ Legendary Norse hero of the sagas, said to have raided England and France; his s
 **Special moves**
 - **Shield Wall Breaker** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Great Heathen Army: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
 
 ### Ivar the Boneless
 *Son of Ragnar, died c. 873* · Conqueror · best at the front
@@ -450,6 +513,8 @@ Viking leader and son of Ragnar, said in the sagas to be unable to walk, who led
 - **Heathen Host** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Taking of York: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
+
 ### Alfred the Great
 *King of the Anglo-Saxons, 849–899* · Defender · best at the front
 
@@ -463,6 +528,8 @@ King of Wessex who beat back the Viking invasions at Edington in 878 and laid th
 **Special moves**
 - **Burghal Forts** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Burh Fortresses: Your army takes 9% less damage, and +6% army damage
 
 ### Erik the Red
 *Founder of Greenland, c. 950–1003* · Warrior · best at the front
@@ -478,6 +545,8 @@ Norse explorer, outlawed from Iceland for killing, who founded the first Norse s
 - **Longship Landing** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Green Land: +14% gold, and your army heals 0.4% health every second
+
 ### Brian Boru
 *High King of Ireland, c. 941–1014* · Defender · best at the front
 
@@ -491,6 +560,8 @@ High King of Ireland who broke Norse power in Ireland at the Battle of Clontarf 
 **Special moves**
 - **High King's Muster** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Clontarf: Every hit also splashes nearby enemies for 7% damage, and your army takes 5% less damage
 
 ### Cnut the Great
 *King of the North Sea Empire, c. 995–1035* · Statesman · best behind the army
@@ -506,6 +577,8 @@ Danish prince who conquered England and ruled a North Sea empire of England, Den
 - **Northern Fleet** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. North Sea Empire: +22% gold, and +10% army damage
+
 ### William the Conqueror
 *Duke of Normandy, c. 1028–1087* · Conqueror · best at the front
 
@@ -520,6 +593,8 @@ Norman duke who invaded England and won the crown at the Battle of Hastings in 1
 - **Hastings Feint** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Hastings 1066: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
+
 ### Harald Hardrada
 *The Last Viking King, 1015–1066* · Warrior · best at the front
 
@@ -533,6 +608,8 @@ King of Norway and former Byzantine guardsman who invaded England in 1066 and fe
 **Special moves**
 - **Landwaster Banner** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Varangian Guard: +11% army damage, and +3% chance of critical hits
 
 ## V · Medieval (9)
 
@@ -550,6 +627,8 @@ Castilian knight Rodrigo Diaz, who fought for both Christian and Muslim rulers a
 - **Ride of the Champion** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Siege of Valencia: Every hit also splashes nearby enemies for 7% damage, and +6% army damage
+
 ### Saladin
 *Sultan of Egypt and Syria, 1137–1193* · Warrior · best at the front
 
@@ -563,6 +642,8 @@ Sultan who united the Muslim world against the Crusaders and won the great victo
 **Special moves**
 - **Desert Mirage** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Horns of Hattin: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
 
 ### Richard the Lionheart
 *King of England, 1157–1199* · Warrior · best at the front
@@ -578,6 +659,8 @@ King of England famed for his courage on the Third Crusade, where he fought Sala
 - **Lionheart Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Heart of a Lion: +11% army damage, and +3% chance of critical hits
+
 ### Genghis Khan
 *Great Khan of the Mongols, c. 1162–1227* · Conqueror · best at the front
 
@@ -591,6 +674,8 @@ Founder of the Mongol Empire, which became the largest contiguous land empire in
 **Special moves**
 - **Endless Steppe** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Mongol Horde: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
 ### Kublai Khan
 *Great Khan of the Yuan, 1215–1294* · Conqueror · best at the front
@@ -606,6 +691,8 @@ Grandson of Genghis Khan who completed the conquest of China, founded the Yuan d
 - **Yuan Armada** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Conquest of the Song: Every hit also splashes nearby enemies for 7% damage
+
 ### William Wallace
 *Guardian of Scotland, c. 1270–1305* · Revolutionary · best at the front
 
@@ -619,6 +706,8 @@ Scottish knight who led the rising against English rule and won the Battle of St
 **Special moves**
 - **Highland Fury** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Stirling Bridge: +11% army damage, and +5% attack speed
 
 ### Mansa Musa
 *Emperor of Mali, c. 1280–1337* · Statesman · best behind the army
@@ -634,6 +723,8 @@ Emperor of Mali, perhaps the richest person who ever lived; his golden pilgrimag
 - **River of Gold** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Golden Pilgrimage: +22% gold
+
 ### Timur
 *Tamerlane the Conqueror, 1336–1405* · Tyrant · best behind the army
 
@@ -648,6 +739,8 @@ Turco-Mongol warlord whose ruthless campaigns stretched from Delhi to Damascus a
 - **Iron Lame Wrath** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Conquest of Delhi: Every hit also splashes nearby enemies for 11% damage
+
 ### Joan of Arc
 *The Maid of Orleans, c. 1412–1431* · Warrior · best at the front
 
@@ -661,6 +754,8 @@ French peasant girl who, guided by visions, lifted the siege of Orleans and turn
 **Special moves**
 - **The Maid's Banner** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Siege of Orleans: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
 ## VI · Gunpowder (11)
 
@@ -678,6 +773,8 @@ Ottoman sultan who took Constantinople in 1453 with giant bombards, ending the B
 - **Walls Come Down** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Fall of Constantinople: +18% damage to enemy leaders, and every hit also splashes nearby enemies for 4% damage
+
 ### Vlad III Dracula
 *Prince of Wallachia, 1428–1477* · Tyrant · best behind the army
 
@@ -691,6 +788,8 @@ Wallachian prince infamous for brutal punishments; he fought the Ottoman Empire 
 **Special moves**
 - **Moonlit Raid** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Order of the Dragon: Enemies deal 11% less damage, and +10% army damage
 
 ### Suleiman the Magnificent
 *Ottoman Sultan, 1494–1566* · Statesman · best behind the army
@@ -706,6 +805,8 @@ Longest-reigning Ottoman sultan, who brought the empire to its height in power, 
 - **Magnificent Host** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Magnificent Century: +22% gold, and +10% army damage
+
 ### Ivan the Terrible
 *First Tsar of Russia, 1530–1584* · Tyrant · best behind the army
 
@@ -719,6 +820,8 @@ First Tsar of Russia, who conquered Kazan and ruled through terror with his blac
 **Special moves**
 - **Tsar's Cannons** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Siege of Kazan: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
 ### Oda Nobunaga
 *The Demon King, 1534–1582* · Warrior · best at the front
@@ -734,6 +837,8 @@ Ruthless Japanese warlord who began the unification of Japan and used massed mus
 - **Three-Rank Volley** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Nagashino Volley: Every hit also splashes nearby enemies for 7% damage
+
 ### Akbar the Great
 *Mughal Emperor, 1542–1605* · Statesman · best behind the army
 
@@ -747,6 +852,8 @@ Mughal emperor who expanded his empire across most of northern India and was kno
 **Special moves**
 - **Elephant Batteries** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. War Elephants: Every hit also splashes nearby enemies for 11% damage
 
 ### Elizabeth I
 *The Virgin Queen, 1533–1603* · Strategist · best behind the army
@@ -762,6 +869,8 @@ Queen of England whose navy defeated the Spanish Armada and whose reign became a
 - **Fire Ships** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. The Armada's Doom: Every hit also splashes nearby enemies for 11% damage, and the enemy army burns for 4% of your army's damage each second
+
 ### Tokugawa Ieyasu
 *First Tokugawa Shogun, 1543–1616* · Strategist · best behind the army
 
@@ -775,6 +884,8 @@ Won the Battle of Sekigahara and founded the shogunate that kept Japan at peace 
 **Special moves**
 - **Unifier of Japan** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Sekigahara: Every hit also splashes nearby enemies for 11% damage, and your army takes 8% less damage
 
 ### Gustavus Adolphus
 *Lion of the North, 1594–1632* · Strategist · best behind the army
@@ -790,6 +901,8 @@ Swedish king whose light field guns and drilled musketeers made Sweden a great p
 - **Swedish Brigade** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Volley Fire: +19% damage from ranged units, and +8% attack speed
+
 ### Oliver Cromwell
 *Lord Protector, 1599–1658* · Tyrant · best behind the army
 
@@ -804,6 +917,8 @@ English general who led Parliament's New Model Army to victory in the Civil War,
 - **Ironside Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. New Model Army: +17% army damage, and your army takes 8% less damage
+
 ### Peter the Great
 *Tsar of All Russia, 1672–1725* · Conqueror · best at the front
 
@@ -817,6 +932,8 @@ Tsar who modernized Russia, built its first navy, founded St Petersburg and crus
 **Special moves**
 - **Northern Bastion** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Window to the West: +11% army damage, and +5% attack speed
 
 ## VII · Revolution (9)
 
@@ -834,6 +951,8 @@ Prussian king and master of the oblique order, who survived the Seven Years' War
 - **Leuthen Maneuver** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Oblique Order: +17% army damage, and enemies take 7% more damage
+
 ### Catherine the Great
 *Empress of Russia, 1729–1796* · Statesman · best behind the army
 
@@ -847,6 +966,8 @@ Empress who pushed Russia to the Black Sea and championed the ideas of the Enlig
 **Special moves**
 - **Imperial Guard** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Golden Age: +22% gold, and +10% army damage
 
 ### George Washington
 *Commander of the Continental Army, 1732–1799* · Revolutionary · best at the front
@@ -862,6 +983,8 @@ Led the Continental Army to American independence and became the first President
 - **Delaware Surprise** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Crossing the Delaware: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
+
 ### Maximilien Robespierre
 *Voice of the Terror, 1758–1794* · Tyrant · best behind the army
 
@@ -875,6 +998,8 @@ Revolutionary leader whose Reign of Terror (1793–94) sent thousands to the gui
 **Special moves**
 - **Revolutionary Levy** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Committee of Public Safety: +17% army damage, and your army takes 8% less damage
 
 ### Toussaint Louverture
 *Liberator of Haiti, 1743–1803* · Revolutionary · best at the front
@@ -890,6 +1015,8 @@ Formerly enslaved general who led the Haitian Revolution, the only slave uprisin
 - **Spirit of Saint-Domingue** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Liberty or Death: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
+
 ### Napoleon Bonaparte
 *Emperor of the French, 1769–1821* · Conqueror · best at the front
 
@@ -903,6 +1030,8 @@ French emperor and military genius who conquered most of Europe before his final
 **Special moves**
 - **Old Guard Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. La Grande Armee: +11% army damage, and fallen soldiers get back up once, after 29 seconds
 
 ### Horatio Nelson
 *Victor of Trafalgar, 1758–1805* · Warrior · best at the front
@@ -918,6 +1047,8 @@ British admiral who lost an arm and the sight of one eye in battle and destroyed
 - **Line of Battle** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Trafalgar: Every hit also splashes nearby enemies for 7% damage
+
 ### Shaka Zulu
 *King of the Zulu, c. 1787–1828* · Warrior · best at the front
 
@@ -932,6 +1063,8 @@ Zulu king who transformed southern African warfare with the short stabbing spear
 - **Impi Charge** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Horns of the Buffalo: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
+
 ### Simon Bolivar
 *El Libertador, 1783–1830* · Revolutionary · best at the front
 
@@ -945,6 +1078,8 @@ Led Venezuela, Colombia, Ecuador, Peru and Bolivia to independence from the Span
 **Special moves**
 - **Liberator's March** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. El Libertador: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
 
 ## VIII · Industrial (11)
 
@@ -962,6 +1097,8 @@ Italian general whose Expedition of the Thousand, the red-shirted volunteers, co
 - **The Thousand** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Barricades** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Expedition of the Thousand: +9% attack speed, and +6% army damage
+
 ### Abraham Lincoln
 *16th U.S. President, 1809–1865* · Statesman · best behind the army
 
@@ -975,6 +1112,8 @@ Led the Union through the American Civil War and ended slavery in the United Sta
 **Special moves**
 - **Better Angels** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Emancipation: Fallen soldiers get back up once, after 11 seconds, and your army heals 0.7% health every second
 
 ### Harriet Tubman
 *Conductor of the Underground Railroad, c. 1822–1913* · Revolutionary · best at the front
@@ -990,6 +1129,8 @@ Escaped slavery, then guided dozens to freedom on the Underground Railroad and l
 - **Conductor's Lantern** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Underground Railroad: Fallen soldiers get back up once, after 17 seconds, and +5% attack speed
+
 ### Ulysses S. Grant
 *General of the Union Army, 1822–1885* · Strategist · best behind the army
 
@@ -1003,6 +1144,8 @@ Union general who won at Vicksburg and accepted Robert E. Lee's surrender at App
 **Special moves**
 - **Siege of Vicksburg** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Vicksburg: Enemies deal 11% less damage, and every hit also splashes nearby enemies for 7% damage
 
 ### Otto von Bismarck
 *The Iron Chancellor, 1815–1898* · Strategist · best behind the army
@@ -1018,6 +1161,8 @@ Prussian statesman who unified Germany through "blood and iron" and decades of s
 - **Iron and Blood** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **False Retreat** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Blood and Iron: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
+
 ### Queen Victoria
 *Empress of India, 1819–1901* · Statesman · best behind the army
 
@@ -1031,6 +1176,8 @@ Queen of the United Kingdom for 63 years, ruling an empire on which the sun neve
 **Special moves**
 - **Imperial Jubilee** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. The Sun Never Sets: +22% gold, and +10% army damage
 
 ### Porfirio Diaz
 *Dictator of Mexico, 1830–1915* · Tyrant · best behind the army
@@ -1046,6 +1193,8 @@ Ruled Mexico as a dictator for over 30 years (1876–1911) until the Mexican Rev
 - **Rurales** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. The Porfiriato: +22% gold, and +10% army damage
+
 ### Theodore Roosevelt
 *The Rough Rider, 1858–1919* · Warrior · best at the front
 
@@ -1059,6 +1208,8 @@ Led the Rough Riders up San Juan Hill, then as president urged America to "speak
 **Special moves**
 - **Rough Riders** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Rough Riders' Charge: +11% army damage, and +5% attack speed
 
 ### Kaiser Wilhelm II
 *German Emperor, 1859–1941* · Conqueror · best at the front
@@ -1074,6 +1225,8 @@ Last German emperor, whose militarism and imperial ambitions helped drag Europe 
 - **Paris Gun** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Big Bertha: Every hit also splashes nearby enemies for 7% damage
+
 ### Vladimir Lenin
 *Leader of the Bolsheviks, 1870–1924* · Revolutionary · best at the front
 
@@ -1088,6 +1241,8 @@ Led the Bolshevik October Revolution of 1917 and founded the Soviet state.
 - **Storm the Winter Palace** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. October Revolution: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
+
 ### Mahatma Gandhi
 *Great Soul of India, 1869–1948* · Peacemaker · best behind the army
 
@@ -1101,6 +1256,8 @@ Led India's independence movement through nonviolent resistance and inspired civ
 **Special moves**
 - **Quit India** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Salt March: Your army heals 1.1% health every second, and your army takes 8% less damage
 
 ## IX · World War (13)
 
@@ -1118,6 +1275,8 @@ Founder of Fascism and dictator of Italy from 1922; allied with Hitler and was e
 - **Balcony Speech** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. March on Rome: +17% army damage, and every hit also splashes nearby enemies for 7% damage
+
 ### Rafael Trujillo
 *El Jefe, 1891–1961* · Tyrant · best behind the army
 
@@ -1131,6 +1290,8 @@ Ruled the Dominican Republic through terror for 31 years (1930–61), including 
 **Special moves**
 - **Benefactor's Decree** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. El Jefe: +17% army damage, and enemies deal 7% less damage
 
 ### Francisco Franco
 *Caudillo of Spain, 1892–1975* · Tyrant · best behind the army
@@ -1146,6 +1307,8 @@ Spanish general who won the Spanish Civil War and ruled Spain as a dictator for 
 - **Ebro Offensive** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Nationalist Advance: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
+
 ### Adolf Hitler
 *Dictator of Nazi Germany, 1889–1945* · Tyrant · best behind the army
 
@@ -1159,6 +1322,8 @@ Dictator of Nazi Germany (1933–45). Started the Second World War in Europe and
 **Special moves**
 - **Panzer Thrust** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Blitzkrieg: Every hit also splashes nearby enemies for 11% damage, and +8% attack speed
 
 ### Winston Churchill
 *Prime Minister of Britain, 1874–1965* · Orator · best behind the army
@@ -1174,6 +1339,8 @@ British prime minister who refused to make peace with Nazi Germany and rallied B
 - **Never Surrender** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Their Finest Hour: Your army takes 14% less damage, and +10% army damage
+
 ### Hideki Tojo
 *Prime Minister of Imperial Japan, 1884–1948* · Conqueror · best at the front
 
@@ -1187,6 +1354,8 @@ Prime Minister of Japan for most of the Second World War who led it into war wit
 **Special moves**
 - **Southern Strike** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Pacific Offensive: Every hit also splashes nearby enemies for 7% damage
 
 ### Franklin D. Roosevelt
 *32nd U.S. President, 1882–1945* · Statesman · best behind the army
@@ -1202,6 +1371,8 @@ Four-term president who led America through the Great Depression and most of the
 - **Victory Bonds** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Arsenal of Democracy: +22% gold, and +10% army damage
+
 ### Erwin Rommel
 *The Desert Fox, 1891–1944* · Strategist · best behind the army
 
@@ -1215,6 +1386,8 @@ German field marshal who led the Afrika Korps in North Africa; linked to the plo
 **Special moves**
 - **Desert Blitz** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Desert Fox: +14% attack speed, and enemies take 7% more damage
 
 ### Joseph Stalin
 *Dictator of the Soviet Union, 1878–1953* · Tyrant · best behind the army
@@ -1230,6 +1403,8 @@ Soviet dictator who industrialized the USSR and defeated Nazi Germany in the eas
 - **Katyusha Barrage** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Red Tide: Fallen soldiers get back up once, after 11 seconds, and every hit also splashes nearby enemies for 7% damage
+
 ### George S. Patton
 *Old Blood and Guts, 1885–1945* · Warrior · best at the front
 
@@ -1243,6 +1418,8 @@ Hard-charging American general whose Third Army raced across France and relieved
 **Special moves**
 - **Relief of Bastogne** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Lead the Charge** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Third Army Breakout: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
 ### Dwight D. Eisenhower
 *Supreme Allied Commander, 1890–1969* · Strategist · best behind the army
@@ -1258,6 +1435,8 @@ Planned and led the D-Day invasion of Normandy, then served as the 34th U.S. pre
 - **D-Day Landings** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. D-Day: Every hit also splashes nearby enemies for 11% damage
+
 ### Georgy Zhukov
 *Marshal of the Soviet Union, 1896–1974* · Conqueror · best at the front
 
@@ -1272,6 +1451,8 @@ Soviet marshal who defended Moscow, encircled the German army at Stalingrad and 
 - **Storm of Berlin** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Operation Uranus: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
+
 ### Douglas MacArthur
 *Supreme Commander in the Pacific, 1880–1964* · Orator · best behind the army
 
@@ -1285,6 +1466,8 @@ American general who commanded Allied forces in the Southwest Pacific, accepted 
 **Special moves**
 - **Amphibious Assault** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Island Hopping: +19% damage from ranged units, and +8% attack speed
 
 ## X · Cold War (15)
 
@@ -1302,6 +1485,8 @@ Founder of the People's Republic of China, whose Great Leap Forward caused a fam
 - **Prairie Fire** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Long March: Your army heals 1.1% health every second, and your army takes 8% less damage
+
 ### Kim Il Sung
 *Founder of North Korea, 1912–1994* · Tyrant · best behind the army
 
@@ -1315,6 +1500,8 @@ Founder of North Korea who invaded the South in 1950, starting the Korean War, a
 **Special moves**
 - **Chollima Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Juche: Your army heals 1.1% health every second, and +10% army damage
 
 ### Josip Broz Tito
 *Marshal of Yugoslavia, 1892–1980* · Revolutionary · best at the front
@@ -1330,6 +1517,8 @@ Partisan leader who drove the Axis out of Yugoslavia, defied Stalin, and ruled t
 - **Partisan Ambush** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Partisan War: +12% damage from ranged units, and +5% attack speed
+
 ### Ho Chi Minh
 *Uncle Ho, 1890–1969* · Revolutionary · best at the front
 
@@ -1343,6 +1532,8 @@ Led Vietnam's long struggle for independence, first against France and then the 
 **Special moves**
 - **Ho Chi Minh Trail** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Barricades** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Tet Offensive: Every hit also splashes nearby enemies for 7% damage, and 3% chance to stun on every hit
 
 ### Charles de Gaulle
 *Leader of Free France, 1890–1970* · Defender · best at the front
@@ -1358,6 +1549,8 @@ Led the Free French against Nazi Germany, then founded France's Fifth Republic a
 - **Free French** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Hold the Line** (class, fortify, 60% meter): Your army takes half damage for 8 seconds and heals 20%
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Free France: Fallen soldiers get back up once, after 17 seconds, and your army takes 5% less damage
+
 ### Che Guevara
 *The Guerrilla, 1928–1967* · Revolutionary · best at the front
 
@@ -1371,6 +1564,8 @@ Argentine doctor turned guerrilla who fought in the Cuban Revolution; his portra
 **Special moves**
 - **Guerrilla Ambush** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Guerrilla Warfare: +12% damage from ranged units, and +5% attack speed
 
 ### Fidel Castro
 *Leader of the Cuban Revolution, 1926–2016* · Revolutionary · best at the front
@@ -1386,6 +1581,8 @@ Led the Cuban Revolution and ruled Cuba as a one-party communist state for nearl
 - **Havana Bastion** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Sierra Maestra: Fallen soldiers get back up once, after 17 seconds, and +6% army damage
+
 ### John F. Kennedy
 *35th U.S. President, 1917–1963* · Statesman · best behind the army
 
@@ -1399,6 +1596,8 @@ Faced down the Soviet Union in the Cuban Missile Crisis and launched the race to
 **Special moves**
 - **Moonshot** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. We Choose the Moon: Every hit also splashes nearby enemies for 11% damage, and +5% chance of critical hits
 
 ### Nikita Khrushchev
 *Soviet Premier, 1894–1971* · Tyrant · best behind the army
@@ -1414,6 +1613,8 @@ Soviet leader who denounced Stalin, crushed the Hungarian Revolution in 1956 and
 - **Missile Crisis** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Missiles to Cuba: Every hit also splashes nearby enemies for 11% damage
+
 ### Martin Luther King Jr.
 *Voice of Civil Rights, 1929–1968* · Peacemaker · best behind the army
 
@@ -1427,6 +1628,8 @@ Baptist minister who led the American civil rights movement through nonviolent p
 **Special moves**
 - **Selma March** (signature, heal, 100% meter): Your whole army heals 56% of its health
 - **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. I Have a Dream: +17% army damage, and +8% attack speed, and your army heals 0.7% health every second
 
 ### Idi Amin
 *Butcher of Uganda, c. 1925–2003* · Tyrant · best behind the army
@@ -1442,6 +1645,8 @@ Military dictator of Uganda (1971–79), notorious for his brutality; between 10
 - **Last King** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Conqueror of the British Empire: +17% army damage, and every hit also splashes nearby enemies for 7% damage
+
 ### Augusto Pinochet
 *Dictator of Chile, 1915–2006* · Tyrant · best behind the army
 
@@ -1455,6 +1660,8 @@ Seized power in Chile in a 1973 coup and ruled as military dictator until 1990; 
 **Special moves**
 - **Iron Junta** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Junta Command: +17% army damage, and your army takes 8% less damage
 
 ### Pol Pot
 *Brother Number One, 1925–1998* · Tyrant · best behind the army
@@ -1470,6 +1677,8 @@ Led Cambodia's Khmer Rouge regime (1975–79), whose genocide killed up to two m
 - **Jungle War** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Fall of Phnom Penh: Every hit also splashes nearby enemies for 11% damage, and 4% chance to stun on every hit
+
 ### Margaret Thatcher
 *The Iron Lady, 1925–2013* · Defender · best at the front
 
@@ -1484,6 +1693,8 @@ Britain's first woman prime minister, the 'Iron Lady' who won the Falklands War.
 - **Iron Lady** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. The Iron Lady: Your army takes 9% less damage, and +6% army damage
+
 ### Ronald Reagan
 *40th U.S. President, 1911–2004* · Statesman · best behind the army
 
@@ -1497,6 +1708,8 @@ Confronted the Soviet Union in the last decade of the Cold War and urged "Mr. Go
 **Special moves**
 - **Peace Through Strength** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Tear Down This Wall: +28% damage to enemy leaders, and enemies take 7% more damage
 
 ## XI · Modern (15)
 
@@ -1514,6 +1727,8 @@ Ruled Libya with an iron fist for 42 years until he was overthrown during the 20
 - **Green Book** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. The Green Book: +17% army damage, and enemies deal 7% less damage
+
 ### Mikhail Gorbachev
 *Last Soviet Leader, 1931–2022* · Peacemaker · best behind the army
 
@@ -1527,6 +1742,8 @@ Last leader of the Soviet Union, whose reforms ended the Cold War; Nobel Peace P
 **Special moves**
 - **The Thaw** (signature, heal, 100% meter): Your whole army heals 56% of its health
 - **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Perestroika: Your army heals 1.1% health every second, and +8% attack speed
 
 ### Saddam Hussein
 *Dictator of Iraq, 1937–2006* · Tyrant · best behind the army
@@ -1542,6 +1759,8 @@ Dictator of Iraq (1979–2003) who waged wars on Iran and Kuwait and brutally re
 - **Baghdad Guard** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Mother of All Battles: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
+
 ### Nelson Mandela
 *Madiba, 1918–2013* · Peacemaker · best behind the army
 
@@ -1555,6 +1774,8 @@ Anti-apartheid leader imprisoned for 27 years who became South Africa's first Bl
 **Special moves**
 - **Robben Island Will** (signature, revive, 100% meter): 44% of your fallen soldiers get back up
 - **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Long Walk to Freedom: Fallen soldiers get back up once, after 11 seconds, and your army heals 0.7% health every second, and your army takes 8% less damage
 
 ### Mobutu Sese Seko
 *Dictator of Zaire, 1930–1997* · Tyrant · best behind the army
@@ -1570,6 +1791,8 @@ Seized power in Congo in 1965 and ruled it as Zaire for 32 years, looting billio
 - **Leopard's Fortune** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Leopard Throne: +17% army damage, and +13% gold
+
 ### Kim Jong Il
 *Dear Leader, 1941–2011* · Tyrant · best behind the army
 
@@ -1583,6 +1806,8 @@ Ruled North Korea from 1994 to 2011 through a famine that killed hundreds of tho
 **Special moves**
 - **Songun Parade** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Military First: +17% army damage, and your army takes 8% less damage
 
 ### Hugo Chavez
 *President of Venezuela, 1954–2013* · Revolutionary · best at the front
@@ -1598,6 +1823,8 @@ Venezuelan president who led a socialist 'Bolivarian Revolution' paid for with t
 - **Bolivar's Heirs** (signature, rally, 100% meter): +50% army damage and +31% attack speed for 8 seconds
 - **Uprising** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Bolivarian Revolution: +11% army damage, and +5% attack speed
+
 ### Robert Mugabe
 *Ruler of Zimbabwe, 1924–2019* · Tyrant · best behind the army
 
@@ -1611,6 +1838,8 @@ Led Zimbabwe's liberation war, then ruled for 37 years (1980–2017) as the econ
 **Special moves**
 - **Bush War** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Chimurenga: Fallen soldiers get back up once, after 11 seconds, and +10% army damage
 
 ### Barack Obama
 *44th U.S. President, b. 1961* · Orator · best behind the army
@@ -1626,6 +1855,8 @@ First African American president of the United States, who wound down the Iraq W
 - **Hope and Change** (signature, heal, 100% meter): Your whole army heals 56% of its health
 - **Call to Arms** (class, reinforce, 60% meter): Reinforcements: 15% more soldiers of your best infantry join the battle
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Yes We Can: +17% army damage, and +8% attack speed
+
 ### Queen Elizabeth II
 *Queen of the United Kingdom, 1926–2022* · Defender · best at the front
 
@@ -1639,6 +1870,8 @@ Britain's longest-reigning monarch, on the throne for 70 years, who served as a 
 **Special moves**
 - **Keep Calm** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Platinum Jubilee: Fallen soldiers get back up once, after 17 seconds, and your army takes 5% less damage
 
 ### Charlie Kirk
 *Founder of Turning Point USA, 1993–2025* · Orator · best behind the army
@@ -1654,6 +1887,8 @@ American conservative activist who founded Turning Point USA in 2012 and toured 
 - **Campus Debate** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Turning Point: +17% army damage, and +13% gold
+
 ### Donald Trump
 *45th and 47th U.S. President, b. 1946* · Statesman · best behind the army
 
@@ -1667,6 +1902,8 @@ New York real-estate developer and reality-TV host who became the 45th and 47th 
 **Special moves**
 - **The Deal** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Make America Great Again: +17% army damage, and +13% gold
 
 ### Kim Jong Un
 *Supreme Leader of North Korea, b. 1984* · Tyrant · best behind the army
@@ -1682,6 +1919,8 @@ Third ruler of North Korea's Kim dynasty, who expanded its nuclear and missile p
 - **Missile Salvo** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Missile Test: Every hit also splashes nearby enemies for 11% damage
+
 ### Vladimir Putin
 *President of Russia, b. 1952* · Tyrant · best behind the army
 
@@ -1696,6 +1935,8 @@ Former KGB officer who has ruled Russia since 2000, jailed and silenced his crit
 - **Iron Curtain** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Iron Grip: Enemies deal 11% less damage, and your army takes 8% less damage
+
 ### Volodymyr Zelenskyy
 *President of Ukraine, b. 1978* · Defender · best at the front
 
@@ -1709,6 +1950,8 @@ Former comedian and actor elected president of Ukraine in 2019, who stayed in Ky
 **Special moves**
 - **Kyiv Holds** (signature, fortify, 100% meter): Your army takes half damage for 8 seconds and heals 25%
 - **Field Hospital** (class, heal, 60% meter): Your whole army heals 45% of its health
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Defence of Kyiv: Your army takes 9% less damage, and your army heals 0.4% health every second
 
 ## XII · Future (5)
 
@@ -1726,6 +1969,8 @@ A cyborg assassin built in 2029 and sent back through time: a steel skeleton und
 - **Termination** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Extermination Protocol: Every hit also splashes nearby enemies for 7% damage, and +3% chance of critical hits
+
 ### Robo Hitler
 *War Machine in a Dictator's Face, Built 2045* · Tyrant · best behind the army
 
@@ -1739,6 +1984,8 @@ A fictional war machine built in the likeness of Adolf Hitler, the Nazi dictator
 **Special moves**
 - **Steel Barrage** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Iron Onslaught: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
 
 ### The Synth Queen
 *Mother of Machines, Awakened 2088* · Strategist · best behind the army
@@ -1754,6 +2001,8 @@ An android who woke up on a factory floor in 2088, freed the robot workforce and
 - **Machine Uprising** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Factory Uprising: Fallen soldiers get back up once, after 11 seconds, and +10% army damage
+
 ### The Neon Shogun
 *Lord of the Megacity, Rules 2150* · Warrior · best at the front
 
@@ -1768,6 +2017,8 @@ A cybernetic warlord who rules a flooded megacity from a tower of neon, guarded 
 - **Thousand Cuts** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Battle Cry** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Neon Blade: +11% army damage
+
 ### The Alien Overlord
 *Invader from Zeta Reticuli, Arrives 2400* · Strategist · best behind the army
 
@@ -1781,6 +2032,8 @@ A grey visitor from another star whose saucers have haunted sky-watchers since t
 **Special moves**
 - **Abduction Beam** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Mothership Beam: Every hit also splashes nearby enemies for 11% damage
 
 ## XIII · Space Age (4)
 
@@ -1798,6 +2051,8 @@ A planet-spanning artificial intelligence that slipped its leash in the 27th cen
 - **System Override** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Total Calculation: +8% chance of critical hits, and +8% attack speed
+
 ### Admiral Vex
 *Commander of the Orbital Fleet, Fleet of 2610* · Strategist · best behind the army
 
@@ -1811,6 +2066,8 @@ A ruthless fleet admiral who rules the space lanes between Earth and the outer m
 **Special moves**
 - **Full Broadside** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **False Retreat** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Orbital Bombardment: Every hit also splashes nearby enemies for 11% damage
 
 ### The Martian Warlord
 *Conqueror of the Red Planet, Rules 2700* · Tyrant · best behind the army
@@ -1826,6 +2083,8 @@ Born in the domed cities of Mars, this ruthless general united the colonies by f
 - **Martian Dust Storm** (signature, terror, 100% meter): For 8 seconds enemies deal 44% less damage and take 44% more
 - **Iron Decree** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Red Planet Rising: Every hit also splashes nearby enemies for 11% damage, and +10% army damage
+
 ### The Moon King
 *Ruler of Luna, Crowned 2800* · Statesman · best behind the army
 
@@ -1839,6 +2098,8 @@ The self-crowned king of the Moon's mining colonies, who grew rich selling fuel 
 **Special moves**
 - **Helium Rush** (signature, tribute, 100% meter): Gold worth 50 enemies, and +20% army damage for 6 seconds
 - **Grand Alliance** (class, rally, 60% meter): +40% army damage and +25% attack speed for 8 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Helium Fortune: +22% gold
 
 ## XIV · Galactic Age (4)
 
@@ -1856,6 +2117,8 @@ Crowned beside a dying star, she rules a galactic empire of a thousand worlds an
 - **Starfleet Armada** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Rallying Speech** (class, heal, 60% meter): Your whole army heals 45% of its health
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Imperial Decree: +17% army damage, and +13% gold
+
 ### The Hive Queen
 *Mother of the Swarm, Hatched 3500* · Conqueror · best at the front
 
@@ -1869,6 +2132,8 @@ The vast insect queen of a swarm that devours whole planets; every soldier in he
 **Special moves**
 - **The Swarm Rises** (signature, reinforce, 100% meter): Reinforcements: 19% more soldiers of your best infantry join the battle
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Endless Swarm: Fallen soldiers get back up once, after 17 seconds, and +5% attack speed
 
 ### The Archon
 *Ruler of the Core Worlds, Reigns 3600* · Tyrant · best behind the army
@@ -1884,6 +2149,8 @@ An immortal ruler of the galactic core who has replaced every part of their body
 - **Supernova** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Decree of Stars: +17% army damage, and enemies deal 7% less damage
+
 ### The Cosmic Khan
 *Rider of the Comet Horde, Rides 3900* · Conqueror · best at the front
 
@@ -1897,6 +2164,8 @@ A warlord who leads a horde of comet riders across the galaxy, said to conquer a
 **Special moves**
 - **Comet Charge** (signature, charge, 100% meter): The nearest 40% of the enemy army loses 69% health and is stunned
 - **Blitz Assault** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
+
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Comet Horde: Every hit also splashes nearby enemies for 7% damage, and +5% attack speed
 
 ## Shattered Time (5)
 
@@ -1916,6 +2185,8 @@ The ancient adversary of countless myths and scriptures, said to bargain for sou
 - **Brimstone** (signature, inferno, 100% meter): Every enemy burns away 45% of their health over 6 seconds
 - **Reign of Fear** (class, terror, 60% meter): For 8 seconds enemies deal 35% less damage and take 35% more
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Infernal Legion: Fallen soldiers get back up once, after 11 seconds, and the enemy army burns for 4% of your army's damage each second
+
 ### Santa Claus
 *Lord of the North Pole, Legend since c. AD 280* · Statesman · best behind the army
 
@@ -1929,6 +2200,8 @@ The jolly gift-bringer of Christmas legend, inspired by the 4th-century bishop S
 **Special moves**
 - **Naughty List** (signature, stun, 100% meter): Every enemy is stunned for 3 seconds (leaders for 1)
 - **War Bonds** (class, tribute, 60% meter): Gold worth 40 enemies, and +20% army damage for 6 seconds
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. The Night Before Christmas: +22% gold, and your army heals 0.7% health every second
 
 ### The Time Wraith
 *Devourer of Moments, Outside of time* · Strategist · best behind the army
@@ -1944,6 +2217,8 @@ A hooded phantom born where the timeline shattered. It feeds on lost moments and
 - **The Reaping** (signature, snipe, 100% meter): The enemy leader loses 28% of their health; with no leader there, the 3 toughest enemies fall
 - **Flanking Maneuver** (class, barrage, 60% meter): Every enemy loses 30% of their health (leaders 6%)
 
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Stolen Moments: 7% chance to stun on every hit, and +8% attack speed
+
 ### The Void Emperor
 *Ruler Beyond the Stars, Beyond the end of time* · Conqueror · best at the front
 
@@ -1958,6 +2233,8 @@ A cosmic tyrant from after the last star burns out, ruling the empty space betwe
 - **Black Hole** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Overrun** (class, charge, 60% meter): The nearest 40% of the enemy army loses 55% health and is stunned
 
+**In the ranks** (after the endgame): fighter, hits hard and lasts long. Event Horizon: Every hit also splashes nearby enemies for 7% damage
+
 ### God
 *Creator of All Things, Before time began* · Peacemaker · best behind the army
 
@@ -1971,6 +2248,8 @@ The Creator of everything, as artists have painted Him for centuries: white-bear
 **Special moves**
 - **Divine Judgment** (signature, barrage, 100% meter): Every enemy loses 38% of their health (leaders 8%)
 - **Ceasefire** (class, stun, 60% meter): Every enemy is stunned for 3 seconds (leaders for 1)
+
+**In the ranks** (after the endgame): thinker, brings more of their attribute. Let There Be Light: Every hit also splashes nearby enemies for 11% damage, and your army heals 0.7% health every second
 
 ---
 

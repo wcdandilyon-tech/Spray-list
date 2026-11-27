@@ -35,6 +35,10 @@
     mysteryAtk: 1.3,
     heroAtk: 4, // commanders on the field, relative to an average soldier
     heroHp: 6,
+    champCost: 6, // army capacity one leader in the ranks takes
+    champSlots: 3, // leaders in the ranks once time shatters
+    champSlotEvery: 18, // one more slot every this many stages of Shattered Time
+    champSlotMax: 8,
     capBase: 30, // army capacity at the start
     capPerEra: 10, // more capacity for every era reached
     enemyCap: 1,
@@ -172,6 +176,7 @@
       army: START_ARMY(),
       meter: {}, // each leader's special meter, 0-100
       pos: {}, // where each leader fights: 'front' or 'back'
+      champs: [], // leaders fighting in the ranks (unlocked once time shatters)
       owned: START_ARMY(),
       uattr: {},
       unitLv: {},
@@ -248,6 +253,7 @@
     S.auto = Object.assign({ push: true, build: true, special: true }, obj.auto || {});
     S.meter = S.meter || {};
     S.pos = S.pos || {};
+    S.champs = Array.isArray(S.champs) ? S.champs : [];
     if (!S.seed) S.seed = (Math.random() * 1e9) | 0;
     infoCache = new Map();
     S.stats = Object.assign(base.stats, obj.stats || {});
@@ -256,6 +262,7 @@
     });
     if (!S.roster[S.main]) S.main = Object.keys(S.roster)[0];
     S.partners = (S.partners || []).filter((p) => S.roster[p] && p !== S.main).slice(0, 2);
+    S.champs = S.champs.filter((id, i, a) => S.roster[id] && id !== S.main && !S.partners.includes(id) && a.indexOf(id) === i);
     Object.keys(S.doctrines).forEach((d) => {
       if (!DOC[d]) delete S.doctrines[d];
     });
@@ -325,9 +332,56 @@
   const cpCost = (id) => ROLES[UNIT[id].role].cost;
   CW.cpCost = cpCost;
   CW.armyUsed = function () {
-    let n = 0;
+    let n = CW.champCap();
     for (const id in S.army) n += S.army[id] * cpCost(id);
     return n;
+  };
+
+  // ---- leaders in the ranks: once time shatters, recruited leaders can take soldiers' places on the front line.
+  // Each takes 6 capacity and fights as a front-line unit. Fighters (front-line classes) hit harder and last longer;
+  // thinkers fight less well but bring more of their signature attribute to the whole army.
+  // At most half of your capacity can go to leaders; any beyond that wait in reserve until capacity grows.
+  CW.champUnlocked = () => !!S && S.best > PATH_LEN;
+  CW.champSlots = function () {
+    if (!CW.champUnlocked()) return 0;
+    return Math.min(CFG.champSlotMax, CFG.champSlots + Math.floor((S.best - PATH_LEN - 1) / CFG.champSlotEvery));
+  };
+  CW.champNextSlot = function () {
+    const n = CW.champSlots();
+    if (!n || n >= CFG.champSlotMax) return 0;
+    return PATH_LEN + 1 + (n - CFG.champSlots + 1) * CFG.champSlotEvery;
+  };
+  CW.champMax = () => Math.min(CW.champSlots(), Math.floor(CW.capacity() / 2 / CFG.champCost));
+  CW.champs = () => (S && S.champs ? S.champs.slice(0, CW.champMax()) : []);
+  CW.champCap = () => CW.champs().length * CFG.champCost;
+  CW.champCost = () => CFG.champCost;
+  const champFighter = (lid) => CW.FRONT_CLASSES.includes(LEADER[lid].cls);
+  CW.champFighter = champFighter;
+  // the share of their signature attribute a leader in the ranks gives your army
+  CW.champAttrK = function (lid) {
+    const r = S.roster[lid] || { stars: 0 };
+    return (champFighter(lid) ? 0.35 : 0.55) * (1 + 0.1 * r.stars);
+  };
+  const CHAMP_SHAPE = {
+    warrior: [1.5, 1.6], conqueror: [1.6, 1.5], revolutionary: [1.45, 1.5], defender: [2.1, 1.15],
+    tyrant: [1.25, 1.1], strategist: [1.15, 1.05], statesman: [1.2, 1], peacemaker: [1.35, 0.9], orator: [1.15, 1.05],
+  };
+  CW.setChamp = function (lid, on) {
+    if (!CW.champUnlocked() || !S.roster[lid]) return false;
+    const at = S.champs.indexOf(lid);
+    if (!on) {
+      if (at < 0) return false;
+      S.champs.splice(at, 1);
+    } else {
+      if (at >= 0 || lid === S.main || S.partners.includes(lid) || CW.champs().length >= CW.champMax()) return false;
+      // a leader waiting in reserve beyond the limit makes room for the new pick
+      S.champs = CW.champs().concat([lid]);
+    }
+    M = null;
+    fitArmy();
+    if (S.auto.build) CW.autoBuild();
+    emit('army');
+    return true;
   };
   CW.armySize = function () {
     let n = 0;
@@ -347,6 +401,12 @@
       else if (S.army[id] > CW.owned(id)) S.army[id] = CW.owned(id);
       if (!S.army[id]) delete S.army[id];
     }
+    S.champs = (S.champs || []).filter((id) => S.roster[id] && id !== S.main && !S.partners.includes(id));
+    fitArmy();
+    if (!Object.keys(S.army).length || S.auto.build) CW.autoBuild();
+  }
+  // send soldiers home (biggest first) until the army fits its capacity
+  function fitArmy() {
     let over = CW.armyUsed() - CW.capacity();
     const ids = Object.keys(S.army).sort((a, b) => cpCost(b) - cpCost(a));
     for (const id of ids) {
@@ -356,7 +416,6 @@
       }
       if (!S.army[id]) delete S.army[id];
     }
-    if (!Object.keys(S.army).length || S.auto.build) CW.autoBuild();
   }
   // set how many of your soldiers of a unit type march into battle (limited by how many you own and by army capacity)
   CW.setCount = function (id, n, keepAuto) {
@@ -386,7 +445,7 @@
     ids.forEach((id) => (val[id] = unitValue(id, ctx)));
     ids.sort((a, b) => val[b] - val[a]);
     S.army = {};
-    let used = 0;
+    let used = CW.champCap();
     const take = (id, budget) => {
       const cp = cpCost(id);
       const n = Math.min(S.owned[id] - (S.army[id] || 0), Math.floor(Math.min(budget, cap - used) / cp));
@@ -397,8 +456,9 @@
       return n * cp;
     };
     const share = { hvy: 0.2, cav: 0.15, rng: 0.25, inf: 0.4 };
+    const room = cap - used;
     for (const role in share) {
-      let budget = Math.floor(cap * share[role]);
+      let budget = Math.floor(room * share[role]);
       for (const id of ids) if (UNIT[id].role === role && budget > 0) budget -= take(id, budget);
     }
     for (const id of ids) if (used < cap) take(id, cap - used);
@@ -610,9 +670,48 @@
       struck: false, face: 1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: true, isBoss: false, main: i === 0,
     };
   }
+  // a leader in the ranks: worth their 6 capacity of your army's soldiers, shaped by their class, plus level and stars
+  function champStats(lid, ctx) {
+    let dps = 0;
+    let hp = 0;
+    let cp = 0;
+    for (const id in S.army) {
+      const st = unitStats(id, ctx);
+      const c = S.army[id];
+      dps += (st.atk / st.int) * c;
+      hp += st.hp * c;
+      cp += c * cpCost(id);
+    }
+    if (!cp) {
+      const best = CW.unlockedUnits().filter((u) => u.role === 'inf').pop() || UNITS[0];
+      const st = unitStats(best.id, ctx);
+      dps = st.atk / st.int;
+      hp = st.hp;
+      cp = cpCost(best.id);
+    }
+    const r = S.roster[lid] || { lv: 1, stars: 0 };
+    const b = (1 + 0.05 * (r.lv - 1)) * (1 + 0.1 * r.stars);
+    const sh = CHAMP_SHAPE[LEADER[lid].cls] || [1.2, 1];
+    const n = CFG.champCost;
+    // quick strikes that cleave the enemies around their target, so no damage is wasted on weak soldiers
+    return { hp: (hp / cp) * n * sh[0] * b * (1 + mods().heroHp), atk: (dps / cp) * n * sh[1] * b * 0.6, int: 0.6 };
+  }
+  CW.champStats = (lid) => champStats(lid, armyContext());
+  function mkChamp(lid, i, n, st) {
+    const q = mkHero(lid, 1, st);
+    q.main = false;
+    q.champ = true;
+    q.cost = CFG.champCost;
+    q.x = 131 - (i % 2) * 4;
+    q.z = 16 + (88 * (i + 0.5)) / n;
+    q.hold = false;
+    q.speed = 22;
+    q.splash = champFighter(lid) ? 0.45 : 0.3;
+    return q;
+  }
   function heroAlive(lid) {
     if (!B) return true;
-    for (const q of B.a) if (q.isHero && q.lid === lid) return q.alive;
+    for (const q of B.a) if (q.isHero && !q.champ && q.lid === lid) return q.alive;
     return true;
   }
   CW.heroAlive = heroAlive;
@@ -634,8 +733,17 @@
       q.speed = st.speed;
       q.ua = st.ua;
     }
+    for (const h of B.a) {
+      if (!h.champ) continue;
+      const st = champStats(h.lid, ctx);
+      const ratio = h.maxHp > 0 ? h.hp / h.maxHp : 1;
+      h.maxHp = st.hp;
+      h.hp = h.alive ? st.hp * ratio : 0;
+      h.atk = st.atk;
+      h.int = st.int;
+    }
     commandIds().forEach((lid, i) => {
-      const h = B.a.find((q) => q.isHero && q.lid === lid);
+      const h = B.a.find((q) => q.isHero && !q.champ && q.lid === lid);
       if (!h) return;
       const st = heroStats(lid, i === 0, ctx);
       const ratio = h.maxHp > 0 ? h.hp / h.maxHp : 1;
@@ -726,6 +834,8 @@
     }
     deploy(allies, 'a');
     commandIds().forEach((lid, i) => allies.push(mkHero(lid, i, heroStats(lid, i === 0, ctx))));
+    const ch = CW.champs();
+    ch.forEach((lid, i) => allies.push(mkChamp(lid, i, ch.length, champStats(lid, ctx))));
     let g = growth(S.stage);
     if (info.chaos) g *= CFG.chaos;
     const foes = enemyArmy(info, g);
@@ -928,7 +1038,7 @@
     if (splash > 0) {
       const r = 11 + (a.role === 'hvy' ? 6 : 0) + (a.isBoss ? 8 : 0);
       for (const f of foes) if (f.alive && f !== t && (f.x - p.x1) ** 2 + (f.z - p.z1) ** 2 < r * r) hit(a, f, p.dmg * splash, false, true);
-      if (a.role === 'hvy' || a.isBoss || splash >= 0.3) B.fx.push({ k: 'blast', x: p.x1, z: p.z1, r: r * 0.55, side: p.side });
+      if (a.role === 'hvy' || a.isBoss || (splash >= 0.3 && !a.champ)) B.fx.push({ k: 'blast', x: p.x1, z: p.z1, r: r * 0.55, side: p.side });
     }
   }
 
@@ -966,6 +1076,7 @@
     }
     if (t.trait === 'armor') dmg *= 0.7;
     if (t.trait === 'guard') dmg *= 0.85;
+    if (t.champ) dmg *= 0.5; // leaders in the ranks fight with a bodyguard
     if (t.ua.def) dmg *= 1 - Math.min(0.7, t.ua.def);
     if (t.ua.rdef && src && src.proj) dmg *= 1 - t.ua.rdef;
     t.hp -= dmg;
@@ -989,10 +1100,10 @@
     B.fx.push({ k: 'death', id: q.id, x: q.x, z: q.z, uid: q.uid, lid: q.lid, side: q.side, kind: q.kind, air: q.air, face: q.face });
     if (!bySpecial) {
       if (q.side === 'e' && !q.isBoss) gainMeter(q);
-      if (q.side === 'a' && B.boss && B.boss.alive) B.bossMeter = Math.min(100, B.bossMeter + (q.isHero ? 25 : (110 * q.cost) / B.aCap));
+      if (q.side === 'a' && B.boss && B.boss.alive) B.bossMeter = Math.min(100, B.bossMeter + (q.champ ? 12 : q.isHero ? 25 : (110 * q.cost) / B.aCap));
     }
     if (q.isHero) {
-      B.fx.push({ k: 'herofall', lid: q.lid });
+      B.fx.push({ k: 'herofall', lid: q.lid, champ: !!q.champ });
       emit('heroFall', q.lid);
     }
     if (q.side === 'e') {
@@ -1378,7 +1489,9 @@
     S.stage++;
     while (S.stage < S.runMax && CW.stageInfo(S.stage).isBoss) S.stage++;
     if (S.stage > S.runMax) S.runMax = S.stage;
+    const slots = CW.champSlots();
     if (S.stage > S.best) S.best = S.stage;
+    if (CW.champSlots() > slots) emit('champSlot', CW.champSlots());
     const info = CW.stageInfo(S.stage);
     const reach = info.chaos ? NERA - 1 : info.era;
     if (reach > S.eraReached) {
@@ -1459,6 +1572,7 @@
       const k = CW.attrStrength(lid, i === 0 ? 'main' : 'partner');
       (i === 0 ? [0, 1, 2] : [1]).forEach((j) => addStats(a, CW.attr(lid, j).stats, k));
     });
+    for (const q of B.a) if (q.champ && q.alive) addStats(a, CW.attr(q.lid, 0).stats, CW.champAttrK(q.lid));
     if (B.boss && B.boss.alive) {
       const k = B.info.mystery ? 1.3 : B.info.echo ? 1.15 : 1;
       for (let j = 0; j < 3; j++) addStats(e, CW.attr(B.boss.lid, j).stats, k);
@@ -1608,6 +1722,7 @@
     if (!ids.every((id) => S.roster[id]) || new Set(ids).size !== ids.length) return false;
     S.main = main;
     S.partners = [p0, p1].filter(Boolean);
+    if (S.champs) S.champs = S.champs.filter((id) => !ids.includes(id));
     M = null;
     emit('command');
     return true;
