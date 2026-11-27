@@ -700,6 +700,19 @@
       case 'spacehelm':
         ell(B, 0, 0.5, 13, 12.5, hc, H, { clip: (x, y) => !(x > -4 && y > -3 && y < 10), bias: 0.2 });
         break;
+      case 'antennae': {
+        // Nib Nub: a gold headband with a purple gem, and two antennae topped with purple orbs
+        cap(B, -9.5, -4, 9.5, -4.6, 0.85, 0.85, hc, H, { bias: 0.4 });
+        dot(B, 3.5, -4.6, ha);
+        const st = '#4a9a3a';
+        cap(B, -3, -8.8, -8.2, -11.4, 0.6, 0.5, st, H, { bias: 0.4 });
+        cap(B, 3.5, -9.2, 8.6, -11.4, 0.6, 0.5, st, H, { bias: 0.4 });
+        ell(B, -9.2, -11.6, 1.6, 1.6, ha, part(B), { bias: 0.5 });
+        ell(B, 9.6, -11.6, 1.6, 1.6, ha, part(B), { bias: 0.5 });
+        dot(B, -9.6, -12.1, '#c8a0ff');
+        dot(B, 9.2, -12.1, '#c8a0ff');
+        break;
+      }
       case 'halo':
         // a golden ring floating above the head
         for (let a = 0; a < Math.PI * 2; a += 0.35) {
@@ -1800,7 +1813,10 @@
     return c;
   };
   const urlCache = {};
+  // Nib Nub's portrait is his own artwork
+  const NIB = 'img/nibnub.png';
   CW.portraitURL = function (id, variant) {
+    if (id === 'nibnub' && variant !== 'mystery') return NIB;
     const key = id + '|' + (variant || '');
     if (!urlCache[key]) {
       const c = CW.portrait(id, variant);
@@ -1811,6 +1827,7 @@
   };
   const headCache = {};
   CW.headURL = function (id, variant) {
+    if (id === 'nibnub' && variant !== 'mystery') return NIB;
     const key = id + '|' + (variant || '');
     if (!headCache[key]) {
       const p = CW.portrait(id, variant);

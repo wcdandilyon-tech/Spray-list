@@ -27,7 +27,7 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   trebuchets, samurai and cannons, landships, tanks and fighter planes, attack helicopters, stealth bombers, power armor,
   battle mechs, space marines and titan mechs. New units arrive already trained close to your best unit's level.
 - **Leader battles.** Every third stage you face a famous leader who fights as a giant on the field with a timer,
-  and whose attributes power their army. Win and they join your roster. 137 in all, from a Stone Age caveman, Otzi,
+  and whose attributes power their army. Win and they join your roster. 138 in all, from a Stone Age caveman, Otzi,
   Gilgamesh and Hatshepsut to Alexander, Caesar, Nero, Ragnar, King Arthur, Kublai Khan, Mehmed II, Napoleon, Frederick the Great,
   Grant, Hitler, Stalin, Mussolini, Rommel, Zhukov, Mao, Khrushchev, Pol Pot, Idi Amin, Gandhi, Martin Luther King Jr.,
   Mandela, Obama, Putin, Kim Jong Un, Zelenskyy, Charlie Kirk and Donald Trump, plus original future rulers (a cyborg
@@ -82,7 +82,7 @@ version, your stage moves to the matching era and you get a full army of that er
 | File | What's in it |
 | --- | --- |
 | `index.html` | Page layout and all styling |
-| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders, their three specials each, their prestige goals and the 31 doctrines |
+| `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 138 leaders, their three specials each, their prestige goals and the 31 doctrines |
 | `img/nibnub.png` | Nib Nub, the guide (artwork supplied by the game's owner) |
 | `LEADERS.md` | Every leader with their class, best position, attributes, three special moves, prestige goals and what they bring in the ranks |
 | `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader prestige and its stats, leader positions, leaders in the ranks, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
@@ -107,6 +107,19 @@ the start of leader battles and mystery fights, in each new era (with a joke for
 side, after a loss, on a prestige or a Time Rift, and now and then with a friendly hint. Each set of lines is used in turn,
 so he doesn't say the same thing twice in a row. Lessons and chatter can each be turned off, or his lessons started again,
 in Settings; saves from before the guide skip the basics.
+
+**The story (spoilers).** Nib Nub starts out sweet and helpful. As you travel through the eras he gets smug, and near the
+end of the time pathway he turns pompous and mocks you now and then, with hints about who he really is. Switch his lines
+off in Settings and he is a little hurt; switch them back on and early in the game he says sorry, while late in the game he
+gloats that you came crawling back. He is the **final leader battle** of the story, at the very end of the Galactic Age:
+before the fight he reveals himself as the Controller of the Infinite Universe, who trained you to find a worthy opponent.
+Beat him and he joins your roster (you can make him your commander), hands you the Infinite Universe and shows you the
+Time Rift controls... and whichever button you press, it was the red one. The timeline breaks. From then on (the
+post-game) every stretch of Shattered Time is its own **broken timeline** of three eras mixed together: the scenery of one,
+enemy soldiers from all three (Vikings next to tanks, pharaohs' chariots next to mechs), and leaders from any of them,
+often with a twist that makes them stronger (Titan: more health; Swift: faster attacks; Brutal: harder hits; Iron: takes
+less damage). Saves that were already past the story meet Nib Nub at their next mystery fight. The story scenes pause the
+battle while he talks; a tap finishes his line, the next tap moves on.
 
 The **Codex** only shows the leaders you have found so far, with a count of how many are still hidden in each era you have
 reached. Later eras and the mystery leaders stay secret until you get there.

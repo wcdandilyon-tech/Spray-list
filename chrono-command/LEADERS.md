@@ -1,6 +1,6 @@
 # Chrono Command: leader list
 
-All 137 leaders with their class, best position, three always-on attributes, three special moves and the prestige goals that unlock them. Values are each leader's base values as your commander with no stars or prestige (each star adds 10% to attributes and 5% to specials; each prestige adds 20% to attributes and specials and 25% strength on the field).
+All 137 leaders (plus one secret, at the very end of this page) with their class, best position, three always-on attributes, three special moves and the prestige goals that unlock them. Values are each leader's base values as your commander with no stars or prestige (each star adds 10% to attributes and 5% to specials; each prestige adds 20% to attributes and specials and 25% strength on the field).
 
 ## How specials, prestige and positions work
 
@@ -2384,6 +2384,23 @@ The Creator of everything, as artists have painted Him for centuries: white-bear
 - **Raise the Fallen** (revive, 90% meter; prestige 2: win 777 battles without falling): 44% of your fallen soldiers get back up
 
 **In the ranks** (after the endgame): thinker, brings more of their attribute. Let There Be Light: Every hit also splashes nearby enemies for 11% damage, and your army heals 0.7% health every second
+
+## Spoiler: the final leader
+
+### Nib Nub
+*Controller of the Infinite Universe, at the end of time* · Orator · best behind the army
+
+Your guide all along, and the last leader battle of the story at the very end of the Galactic Age. Beat him and he joins your roster.
+
+**Attributes**
+- **Infinite Remote** (signature attribute): army damage and a chance to stun on every hit
+- **Know-It-All Lecture** (partner attribute): enemies deal less damage
+- **Antenna Static** (third attribute): enemies take more damage
+
+**Special moves**
+- **Pause Button** (stun, 70% meter; starts unlocked): Every enemy is stunned for 3 seconds (leaders for 1)
+- **Antenna Zap** (snipe, 90% meter; prestige 1: beat 12 enemy leaders): The enemy leader loses a big share of their health; with no leader there, the 3 toughest enemies fall
+- **Rewrite the Timeline** (revive, 90% meter; prestige 2: defeat 9,999 enemies with specials): Many of your fallen soldiers get back up
 
 ---
 

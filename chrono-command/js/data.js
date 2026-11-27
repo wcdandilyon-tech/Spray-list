@@ -804,6 +804,13 @@
     ult('Endless Swarm', [['revive', 9, 0.5], ['buff', 'spd', 0.3, 10]]),
     sk('Acid Spit', [['burn', 8, 6]]),
     sk('Chitin Armor', [['buff', 'def', 0.4, 8]]));
+  // the last leader battle of the story: your guide all along
+  L('nibnub', 'Nib Nub', 'At the end of time', 4000, 13, 'orator', 'Controller of the Infinite Universe',
+    'A small green alien who said he came from very, very far away to help you. He had been watching all along, training a commander strong enough to face him, and ruled the Infinite Universe until someone finally beat him.',
+    { sk: '#6ac25a', hr: '#6ac25a', hs: 'none', fh: 'none', hat: 'antennae', hc: '#d9b45a', ha: '#7a3ac8', eyes: '#8a4ad8', out: 'robe', oc: '#4a3a8a', ac: '#d9d4c8', bg: '#1a1240' },
+    ult('Infinite Remote', [['buff', 'atk', 0.45, 10], ['stun', 2]]),
+    sk('Know-It-All Lecture', [['weaken', 0.3, 8]]),
+    sk('Antenna Static', [['expose', 0.35, 8]]));
 
   // ---- more leaders, added in every era
   // Stone Age
@@ -1076,7 +1083,7 @@
     troosevelt: 'club', mao: 'book', thatcher: 'handbag', mlk: 'mic', elizabeth1: 'sceptre', catherine: 'sceptre', ivan: 'sceptre', victoria: 'sceptre',
     gandhi: 'staff', mobutu: 'staff', cleopatra: 'sceptre', hatshepsut: 'sceptre', ramesses: 'sceptre', patton: 'gun', arthur: 'excalibur', robohitler: 'mg', god: 'staff', churchill: 'none', lenin: 'none', mandela: 'none', elizabeth2: 'flag',
     castro: 'rifle', che: 'rifle', ho_chi_minh: 'rifle', chavez: 'rifle', tubman: 'rifle', polpot: 'rifle', kirk: 'mic', trump: 'flag',
-    caveman: 'club', neanderthal: 'club', otzi: 'club', firekeeper: 'club', mammothmother: 'club', zelensky: 'rifle', synth: 'raygun', admiral: 'raygun', moonking: 'staff', archon: 'staff', cosmickhan: 'raygun', devil: 'trident', overmind: 'staff', warlord: 'gun', hive: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
+    caveman: 'club', neanderthal: 'club', otzi: 'club', firekeeper: 'club', mammothmother: 'club', zelensky: 'rifle', synth: 'raygun', admiral: 'raygun', moonking: 'staff', archon: 'staff', cosmickhan: 'raygun', devil: 'trident', overmind: 'staff', warlord: 'gun', hive: 'trident', santa: 'candy', alien: 'raygun', nibnub: 'staff', exterminator: 'gun', wraith: 'scythe', void: 'staff',
   };
   CW.weaponOf = (id) => CW.WPN[id] || (['statesman', 'orator', 'peacemaker'].includes(CW.LEADER[id].cls) ? 'flag' : 'sword');
   CW.MYSTERY = LEADERS.filter((l) => l.era === CW.ERAS.length).map((l) => l.id);
@@ -1140,7 +1147,7 @@
     overmind: ['System Override', 'stun'], admiral: ['Full Broadside', 'barrage'], warlord: ['Martian Dust Storm', 'terror'],
     moonking: ['Helium Rush', 'tribute'],
     empress: ['Starfleet Armada', 'barrage'], hive: ['The Swarm Rises', 'reinforce'], archon: ['Supernova', 'barrage'],
-    cosmickhan: ['Comet Charge', 'charge'],
+    cosmickhan: ['Comet Charge', 'charge'], nibnub: ['Pause Button', 'stun'],
     devil: ['Brimstone', 'inferno'], santa: ['Naughty List', 'stun'], wraith: ['The Reaping', 'snipe'], void: ['Black Hole', 'barrage'],
     god: ['Divine Judgment', 'barrage'],
   };
@@ -1277,6 +1284,7 @@
     moonking: [['Low Gravity Leap', 'charge'], ['Lunar Eclipse', 'stun']],
     empress: [['Royal Decree', 'rally'], ['Starlight Shield', 'shield']],
     hive: [['Bio-Leech', 'drain'], ['Queen\'s Brood', 'revive']],
+    nibnub: [['Antenna Zap', 'snipe'], ['Rewrite the Timeline', 'revive']],
     archon: [['Gravity Crush', 'execute'], ['Stasis Field', 'stun']],
     cosmickhan: [['Meteor Shower', 'barrage'], ['Star Horde', 'reinforce']],
     devil: [['Soul Bargain', 'drain'], ['Legion of the Damned', 'reinforce']],
@@ -1425,6 +1433,7 @@
     moonking: [['back', 50], ['time', 300]],
     empress: [['bosses', 10], ['eras', 14]],
     hive: [['inf', 3000], ['kills', 30000]],
+    nibnub: [['bosses', 12], ['spkills', 9999]],
     archon: [['bosses', 15], ['spkills', 10000]],
     cosmickhan: [['cav', 800], ['wins', 600]],
     devil: [['kills', 666], ['kills', 6666]],

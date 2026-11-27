@@ -48,7 +48,7 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .stat.gold b{color:var(--brass)}
 .ov{position:absolute;inset:0;pointer-events:none;font-size:clamp(10px,1.25cqw,13px)}
 .glass{background:rgba(12,14,13,.62);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.5em .75em}
-.ov-l{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 50px);width:min(34%,14em)}
+.ov-l{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:var(--topH,calc(env(safe-area-inset-top,0px) + 50px));width:min(34%,14em)}
 .ov-l b{display:block;font-weight:800;font-size:1.1em;letter-spacing:-.01em;line-height:1.2}
 .ov-l small{display:block;color:#c9b27a;font-size:.8em;font-weight:600}
 .tug{display:flex;height:.42em;border-radius:99px;overflow:hidden;margin:.45em 0 .25em;background:var(--foe)}
@@ -56,7 +56,7 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .cnts{display:flex;justify-content:space-between;font-size:.8em;font-weight:700;font-variant-numeric:tabular-nums}
 .cnts span:first-child{color:var(--ally)}
 .cnts span:last-child{color:var(--foe)}
-.ov-r{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 50px);width:min(40%,17em)}
+.ov-r{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:var(--topH,calc(env(safe-area-inset-top,0px) + 50px));width:min(40%,17em)}
 .ov-r .bn{display:flex;justify-content:space-between;gap:.6em;font-weight:800;font-size:1.05em;line-height:1.2}
 .ov-r .bn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ov-r .bn span{white-space:nowrap;font-variant-numeric:tabular-nums;color:#e9d39a}
@@ -428,6 +428,19 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
 .gpage.locked{border-style:dashed;opacity:.7}
 @media (orientation:landscape) and (max-height:540px){.guide{width:min(340px,46vw)}}
 @media (prefers-reduced-motion:reduce){.glow,.guide,.guide.talk .nib{animation:none}}
+
+/* story scenes: Nib Nub speaks, the battle waits */
+.modal.cine{background:rgba(4,3,10,.86)}
+.story{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+.story .nib{width:150px;height:150px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.story.talk .nib{animation:nibTalk .5s ease-in-out infinite}
+.story.evil .nib{filter:drop-shadow(0 0 14px rgba(255,70,60,.85)) drop-shadow(0 0 4px rgba(255,70,60,.9))}
+.story.evil{--st:#ff8a7a}
+.st-b small{display:block;font-size:12px;font-weight:700;color:var(--st,var(--brass))}
+.st-b p{margin:6px 0 0;font-size:17px;line-height:1.5;font-weight:600;min-height:3em}
+.story .acts{justify-content:flex-start!important;margin-top:16px!important;gap:8px}
+.btn.green{background:#7ac06a;color:#0c1a08}
+@media (max-width:600px){.story{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center}.story .nib{width:120px;height:120px}.story .acts{justify-content:center!important}.st-b p{font-size:15.5px}}
 /* phones held upright: tighter console */
 @media (max-width:600px){
   .logo,.stat small,.nb small,.chip .cn,.strip .yr{display:none}
@@ -454,7 +467,6 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
 @media (orientation:landscape) and (max-height:540px){
   .logo{display:none}
   .top{padding-top:calc(env(safe-area-inset-top,0px) + 5px);padding-bottom:10px}
-  .ov-l,.ov-r{top:calc(env(safe-area-inset-top,0px) + 34px)}
   .ov-l{width:min(24%,12em)}
   .ov-r{width:min(30%,14em)}
   .dock{display:flex;align-items:flex-end;gap:8px;padding-top:14px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 5px)}

@@ -61,7 +61,7 @@
   for (let e = 0; e < 11; e++) BOSSES.push(LEADERS.filter((l) => l.era === e && !l.starter).map((l) => l.id));
   BOSSES.push(['exterminator', null, 'synth', 'robohitler', 'neonshogun', null, 'alien']); // Future: nulls are echoes of the past
   BOSSES.push(['overmind', null, 'admiral', 'warlord', null, 'moonking']); // Space Age
-  BOSSES.push(['empress', null, 'archon', null, 'cosmickhan', 'hive']); // Galactic Age
+  BOSSES.push(['empress', null, 'archon', null, 'cosmickhan', 'hive', 'nibnub']); // Galactic Age; Nib Nub is the end of the story
   const SPB = CFG.stagesPerBoss;
   const ERA_LEN = BOSSES.map((b) => b.length * SPB);
   const ERA_START = [];
@@ -106,27 +106,41 @@
       const yr = isBoss && !variant ? L.yr : Math.round(span[0] + ((span[1] - span[0]) * (k + 1)) / ERA_LEN[era]);
       r = { stage, chaos: false, era, k, bi, sub, isBoss, bossId, yr, variant, echo: era >= 11, mystery: false };
     } else {
+      // Shattered Time: the timeline is broken, so every stretch is its own timeline of three eras mixed together.
+      // The scenery comes from the first, the enemy soldiers from all three, and the leader from any of them,
+      // often with a twist (Titan, Swift, Brutal or Iron) that makes them stronger in their own way.
       const c = stage - PATH_LEN - 1;
       const seg = Math.floor(c / SPB);
       const sub = c % SPB;
       const era = hash(seed(), seg * 3 + 1) % NERA;
+      const timeline = [era];
+      for (let k = 0; timeline.length < 3 && k < 12; k++) {
+        const e2 = hash(seed(), seg * 11 + 40 + k) % NERA;
+        if (!timeline.includes(e2)) timeline.push(e2);
+      }
       const mystery = seg % 4 === 0;
       let bossId;
-      if (mystery) bossId = CW.MYSTERY[hash(seed(), seg * 3 + 2) % CW.MYSTERY.length];
+      if (mystery) bossId = S && S.roster && !S.roster.nibnub ? 'nibnub' : CW.MYSTERY[hash(seed(), seg * 3 + 2) % CW.MYSTERY.length];
       else {
-        const pool = era < 11 ? BOSSES[era] : CW.FUTURE_POOL;
+        const be = timeline[hash(seed(), seg * 3 + 4) % timeline.length];
+        const pool = be < 11 ? BOSSES[be] : CW.FUTURE_POOL;
         bossId = pool[hash(seed(), seg * 3 + 2) % pool.length];
       }
+      const twist = mystery ? null : CW.TWISTS[hash(seed(), seg * 5 + 9) % CW.TWISTS.length];
       const L = LEADER[bossId];
       const span = ERAS[era].span;
       const variant = !mystery && era >= 11 && L.era < 11 ? 'echo' : '';
       const isBoss = sub === SPB - 1;
       const yr = isBoss && L.yr != null && L.era === era ? L.yr : Math.round(span[0] + ((span[1] - span[0]) * (hash(seed(), c + 7) % 1000)) / 1000);
-      r = { stage, chaos: true, era, k: sub, bi: seg, sub, isBoss, bossId, yr, variant, echo: true, mystery, depth: seg + 1 };
+      r = { stage, chaos: true, era, k: sub, bi: seg, sub, isBoss, bossId, yr, variant, echo: true, mystery, depth: seg + 1, timeline, twist };
     }
     infoCache.set(stage, r);
     return r;
   };
+  // the twists a Shattered Time leader can carry (null: none)
+  CW.TWISTS = [null, 'titan', 'swift', 'brutal', 'iron', null];
+  CW.TWIST_NAME = { titan: 'Titan', swift: 'Swift', brutal: 'Brutal', iron: 'Iron' };
+  CW.TWIST_TEXT = { titan: '60% more health', swift: 'attacks 40% faster', brutal: 'hits 40% harder', iron: 'takes 30% less damage' };
   CW.bossStageOf = function (id) {
     for (let e = 0; e < NERA; e++) {
       const i = BOSSES[e].indexOf(id);
@@ -809,8 +823,10 @@
     let cap = enemyCap(info);
     if (info.isBoss) cap = Math.floor(cap * 0.6);
     const byRole = {};
-    UNITS.forEach((u) => {
-      if (u.era === info.era) byRole[u.role] = u;
+    const roles = ['inf', 'rng', 'cav', 'hvy'];
+    roles.forEach((role, i) => {
+      const e = info.timeline ? info.timeline[hash(seed(), info.bi * 7 + i * 13) % info.timeline.length] : info.era;
+      byRole[role] = UNITS.find((u) => u.era === e && u.role === role) || UNITS.find((u) => u.era === info.era && u.role === role);
     });
     const share = { hvy: 0.18, cav: 0.14, rng: 0.28 };
     const list = [];
@@ -855,17 +871,19 @@
       const lid = info.bossId;
       let treasury = 0;
       for (let j = 0; j < 3; j++) treasury += CW.attr(lid, j).stats.gold || 0;
-      const hp = ROLES.hvy.hp * g * CFG.enemyHp * CFG.bossHp * (info.echo ? 1.25 : 1) * (info.mystery ? CFG.mysteryHp : 1) * Math.min(1, 0.55 + 0.03 * S.stage) * (1 + treasury * 0.5);
+      const final = lid === 'nibnub';
+      const tw = info.twist;
+      const hp = ROLES.hvy.hp * g * CFG.enemyHp * CFG.bossHp * (info.echo ? 1.25 : 1) * (info.mystery ? CFG.mysteryHp : 1) * Math.min(1, 0.55 + 0.03 * S.stage) * (1 + treasury * 0.5) * (final ? 1.6 : 1) * (tw === 'titan' ? 1.6 : 1);
       const w = CW.weaponOf(lid);
       boss = {
         id: eid++, side: 'e', uid: null, lid, kind: 'boss', role: 'boss', trait: null, era: info.era, x: FX - 70, z: 60,
-        hp, maxHp: hp, atk: ROLES.hvy.atk * g * CFG.enemyAtk * CFG.bossAtk * (info.mystery ? CFG.mysteryAtk : 1), int: 1.6,
+        hp, maxHp: hp, atk: ROLES.hvy.atk * g * CFG.enemyAtk * CFG.bossAtk * (info.mystery ? CFG.mysteryAtk : 1) * (final ? 1.2 : 1) * (tw === 'brutal' ? 1.4 : 1), int: tw === 'swift' ? 1.6 / 1.4 : 1.6,
         range: RANGED_W[w] ? 60 : 13, speed: 16, ua: {}, rad: 10, proj: RANGED_W[w] || null, splash: 0.4, air: false, cost: 0,
         t: 0, rt: 0, target: null, alive: true, stun: 0, struck: false, face: -1, moving: false, flash: 0, lunge: 0, burn: null,
         revived: false, down: 0, isHero: false, isBoss: true,
       };
       foes.push(boss);
-      bossT = CFG.bossTime + mods().bossTime + (info.mystery ? 15 : 0);
+      bossT = CFG.bossTime + mods().bossTime + (info.mystery ? 15 : 0) + (final ? 20 : 0);
     }
     let aCap = 0;
     let eCap = 0;
@@ -1086,6 +1104,7 @@
       if (t.isHero) dmg *= 1 + B.se.boss;
     }
     if (t.trait === 'armor') dmg *= 0.7;
+    if (t.isBoss && B.info.twist === 'iron') dmg *= 0.7;
     if (t.trait === 'guard') dmg *= 0.85;
     if (t.champ) dmg *= 0.5; // leaders in the ranks fight with a bodyguard
     if (t.ua.def) dmg *= 1 - Math.min(0.7, t.ua.def);
@@ -1583,6 +1602,7 @@
     if (!r) {
       S.roster[lid] = { lv: 1, stars: 0 };
       res = 'recruit';
+      if (lid === 'nibnub') infoCache = new Map();
     } else if (r.stars < 5) {
       r.stars++;
       res = 'star';

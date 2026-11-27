@@ -195,11 +195,22 @@
     // banners sit over the battle wherever it is on screen
     screenEl.style.setProperty('--bannerY', (((OY + 150) / VH) * 100).toFixed(1) + '%');
     document.documentElement.style.setProperty('--dockH', Math.round(d) + 'px');
+    placeHud();
+  }
+  // the battle panels sit just under the top bar, however many lines the era name takes
+  function placeHud() {
+    const tl = document.querySelector('.top .tl');
+    const rs = document.querySelector('.top .res');
+    if (!tl || !rs) return;
+    const h = Math.max(tl.getBoundingClientRect().bottom, rs.getBoundingClientRect().bottom);
+    const v = Math.round(h + 8) + 'px';
+    if (placeHud._v !== v) document.documentElement.style.setProperty('--topH', (placeHud._v = v));
   }
   addEventListener('resize', () => resize());
   const ro = new ResizeObserver(() => resize());
   ro.observe(screenEl);
   ro.observe(document.getElementById('dock'));
+  ro.observe(document.querySelector('.top .tl'));
   let fieldVisible = true;
   try {
     const io = new IntersectionObserver((es) => (fieldVisible = es[es.length - 1].isIntersecting));
@@ -835,7 +846,7 @@
     setHidden(hud.boss, !B.boss);
     if (B.boss) {
       const hidden = info.mystery && B.phase === 'deploy';
-      setText(hud.bossName, hidden ? '???' : short(B.boss.lid));
+      setText(hud.bossName, hidden ? '???' : (info.twist ? CW.TWIST_NAME[info.twist] + ' ' : '') + short(B.boss.lid));
       setW(hud.bossHp, B.boss.hpS === undefined ? 1 : B.boss.hpS);
       setText(hud.time, Math.max(0, Math.ceil(B.bossT)) + 's');
       setClass(hud.time, B.bossT < 10 ? 'low' : '');
@@ -1142,7 +1153,7 @@
     setText(el.shards, fmt(st.shards));
     const info = B.info;
     const era = ERAS[info.era];
-    setText(el.era, (info.chaos ? 'Shattered Time · ' : '') + 'Era ' + era.roman + ' · ' + era.name);
+    setText(el.era, info.chaos ? 'Broken timeline · ' + info.timeline.map((e) => ERAS[e].name.replace(' Age', '')).join(' × ') : 'Era ' + era.roman + ' · ' + era.name);
     setText(el.year, fmtYear(info.yr));
     setText(el.stage, 'Stage ' + st.stage + (info.chaos ? ' · depth ' + info.depth : '') + (st.farming ? ' · regrouping' : ''));
     if (info.mystery && B.boss && B.phase === 'fight' && revealed !== B.boss.id) {
@@ -1802,10 +1813,12 @@
     }
     if (e.target.dataset.act === 'tips') {
       S().guide.on = e.target.checked;
+      react(e.target.checked);
       return;
     }
     if (e.target.dataset.act === 'chat') {
       S().guide.chat = e.target.checked;
+      react(e.target.checked);
       return;
     }
     if (e.target.dataset.act === 'autobuild') {
@@ -1843,7 +1856,7 @@
   document.addEventListener('keydown', (e) => {
     if (e.target.matches && e.target.matches('input,textarea,select') && (e.key !== 'Escape' || e.target.matches('textarea'))) return;
     if (modalKind) {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape' && modalKind !== 'story') closeModal();
       return;
     }
     if (!el.spop.hidden && e.key === 'Escape') return closeSpecials();
@@ -2076,7 +2089,7 @@
   });
   CW.on('chaos', () => {
     SFX.play('era');
-    toast('Time shatters: random eras ahead', 'red');
+    toast('The timeline is broken: eras are mixed together', 'red');
     setTimeout(() => toast('The story is over: leader prestige is open · Team', 'blue'), 1600);
     setTimeout(() => toast('Leaders can now join the ranks · Army', 'blue'), 3400);
   });
@@ -2130,7 +2143,7 @@
     const dt = Math.min(0.25, Math.max(0, (now - lastT) / 1000));
     lastT = now;
     try {
-      CW.advance(dt);
+      if (modalKind !== 'story') CW.advance(dt);
       const B = CW.battle();
       if (fieldVisible) {
         consumeFx();
@@ -2193,9 +2206,9 @@
     { id: 'rift', sec: 'Later', t: 'Time Rift', d: () => ['Stuck? Try a Time Rift!', 'It sends you back to the start, but gives you Chrono Shards. Each shard makes everything 5% stronger, forever. And you keep your leaders!'], target: '[data-sc="rift"]', tab: 'rift', when: (st) => CW.riftShards() > 0 && (st.farming || st.stage >= 80) },
     { id: 'afterrift', sec: 'Later', t: 'Back to the start!', d: () => ['Wheee! That tickled.', 'Your shards make you stronger now, so you will go further and faster this time.'], ev: 'rift' },
     { id: 'mystery', sec: 'Later', t: 'Mystery boss!', d: () => ['A mystery boss! Nib Nub does not know who this is either.', 'Mystery bosses are extra tough. Good luck!'], target: '#hudBoss', when: () => B_().info.mystery },
-    { id: 'story', sec: 'Later', t: 'You beat the story!', d: () => ['You did it! You beat the whole story!', 'But uh oh, now time is broken. Eras come in a random order, and the enemies keep getting stronger, forever and ever.'], when: (st) => st.best > CW.PATH_LEN },
-    { id: 'prestige', sec: 'Later', t: 'Leader prestige', d: () => ['Big news! Leaders can learn new special moves now.', 'Each leader has a goal, like beating 666 enemies. Meet it, then tap Prestige.'], target: '[data-sc="command"]', tab: 'command', when: () => CW.prestigeUnlocked() },
-    { id: 'ranks', sec: 'Later', t: 'Leaders in the ranks', d: () => ['And another thing! Leaders can fight as soldiers too.', 'Open Army and add a leader to the front line.'], target: '[data-sc="army"]', tab: 'army', when: () => CW.champUnlocked() },
+    { id: 'story', sec: 'Later', t: 'The broken timeline', d: () => ['You beat Nib Nub and became Controller of the Infinite Universe. Then you pressed the red button.', 'Now every timeline mixes different eras together, and the leaders keep coming back stronger, every time different. Fix them, one by one!'], when: (st) => st.best > CW.PATH_LEN && !!st.roster.nibnub },
+    { id: 'prestige', sec: 'Later', t: 'Leader prestige', d: () => ['Listen up, Controller. Nib Nub has a gift. Leaders can learn new special moves now.', 'Each leader has a goal, like beating 666 enemies. Meet it, then tap Prestige. Yes, even Nib Nub has goals.'], target: '[data-sc="command"]', tab: 'command', when: () => CW.prestigeUnlocked() },
+    { id: 'ranks', sec: 'Later', t: 'Leaders in the ranks', d: () => ['And another thing! Leaders can fight as soldiers too.', 'Open Army and add a leader to the front line. Nib Nub volunteers. Nib Nub looks great at the front.'], target: '[data-sc="army"]', tab: 'army', when: () => CW.champUnlocked() },
     { id: 'ready', sec: 'Later', t: 'Ready to prestige!', d: () => { const id = prestigeReady(); return [(id ? LEADER[id].name : 'A leader') + ' met their goal!', 'Open Team or the Codex and tap Prestige to unlock a new special.']; }, target: '[data-sc="command"]', tab: 'command', when: () => !!prestigeReady() },
   ];
   const SECS = ['Basics', 'Army', 'Leaders', 'Later'];
@@ -2229,7 +2242,24 @@
       'Space! Nib Nub feels right at home up here.',
       'The Galactic Age! Somewhere out there is Nib Nub\'s planet. Wave hello!',
     ],
-    hint: ['If you get stuck, train your best soldiers. It helps a lot!', 'Tap the battlefield where the enemies bunch up. More enemies, more bonk!', 'Nib Nub counted all the leaders in history. There are 137! Can you find them all?', 'Thinkers like to stay behind the army. Fighters love the front!', 'Soldiers far away look smaller. Nib Nub thinks that is magic.', "Nib Nub's favourite leader is... everyone! Shh, do not tell them.", 'Check the Army menu now and then. New soldiers might be waiting!', 'Do you hear that? That is the sound of winning.', 'Nib Nub once tried to ride a war elephant. It did not go well.', "A leader's picture glows when their special is ready. Tap it!", 'Forgot something? Tap Nib Nub in the top corner. He wrote everything down.', 'Big machines take 4 spaces in your army, but they hit really hard!', 'Every new era gives your army more room. Fill it up!'],
+    // as the story goes on he gets smug (S), then pompous and mocking (P); once beaten he is your cheeky ally (A)
+    hintS: ['Nib Nub would have won that battle faster. Just saying.', 'You are doing okay. For a human.', 'Nib Nub knows a secret about the end of time. But he is not telling you. Yet.', 'Have you noticed Nib Nub is always right? Nib Nub has noticed.', 'Keep going, Commander. Nib Nub needs you strong. For... reasons.'],
+    hintP: ['Soon you will see who Nib Nub really is. Heh heh.', "The Galactic Age is Nib Nub's home. Nib Nub's KINGDOM. Er... never mind.", 'Tiny humans with tiny armies. How adorable.', 'Do keep fighting, Commander. Nib Nub is enjoying the show.', 'Nib Nub could end this war with one button. But where would be the fun?', 'Bow before... I mean, good job, Commander! Heh.'],
+    hintA: ['You are the Controller now. Act like it! ...Please.', 'Nib Nub is helping. Nib Nub is a very helpful former ruler of the universe.', 'Every timeline we fix makes Nib Nub feel a little less guilty. About the button. Which YOU pressed.', 'Vikings with tanks! Pharaohs in space! Nib Nub secretly loves this mess.', 'Watch out for Titan leaders. They are big. Bigger than Nib Nub. Rude.'],
+    defeatS: ['Lost again? Nib Nub is not surprised. Just a little.', 'Hmm. Nib Nub would have done better. But okay.'],
+    defeatP: ['Ha! Did you even try that time?', "Nib Nub's grandma fights better than that. And she is a cloud.", 'Lost again? Nib Nub is shocked. Not really.', 'Maybe let Nib Nub drive next time. Oh wait, you cannot. Heh.'],
+    defeatA: ['Ouch. Even Controllers lose sometimes. Nib Nub lost to YOU, remember?', 'Shake it off, Controller. The timeline will not fix itself!'],
+    joinsP: ['{name} joins you? Cute. Collect them all, little Commander.', '{name}! Nib Nub remembers when they were his favourite toy.'],
+    eraP: ['Ah, the {era}. Nib Nub planned this one himself.', 'Welcome to the {era}. Try not to embarrass yourself.'],
+    off: ['Oh. Okay. Nib Nub will be quiet now... *sniff*', 'Nib Nub understands. Too much talking. Bye for now...', 'That is fine. Nib Nub will just sit here. All alone. In silence.'],
+    offS: ['Fine. Nib Nub will just stand here. Silently. Being amazing.', "Hmph! Nib Nub's wisdom is wasted on you anyway."],
+    offP: ['You dare silence the great Nib Nub?! ...Fine. You will be sorry!', "Ha! You cannot handle Nib Nub's genius. Off I go."],
+    offA: ['Silencing the former Controller of the Universe? Rude. But fine.', 'Okay, okay. Nib Nub will be quiet. Sort of.'],
+    on: ['Nib Nub is back! Sorry if I talked too much before. I will try to be extra helpful!', 'You missed me? Nib Nub is so happy! And a little bit sorry. Mostly happy.', 'Thank you for letting Nib Nub talk again. He was very lonely.'],
+    onS: ['Oh, you need Nib Nub again? Of course you do.', 'Back to Nib Nub, are we? Nib Nub knew you would be.'],
+    onP: ['Crawling back to Nib Nub, are we? I knew you could not win without my genius!', 'Ha! Turned me back on? Admit it, you are lost without the great Nib Nub.'],
+    onA: ['Back again? Even the new Controller needs advice, I see.', 'Nib Nub is back on duty, Controller. Try not to press any more red buttons.'],
+    hint: ['If you get stuck, train your best soldiers. It helps a lot!', 'Tap the battlefield where the enemies bunch up. More enemies, more bonk!', 'Nib Nub counted all the leaders in history. There are ' + LEADERS.length + '! Can you find them all?', 'Thinkers like to stay behind the army. Fighters love the front!', 'Soldiers far away look smaller. Nib Nub thinks that is magic.', "Nib Nub's favourite leader is... everyone! Shh, do not tell them.", 'Check the Army menu now and then. New soldiers might be waiting!', 'Do you hear that? That is the sound of winning.', 'Nib Nub once tried to ride a war elephant. It did not go well.', "A leader's picture glows when their special is ready. Tap it!", 'Forgot something? Tap Nib Nub in the top corner. He wrote everything down.', 'Big machines take 4 spaces in your army, but they hit really hard!', 'Every new era gives your army more room. Fill it up!'],
   };
   const chatUsed = {};
   function pick(set) {
@@ -2265,26 +2295,37 @@
     gLit.forEach((n) => n.classList.add('glow'));
   }
   // Nib Nub talks: the words appear a few letters at a time with a soft blip (all at once if motion is reduced)
-  let sayT = null;
   const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function say(node, text) {
-    clearInterval(sayT);
+  // each place he talks (the guide card, a story scene) types on its own
+  const saying = new Map();
+  function say(node, text, host) {
+    host = host || guideEl;
+    finishSay(host);
     if (calm) {
       node.textContent = text;
       return;
     }
     let i = 0;
     node.textContent = '';
-    guideEl.classList.add('talk');
-    sayT = setInterval(() => {
+    host.classList.add('talk');
+    const job = { node, text, host, t: 0 };
+    job.t = setInterval(() => {
       i = Math.min(text.length, i + 2);
       node.textContent = text.slice(0, i);
       if (i % 8 === 0) SFX.play('blip');
-      if (i >= text.length) {
-        clearInterval(sayT);
-        guideEl.classList.remove('talk');
-      }
+      if (i >= text.length) finishSay(host);
     }, 28);
+    saying.set(host, job);
+  }
+  // a tap while he is still talking shows the whole line at once; the next tap moves on
+  function finishSay(host) {
+    const job = saying.get(host);
+    if (!job) return false;
+    clearInterval(job.t);
+    job.node.textContent = job.text;
+    job.host.classList.remove('talk');
+    saying.delete(host);
+    return true;
   }
   function drawLesson() {
     const { tip, lines: ls, i } = gCur;
@@ -2305,8 +2346,14 @@
     gHide = 0;
     drawLesson();
   }
-  function showChat(text) {
-    gCur = { chat: true };
+  function react(on) {
+    const m = mood();
+    const set = (on ? 'on' : 'off') + m;
+    stopTalking();
+    showChat(fill(pick(CHAT[set] ? set : on ? 'on' : 'off'), {}), true);
+  }
+  function showChat(text, force) {
+    gCur = { chat: true, force: !!force };
     guideEl.className = 'guide chat';
     guideEl._mode = '';
     guideEl.innerHTML = `<img class="nib" src="img/nibnub.png" alt="Nib Nub"><div class="g-b"><small>Nib Nub</small><p data-say></p></div>`;
@@ -2316,7 +2363,7 @@
     gHide = Math.max(5, text.length / 14 + 3);
   }
   function stopTalking() {
-    clearInterval(sayT);
+    finishSay(guideEl);
     const was = gCur;
     gCur = null;
     guideEl.hidden = true;
@@ -2353,8 +2400,24 @@
     }
     light();
   }
+  // how Nib Nub feels about you: sweet at first, smug in the middle, pompous near the end, a cheeky ally once beaten
+  function mood() {
+    const st = S();
+    if (st.roster.nibnub) return 'A';
+    const f = st.best / CW.PATH_LEN;
+    return f < 0.4 ? '' : f < 0.75 ? 'S' : 'P';
+  }
+  function moodSet(set) {
+    const m = mood();
+    const chance = { '': 0, S: 0.25, P: 0.6, A: 0.5 }[m];
+    if (m && CHAT[set + m] && Math.random() < chance) return set + m;
+    if (m === 'P' && CHAT[set + 'S'] && Math.random() < 0.3) return set + 'S';
+    return set;
+  }
   function chat(set, o, important) {
     if (!chatOn()) return;
+    if (set !== 'era' || mood() !== 'P' || Math.random() > 0.4) set = set === 'era' ? set : moodSet(set);
+    else set = 'eraP';
     const text = fill(set === 'era' ? (o.i !== undefined && CHAT.era[o.i] && Math.random() < 0.75 ? CHAT.era[o.i] : pick('eraAny')) : pick(set), o || {});
     // the newest thing wins; important news (a leader joining, a prestige) skips the wait
     chatQ = { text, important };
@@ -2366,11 +2429,11 @@
     if (gCur) {
       const tip = gCur.tip;
       if (tip && !lessonsOn()) return stopTalking();
-      if (gCur.chat && !chatOn()) return stopTalking();
+      if (gCur.chat && !chatOn() && !gCur.force) return stopTalking();
       // a dialog that isn't his moves him out of the way (lessons are already heard, so nothing repeats)
       if ((tip && tip.modal && modalKind !== tip.modal) || (!(tip && tip.modal) && modalKind)) return stopTalking();
       if (tip && tip.done && tip.done(st)) return stopTalking();
-      if (gCur.chat && (!el.sheet.hidden || busy)) return stopTalking();
+      if (gCur.chat && !gCur.force && (!el.sheet.hidden || busy)) return stopTalking();
       if (guideEl.hidden !== busy) {
         guideEl.hidden = busy;
         if (busy) unlight();
@@ -2419,6 +2482,7 @@
     if (gCur.chat) return stopTalking();
     const b = e.target.closest('[data-g]');
     if (!b) return;
+    if (b.dataset.g === 'next' && finishSay(guideEl)) return;
     if (b.dataset.g === 'next') {
       gCur.i++;
       drawLesson();
@@ -2444,10 +2508,15 @@
   CW.on('victory', (r) => {
     if (!r || !r.lid) return;
     const name = short(r.lid);
+    if (r.lid === 'nibnub') {
+      if (r.res === 'recruit' && !S().guide.seen.finale) setTimeout(storyFinale, 1100);
+      return;
+    }
     if (r.res === 'recruit') chat('joins', { name: LEADER[r.lid].name }, true);
     else if (r.res === 'star') chat('star', { name });
   });
   CW.on('stage', (info) => {
+    if (info.isBoss && info.bossId === 'nibnub' && !S().roster.nibnub && !S().guide.seen.reveal && started) return setTimeout(storyReveal, 350);
     if (!info.isBoss || !S().guide.seen.boss) return;
     if (info.mystery) chat('mystery', {});
     else if (Math.random() < 0.7) chat('boss', { name: LEADER[info.bossId].name, title: LEADER[info.bossId].title.replace(/^The /, 'the ') });
@@ -2472,6 +2541,102 @@
     }
     return h + `<p class="note">You can turn Nib Nub's lessons and chatter on or off, or have him start over, in Settings.</p>`;
   }
+
+  // ------------------------------------------------------------ the end of the story
+  // Before the last leader battle Nib Nub reveals who he really is; when you beat him he hands you the Infinite
+  // Universe, shows you the Time Rift controls... and you press the wrong button. The battle waits while he talks.
+  let storyQ = null;
+  const REVEAL = [
+    'Well, well, well. Look who made it all the way to the end of time.',
+    'Did you really think a little alien was here just to help you? Nib Nub has been watching you. Training you.',
+    'Every era, every leader, every battle... Nib Nub set them all up, just to find someone worth fighting.',
+    'I am Nib Nub, Controller of the Infinite Universe! Now, Commander... FIGHT ME!',
+  ];
+  const FINALE = [
+    'No... no, no, NO! You beat the great Nib Nub?!',
+    '...Fine. A deal is a deal. Whoever beats Nib Nub becomes the Controller of the Infinite Universe. That is you now.',
+    'And Nib Nub will join your team. Every Controller needs a genius. You can make Nib Nub your leader in Team.',
+    'Now, let Nib Nub show you the controls. This is the Time Rift. The green button rewinds time, nice and safe. The red button... do NOT press the red button.',
+  ];
+  const AFTER = [
+    'The timeline is broken! Every era is mixed up. Vikings with tanks! Pharaohs in space!',
+    'Now we have to rebuild everything, one timeline at a time. And the leaders out there keep coming back stronger, and different every time.',
+    'Do not worry, Controller. Nib Nub will help. Probably. Let us fix this mess!',
+  ];
+  function storyPage() {
+    const q = storyQ;
+    const line = q.lines[q.i];
+    const last = q.i >= q.lines.length - 1;
+    let acts;
+    if (q.choice && last) acts = '<button class="btn sm green" data-st="green">Press the green button</button><button class="btn red sm" data-st="red">Press the red button</button>';
+    else acts = `<button class="btn sm" data-st="next">${last ? esc(q.end) : 'Next'}</button>`;
+    el.dlg.innerHTML = `<div class="story ${q.evil ? 'evil' : ''}"><img class="nib" src="img/nibnub.png" alt="Nib Nub"><div class="st-b"><small>${q.evil ? 'Nib Nub · Controller of the Infinite Universe' : 'Nib Nub'}</small><p data-say></p><div class="acts">${acts}</div></div></div>`;
+    say(el.dlg.querySelector('[data-say]'), line, el.dlg.querySelector('.story'));
+  }
+  function openStory(q) {
+    if (closeSheet) closeSheet();
+    closeSpecials();
+    storyQ = Object.assign({ i: 0 }, q);
+    modalKind = 'story';
+    el.modal.hidden = false;
+    el.modal.classList.add('cine');
+    storyPage();
+    SFX.play(q.evil ? 'bosscast' : 'cast');
+  }
+  function storyReveal() {
+    const B = CW.battle();
+    if (!B || !B.boss || B.boss.lid !== 'nibnub' || S().guide.seen.reveal) return;
+    if (modalKind) return setTimeout(storyReveal, 500);
+    S().guide.seen.reveal = 1;
+    openStory({ lines: REVEAL, evil: true, end: 'Fight!' });
+  }
+  function storyFinale() {
+    if (S().guide.seen.finale) return;
+    if (modalKind && modalKind !== 'council') return setTimeout(storyFinale, 500);
+    if (modalKind === 'council') {
+      modalKind = null;
+      el.modal.hidden = true;
+    }
+    S().guide.seen.finale = 1;
+    S().guide.seen.story = 1;
+    openStory({ lines: FINALE, choice: true, end: '' });
+  }
+  function storyEnd() {
+    const q = storyQ;
+    storyQ = null;
+    modalKind = null;
+    el.modal.hidden = true;
+    el.modal.classList.remove('cine');
+    el.dlg.innerHTML = '';
+    save();
+    if (q && q.then) q.then();
+    else if (S().council) openCouncil();
+  }
+  el.dlg.addEventListener('click', (e) => {
+    if (modalKind !== 'story' || !storyQ) return;
+    const b = e.target.closest('[data-st]');
+    if (!b) return;
+    e.stopPropagation();
+    SFX.ensure();
+    const act = b.dataset.st;
+    if (act === 'next' && finishSay(el.dlg.querySelector('.story'))) return;
+    if (act === 'next') {
+      if (storyQ.i < storyQ.lines.length - 1) {
+        storyQ.i++;
+        storyPage();
+      } else storyEnd();
+      return;
+    }
+    // either button breaks time: the green one was the red one all along
+    const red = act === 'red';
+    storyQ = { i: 0, lines: [red ? 'YOU PRESSED THE RED ONE!' : 'That... was the red one. Nib Nub painted the buttons the wrong colours. Oops.'].concat(AFTER), end: 'Fix the timeline' };
+    flashT = 1.4;
+    flashCol = '#ff4a3a';
+    shake = 1.2;
+    SFX.play('boom');
+    SFX.play('bosscast');
+    storyPage();
+  }, true);
 
   function boot(data) {
     let saved = data && data.save;
