@@ -139,6 +139,7 @@
         case 'boom': noise(0.25, 0.05); tone(90, 0.25, 'triangle', 0.05, 0.5); break;
         case 'coin': tone(988, 0.05, 'square', 0.015); tone(1319, 0.08, 'square', 0.015, 1, 0.05); break;
         case 'tap': tone(320, 0.05, 'square', 0.025, 0.5); break;
+        case 'blip': tone(700 + Math.random() * 260, 0.035, 'triangle', 0.012, 1.15); break;
         case 'cast': [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.09, 'square', 0.03, 1, i * 0.05)); break;
         case 'bosscast': [220, 185, 147].forEach((f, i) => tone(f, 0.14, 'sawtooth', 0.035, 1, i * 0.08)); break;
         case 'win': [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, 0.13, 'square', 0.04, 1, i * 0.1)); break;
@@ -1669,7 +1670,7 @@
         <label class="tog"><input type="checkbox" data-act="autopush" ${st.auto.push ? 'checked' : ''}><span>Auto-advance<small>Push on to the next stage after each win; off keeps you farming this one</small></span></label>
         <label class="tog"><input type="checkbox" data-act="autospecial" ${st.auto.special !== false ? 'checked' : ''}><span>Auto specials<small>A charged special fires by itself after a few seconds</small></span></label>
         <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound</label>
-        <label class="tog"><input type="checkbox" data-act="tips" ${st.guide.on !== false ? 'checked' : ''}><span>Show tips<small>Short how-to-play tips when something new happens. They are all kept in the Guide (the ? button).</small></span></label>
+        <label class="tog"><input type="checkbox" data-act="tips" ${st.guide.on !== false ? 'checked' : ''}><span>Nib Nub's tips<small>Nib Nub explains each new thing the first time it happens. Every tip is kept in his Guide (his face in the top corner).</small></span></label>
       </div>
       <p><button class="btn ghost" data-act="guidereset">Start the guide again</button></p>
       <p><button class="btn ghost" data-act="save">Save now</button> <button class="btn ghost" data-act="export">Export save</button> <button class="btn ghost" data-act="import">Import save</button></p>
@@ -1706,7 +1707,7 @@
     else if (act === 'champ') openRanks();
     else if (act === 'guidereset') {
       st.guide = { seen: {}, on: true };
-      toast('The guide starts again', 'blue');
+      toast('Nib Nub will explain everything again', 'blue');
       renderPanel();
     }
     else if (act === 'eqsp') {
@@ -1855,6 +1856,7 @@
       'start',
       `<h2>Chrono Command</h2>
       <p class="bio">Lead history's commanders through an endless war across time. Build an army from 56 unit types across 14 eras, equip their attributes, and watch every soldier fight it out. Beat each era's leaders to recruit them.</p>
+      <div class="nibhead"><img class="nib" src="img/nibnub.png" alt=""><div><b>Hello! I am Nib Nub.</b><p>I will be your guide. Pick a commander and Nib Nub will explain everything as you play.</p></div></div>
       <h3>Pick your commander</h3>
       <div class="starters">${starters
         .map((l) => `<button class="starter" data-start="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><b>${esc(l.name)}</b><small><span class="an">${esc(l.skills[0].n)}</span> ${esc(CW.attrText(l.id, 0))}</small></button>`)
@@ -2166,29 +2168,29 @@
   const anyReady = () => [S().main].concat(S().partners).some((id) => CW.heroAlive(id) && CW.meter(id) >= CW.special(id).cost);
   const prestigeReady = () => Object.keys(S().roster).find((id) => { const gl = CW.prestigeGoal(id); return gl && gl.done; });
   const TIPS = [
-    { id: 'welcome', sec: 'Basics', t: 'Welcome, Commander!', d: () => 'Your army fights all by itself. Your job is to make it stronger, so it can win more battles and travel through time.', when: () => true },
-    { id: 'tap', sec: 'Basics', t: 'Tap to strike', d: () => 'Tap anywhere on the battlefield to drop a strike on the enemy. Try it now!', target: '#screen', when: () => B_().phase === 'fight', done: (st) => st.stats.taps > 0 },
-    { id: 'bars', sec: 'Basics', t: 'Who is winning?', d: () => 'The bar at the top left shows your soldiers in blue and the enemy in red. Beat every enemy to win the stage.', target: '.ov-l', when: (st) => st.stage >= 2 },
-    { id: 'gold', sec: 'Army', t: 'Gold buys soldiers', d: () => 'Every enemy you beat drops gold. Open Army and tap Recruit to buy more soldiers.', target: '[data-sc="army"]', tab: 'army', when: (st) => (st.stage >= 2 || st.stats.kills >= 12) && st.gold >= cheapestRecruit() },
-    { id: 'room', sec: 'Army', t: 'Room in your army', d: () => 'Your army only has so much room. Foot soldiers take 1 space, riders take 2 and big machines take 4. Every new era gives you more room.', target: '.capline', when: () => !el.sheet.hidden && tab === 'army' },
-    { id: 'train', sec: 'Army', t: 'Recruit or train?', d: () => 'Recruit buys one more soldier. Train +1 makes every soldier of that kind stronger. Auto-build always sends your best soldiers into battle.', target: '.buys', when: (st) => !el.sheet.hidden && tab === 'army' && st.guide.seen.room },
-    { id: 'boss', sec: 'Leaders', t: 'A famous leader!', d: () => 'Every third stage a famous leader fights you. Beat them before the timer runs out and they join your side.', target: '#hudBoss', when: () => B_().info.isBoss && !B_().info.mystery },
-    { id: 'lose', sec: 'Basics', t: 'Lost? That is okay!', d: () => 'Your army steps back to an easier stage to earn more gold. Buy and train soldiers, and it will try again by itself.', ev: 'defeat' },
-    { id: 'council', sec: 'Leaders', t: 'War Council', d: () => 'You won! Pick one doctrine. It is a bonus for your whole army that lasts until your next Time Rift.', modal: 'council', when: (st) => !!st.council && modalKind === 'council' },
-    { id: 'special', sec: 'Leaders', t: 'Special move ready!', d: () => "When a leader's picture glows, their special move is charged. Tap the picture, then tap the special to use it.", target: '#deck .chip.ready', when: anyReady, ev2: 'special' },
-    { id: 'team', sec: 'Leaders', t: 'Your team', d: () => 'You lead with one commander and two partners. Open Team to swap them. Your commander gives the biggest bonus.', target: '[data-sc="command"]', tab: 'command', when: (st) => Object.keys(st.roster).length > 3 },
-    { id: 'position', sec: 'Leaders', t: 'Front or back?', d: () => 'Fighters are best at the front of the army. Thinkers are best behind it. Change it in Team. A star shows each leader’s best place.', target: '[data-sc="command"]', tab: 'command', when: (st) => st.guide.seen.team && st.stage >= 12 },
-    { id: 'skills', sec: 'Army', t: 'Soldier skills', d: () => 'Each kind of soldier can carry skills like Sharpened or Shield Wall. Open Army and tap + Equip. More slots open at level 10 and 30.', target: '[data-sc="army"]', tab: 'army', when: (st) => st.stage >= 9 },
-    { id: 'era', sec: 'Army', t: 'A new era!', d: () => 'You travelled forward in time. New soldiers are ready to recruit. They cost more, so save up your gold.', target: '[data-sc="army"]', tab: 'army', ev: 'era' },
-    { id: 'codex', sec: 'Leaders', t: 'The Codex', d: () => 'Every leader you beat goes into the Codex. Look there to see their skills and special moves. Can you find them all?', target: '[data-sc="leaders"]', tab: 'leaders', when: (st) => Object.keys(st.roster).length >= 5 },
-    { id: 'auto', sec: 'Basics', t: 'Auto buttons', d: () => 'In Settings you can turn off Auto-advance to stay and farm one stage, or turn off Auto specials to fire specials yourself.', target: '[data-sc="options"]', tab: 'options', when: (st) => st.stage >= 20 },
-    { id: 'rift', sec: 'Later', t: 'Time Rift', d: () => 'Stuck? A Time Rift sends you back to the start, but gives you Chrono Shards. Each shard makes everything 5% stronger forever, and you keep your leaders.', target: '[data-sc="rift"]', tab: 'rift', when: (st) => CW.riftShards() > 0 && (st.farming || st.stage >= 80) },
-    { id: 'afterrift', sec: 'Later', t: 'Back to the start', d: () => 'Your shards make you stronger now, so you will go further and faster this time.', ev: 'rift' },
-    { id: 'mystery', sec: 'Later', t: 'Mystery boss!', d: () => 'Nobody knows who this is until the fight starts. Mystery bosses are extra tough.', target: '#hudBoss', when: () => B_().info.mystery },
-    { id: 'story', sec: 'Later', t: 'You beat the story!', d: () => 'Time is broken now. The eras come in a random order and the enemies keep getting stronger, forever.', when: (st) => st.best > CW.PATH_LEN },
-    { id: 'prestige', sec: 'Later', t: 'Leader prestige', d: () => 'Leaders can unlock new special moves now. Each leader has a goal, like beating 666 enemies. Meet it, then tap Prestige.', target: '[data-sc="command"]', tab: 'command', when: () => CW.prestigeUnlocked() },
-    { id: 'ranks', sec: 'Later', t: 'Leaders in the ranks', d: () => 'You can swap soldiers for leaders now. Open Army and add a leader to fight on the front line.', target: '[data-sc="army"]', tab: 'army', when: () => CW.champUnlocked() },
-    { id: 'ready', sec: 'Later', t: 'Ready to prestige!', d: () => { const id = prestigeReady(); return (id ? LEADER[id].name : 'A leader') + ' met their goal. Open Team or the Codex, then tap Prestige to unlock a new special.'; }, target: '[data-sc="command"]', tab: 'command', when: () => !!prestigeReady() },
+    { id: 'welcome', sec: 'Basics', t: 'Hello, Commander!', d: () => 'Greetings! I am Nib Nub. I came from very, very far away to help you. Your army fights all by itself. Your job is to make it stronger. Nib Nub will do his best to show you how!', when: () => true },
+    { id: 'tap', sec: 'Basics', t: 'Bonk them from the sky!', d: () => 'Tap anywhere on the battlefield and a strike falls on the enemy. Go on, tap! Nib Nub loves this part.', target: '#screen', when: () => B_().phase === 'fight', done: (st) => st.stats.taps > 0 },
+    { id: 'bars', sec: 'Basics', t: 'Who is winning?', d: () => 'See the bar at the top? Blue is your army. Red is the enemy. Beat all the red ones to win the stage. Easy peasy!', target: '.ov-l', when: (st) => st.stage >= 2 },
+    { id: 'gold', sec: 'Army', t: 'Shiny gold!', d: () => 'Every enemy you beat drops gold. Nib Nub says: spend it! Open Army and tap Recruit to get more soldiers.', target: '[data-sc="army"]', tab: 'army', when: (st) => (st.stage >= 2 || st.stats.kills >= 12) && st.gold >= cheapestRecruit() },
+    { id: 'room', sec: 'Army', t: 'Only so much room', d: () => 'Your army can only fit so many soldiers. Foot soldiers take 1 space, riders take 2 and big machines take 4. Every new era gives you more room.', target: '.capline', when: () => !el.sheet.hidden && tab === 'army' },
+    { id: 'train', sec: 'Army', t: 'Recruit or train?', d: () => 'Recruit buys one more soldier. Train +1 makes every soldier of that kind stronger. Both are good! Auto-build always sends your best soldiers into battle.', target: '.buys', when: (st) => !el.sheet.hidden && tab === 'army' && st.guide.seen.room },
+    { id: 'boss', sec: 'Leaders', t: 'A famous leader!', d: () => 'Ooh, a famous leader from history! Beat them before the timer runs out, and they will join your side.', target: '#hudBoss', when: () => B_().info.isBoss && !B_().info.mystery },
+    { id: 'lose', sec: 'Basics', t: 'Oops! That is okay', d: () => 'Nib Nub loses all the time! Your army steps back to an easier stage to earn more gold. Make it stronger, and it will try again by itself.', ev: 'defeat' },
+    { id: 'council', sec: 'Leaders', t: 'War Council', d: () => 'You won! Now pick one doctrine. It is a bonus for your whole army, and it lasts until your next Time Rift.', modal: 'council', when: (st) => !!st.council && modalKind === 'council' },
+    { id: 'special', sec: 'Leaders', t: 'Special move ready!', d: () => "When a leader's picture glows, their special move is ready! Tap the picture, then tap the special. Kaboom!", target: '#deck .chip.ready', when: anyReady, ev2: 'special' },
+    { id: 'team', sec: 'Leaders', t: 'Your team', d: () => 'You lead with one commander and two helpers called partners. Open Team to swap them. The commander gives the biggest bonus.', target: '[data-sc="command"]', tab: 'command', when: (st) => Object.keys(st.roster).length > 3 },
+    { id: 'position', sec: 'Leaders', t: 'Front or back?', d: () => "Some leaders are fighters. They like the front! Some are thinkers. They like to stay behind the army. In Team, a star shows each leader's best place.", target: '[data-sc="command"]', tab: 'command', when: (st) => st.guide.seen.team && st.stage >= 12 },
+    { id: 'skills', sec: 'Army', t: 'Soldier skills', d: () => 'Soldiers can learn skills, like Sharpened or Shield Wall! Open Army and tap + Equip. More slots open at level 10 and level 30.', target: '[data-sc="army"]', tab: 'army', when: (st) => st.stage >= 9 },
+    { id: 'era', sec: 'Army', t: 'Whoosh! A new era!', d: () => 'You travelled forward in time! New soldiers are ready to recruit. They cost more, so save up your gold.', target: '[data-sc="army"]', tab: 'army', ev: 'era' },
+    { id: 'codex', sec: 'Leaders', t: 'The Codex', d: () => 'Every leader you beat goes into the Codex. It is like a sticker book! Can you find them all? Nib Nub believes in you.', target: '[data-sc="leaders"]', tab: 'leaders', when: (st) => Object.keys(st.roster).length >= 5 },
+    { id: 'auto', sec: 'Basics', t: 'Auto buttons', d: () => 'In Settings you can turn off Auto-advance to stay on one stage and collect gold. You can also turn off Auto specials and fire them yourself.', target: '[data-sc="options"]', tab: 'options', when: (st) => st.stage >= 20 },
+    { id: 'rift', sec: 'Later', t: 'Time Rift', d: () => 'Stuck? Try a Time Rift! It sends you back to the start, but gives you Chrono Shards. Each shard makes everything 5% stronger, forever. You keep your leaders.', target: '[data-sc="rift"]', tab: 'rift', when: (st) => CW.riftShards() > 0 && (st.farming || st.stage >= 80) },
+    { id: 'afterrift', sec: 'Later', t: 'Back to the start!', d: () => 'Wheee! Your shards make you stronger now, so you will go further and faster this time.', ev: 'rift' },
+    { id: 'mystery', sec: 'Later', t: 'Mystery boss!', d: () => 'Nib Nub does not know who this is either! Mystery bosses are extra tough. Good luck!', target: '#hudBoss', when: () => B_().info.mystery },
+    { id: 'story', sec: 'Later', t: 'You beat the story!', d: () => 'You did it! Now time is broken. Eras come in a random order, and the enemies keep getting stronger, forever and ever.', when: (st) => st.best > CW.PATH_LEN },
+    { id: 'prestige', sec: 'Later', t: 'Leader prestige', d: () => 'Big news! Leaders can learn new special moves now. Each leader has a goal, like beating 666 enemies. Meet it, then tap Prestige.', target: '[data-sc="command"]', tab: 'command', when: () => CW.prestigeUnlocked() },
+    { id: 'ranks', sec: 'Later', t: 'Leaders in the ranks', d: () => 'Now leaders can fight as soldiers too! Open Army and add a leader to the front line.', target: '[data-sc="army"]', tab: 'army', when: () => CW.champUnlocked() },
+    { id: 'ready', sec: 'Later', t: 'Ready to prestige!', d: () => { const id = prestigeReady(); return (id ? LEADER[id].name : 'A leader') + ' met their goal! Open Team or the Codex and tap Prestige to unlock a new special.'; }, target: '[data-sc="command"]', tab: 'command', when: () => !!prestigeReady() },
   ];
   const SECS = ['Basics', 'Army', 'Leaders', 'Later'];
   const guideEl = $('#guide');
@@ -2214,12 +2216,36 @@
     gCur = tip;
     const st = S();
     const n = TIPS.filter((x) => st.guide.seen[x.id]).length + 1;
-    guideEl.innerHTML = `<img class="px" src="${CW.headURL(st.main)}" alt=""><div class="g-b"><small>${esc(short(st.main))} says · tip ${n} of ${TIPS.length}</small><b>${esc(tip.t)}</b><p>${esc(tip.d(st))}</p><div class="g-acts"><button class="btn sm" data-g="ok">Got it</button>${tip.tab ? '<button class="btn ghost sm" data-g="show">Show me</button>' : ''}</div></div>`;
+    guideEl.innerHTML = `<img class="nib" src="img/nibnub.png" alt="Nib Nub"><div class="g-b"><small>Nib Nub · tip ${n} of ${TIPS.length}</small><b>${esc(tip.t)}</b><p data-say></p><div class="g-acts"><button class="btn sm" data-g="ok">Got it</button>${tip.tab ? '<button class="btn ghost sm" data-g="show">Show me</button>' : ''}</div></div>`;
     guideEl.hidden = false;
     placeGuide();
-    SFX.play('coin');
+    say(guideEl.querySelector('[data-say]'), tip.d(st));
+  }
+  // Nib Nub talks: the words appear a few letters at a time with a soft blip (all at once if motion is reduced)
+  let sayT = null;
+  const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function say(node, text) {
+    clearInterval(sayT);
+    if (calm) {
+      node.textContent = text;
+      return;
+    }
+    let i = 0;
+    node.textContent = '';
+    guideEl.classList.add('talk');
+    sayT = setInterval(() => {
+      i = Math.min(text.length, i + 2);
+      node.textContent = text.slice(0, i);
+      if (i % 8 === 0) SFX.play('blip');
+      if (i >= text.length) {
+        clearInterval(sayT);
+        guideEl.classList.remove('talk');
+      }
+    }, 28);
   }
   function finishTip() {
+    clearInterval(sayT);
+    guideEl.classList.remove('talk');
     if (!gCur) return;
     const st = S();
     st.guide.seen[gCur.id] = 1;
@@ -2322,7 +2348,7 @@
   function renderGuide() {
     const st = S();
     const seen = TIPS.filter((x) => st.guide.seen[x.id]);
-    let h = `<div class="phead"><h2>Guide</h2></div><p class="note">How to play, in small steps. A new page unlocks each time something new happens in your game · ${seen.length} of ${TIPS.length} pages.</p>`;
+    let h = `<div class="phead"><h2>Guide</h2></div><div class="nibhead"><img class="nib" src="img/nibnub.png" alt=""><div><b>Nib Nub's Guide</b><p>Hello again! Nib Nub writes down everything he teaches you, right here. A new page appears every time something new happens in your game. You have ${seen.length} of ${TIPS.length} pages.</p></div></div>`;
     for (const sec of SECS) {
       const all = TIPS.filter((x) => x.sec === sec);
       const got = all.filter((x) => st.guide.seen[x.id]);
@@ -2330,7 +2356,7 @@
         .map((x) => `<div class="gpage"><b>${esc(x.t)}</b><p>${esc(x.d(st))}</p></div>`)
         .join('')}${got.length < all.length ? `<div class="gpage locked"><b>${all.length - got.length} more ${all.length - got.length === 1 ? 'page' : 'pages'}</b><p>Keep playing to unlock ${all.length - got.length === 1 ? 'it' : 'them'}.</p></div>` : ''}</div></div>`;
     }
-    return h + `<p class="note">Tips are ${st.guide.on !== false ? 'on' : 'off'}. You can turn them off, or start the guide again, in Settings.</p>`;
+    return h + `<p class="note">Nib Nub's tips are ${st.guide.on !== false ? 'on' : 'off'}. You can turn them off, or start the guide again, in Settings.</p>`;
   }
 
   function boot(data) {

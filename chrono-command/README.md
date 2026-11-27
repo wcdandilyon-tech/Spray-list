@@ -83,6 +83,7 @@ version, your stage moves to the matching era and you get a full army of that er
 | --- | --- |
 | `index.html` | Page layout and all styling |
 | `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 137 leaders, their three specials each, their prestige goals and the 31 doctrines |
+| `img/nibnub.png` | Nib Nub, the guide (artwork supplied by the game's owner) |
 | `LEADERS.md` | Every leader with their class, best position, attributes, three special moves, prestige goals and what they bring in the ranks |
 | `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader prestige and its stats, leader positions, leaders in the ranks, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the full-screen era scene around it, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
@@ -95,12 +96,13 @@ on whichever soldier or upgrade adds the most strength. Even that bot starts los
 hits walls every few eras where it has to save up and train, reaches its first Time Rift after about 2 to 2.5 hours,
 and opens Shattered Time after about 10 to 11 hours.
 
-**A guide that teaches as you go.** Short tips in plain words (written so a kid can follow them) appear the first time
-something new matters: how to strike, what gold is for, room in your army, leader battles, losing, the War Council,
-special moves, front or back, soldier skills, new eras, the Codex, Time Rifts, the end of the story, prestige and leaders
-in the ranks. Your commander "says" each one, the button or bar it talks about glows, and **Show me** opens the right menu.
-Every tip you have seen is kept on the **Guide** page (the **?** button), which fills in as you play. Tips can be turned off
-or started again in Settings; saves from before the guide skip the basics.
+**Nib Nub, your guide.** Nib Nub is a small alien from very far away who does his best to teach you the game as you go.
+His tips are short and in plain words (written so a kid can follow them), and each one appears the first time something new
+matters: how to strike, what gold is for, room in your army, leader battles, losing, the War Council, special moves, front
+or back, soldier skills, new eras, the Codex, Time Rifts, the end of the story, prestige and leaders in the ranks. His words
+type out as he talks, the button or bar he means glows, and **Show me** opens the right menu. Everything he has taught you
+is kept in **Nib Nub's Guide** (his face in the top corner), which fills in as you play. His tips can be turned off or
+started again in Settings; saves from before the guide skip the basics.
 
 The **Codex** only shows the leaders you have found so far, with a count of how many are still hidden in each era you have
 reached. Later eras and the mystery leaders stay secret until you get there.
