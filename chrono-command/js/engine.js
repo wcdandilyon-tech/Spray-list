@@ -27,47 +27,91 @@
     riftBase: 5,
     riftGrowth: 1.04,
     vet: 0.4, // new-era units start at this share of your best unit level
+    chaos: 1.6, // extra enemy strength once time shatters
+    mysteryHp: 2.2,
+    mysteryAtk: 1.3,
+    heroAtk: 1.0, // commanders on the field, relative to an average squad
+    heroHp: 3.0,
   });
   CW.SAVE_KEY = 'chronoCommand.v1';
 
   // ------------------------------------------------------------ campaign map
+  // The time pathway runs every era in order, from the Stone Age to the Future.
+  // After it ends, time shatters: random eras, stronger foes and mystery bosses, forever.
   const BOSSES = [];
   for (let e = 0; e < 9; e++) BOSSES.push(LEADERS.filter((l) => l.era === e && !l.starter).map((l) => l.id));
-  BOSSES.push([0, 1, 2, 3, 4, 5]); // future era: six echo battles
-  const ERA_LEN = BOSSES.map((b) => b.length * CFG.stagesPerBoss);
+  BOSSES.push(['exterminator', null, null, null, null, 'alien']); // nulls: echoes of the past, picked per run
+  const SPB = CFG.stagesPerBoss;
+  const ERA_LEN = BOSSES.map((b) => b.length * SPB);
   const ERA_START = [];
   let acc = 0;
   ERA_LEN.forEach((n) => {
     ERA_START.push(acc);
     acc += n;
   });
-  const LOOP_LEN = acc;
-  CW.LOOP_LEN = LOOP_LEN;
+  const PATH_LEN = acc;
+  CW.PATH_LEN = PATH_LEN;
   CW.ERA_START = ERA_START;
   CW.BOSSES = BOSSES;
 
-  function echoFor(loop, i) {
-    const p = CW.ECHO_POOL;
-    return p[(loop * 6 + i) % p.length];
+  function hash(a, b) {
+    let h = (a ^ 0x9e3779b9) + Math.imul(b + 0x7f4a7c15, 0x85ebca6b);
+    h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
+    h = Math.imul(h ^ (h >>> 12), 0x297a2d39);
+    h ^= h >>> 15;
+    return h >>> 0;
   }
-  const infoCache = new Map();
+  const seed = () => (S && S.seed) || 1;
+  function echoFor(i) {
+    const p = CW.ECHO_POOL;
+    return p[(hash(seed(), 99) + i * 5) % p.length];
+  }
+  let infoCache = new Map();
   CW.stageInfo = function (stage) {
     let r = infoCache.get(stage);
     if (r) return r;
-    const s0 = (stage - 1) % LOOP_LEN;
-    const loop = Math.floor((stage - 1) / LOOP_LEN);
-    let era = 0;
-    while (era < 9 && s0 >= ERA_START[era + 1]) era++;
-    const k = s0 - ERA_START[era];
-    const bi = Math.floor(k / CFG.stagesPerBoss);
-    const sub = k % CFG.stagesPerBoss;
-    const bossId = era === 9 ? echoFor(loop, bi) : BOSSES[era][bi];
-    const isBoss = sub === CFG.stagesPerBoss - 1;
-    const span = ERAS[era].span;
-    const yr = isBoss && era < 9 ? LEADER[bossId].yr : Math.round(span[0] + ((span[1] - span[0]) * (k + 1)) / ERA_LEN[era]);
-    r = { stage, loop, era, k, bi, sub, isBoss, bossId, yr, echo: loop > 0 || era === 9, eraStage: k + 1, eraLen: ERA_LEN[era] };
+    if (stage <= PATH_LEN) {
+      const s0 = stage - 1;
+      let era = 0;
+      while (era < 9 && s0 >= ERA_START[era + 1]) era++;
+      const k = s0 - ERA_START[era];
+      const bi = Math.floor(k / SPB);
+      const sub = k % SPB;
+      const bossId = BOSSES[era][bi] || echoFor(bi);
+      const isBoss = sub === SPB - 1;
+      const L = LEADER[bossId];
+      const span = ERAS[era].span;
+      const variant = era === 9 && L.era !== 9 ? 'echo' : '';
+      const yr = isBoss && !variant ? L.yr : Math.round(span[0] + ((span[1] - span[0]) * (k + 1)) / ERA_LEN[era]);
+      r = { stage, chaos: false, era, k, bi, sub, isBoss, bossId, yr, variant, echo: era === 9, mystery: false, eraStage: k + 1, eraLen: ERA_LEN[era] };
+    } else {
+      const c = stage - PATH_LEN - 1;
+      const seg = Math.floor(c / SPB);
+      const sub = c % SPB;
+      const era = hash(seed(), seg * 3 + 1) % 10;
+      const mystery = seg % 4 === 0;
+      let bossId;
+      if (mystery) bossId = CW.MYSTERY[hash(seed(), seg * 3 + 2) % CW.MYSTERY.length];
+      else {
+        const pool = era < 9 ? BOSSES[era] : CW.FUTURE_POOL;
+        bossId = pool[hash(seed(), seg * 3 + 2) % pool.length];
+      }
+      const L = LEADER[bossId];
+      const span = ERAS[era].span;
+      const variant = !mystery && era === 9 && L.era !== 9 ? 'echo' : '';
+      const isBoss = sub === SPB - 1;
+      const yr = isBoss && L.yr != null && L.era === era ? L.yr : Math.round(span[0] + ((span[1] - span[0]) * (hash(seed(), c + 7) % 1000)) / 1000);
+      r = { stage, chaos: true, era, k: sub, bi: seg, sub, isBoss, bossId, yr, variant, echo: true, mystery, depth: seg + 1, eraStage: sub + 1, eraLen: SPB };
+    }
     infoCache.set(stage, r);
     return r;
+  };
+  CW.bossStageOf = function (id) {
+    for (let e = 0; e < 10; e++) {
+      const i = BOSSES[e].indexOf(id);
+      if (i >= 0) return ERA_START[e] + i * SPB + SPB;
+    }
+    return 0;
   };
   CW.fmtYear = (y) => (y < 0 ? Math.abs(y) + ' BC' : y < 1000 ? 'AD ' + y : String(y));
 
@@ -98,6 +142,7 @@
     starters.forEach((id) => (roster[id] = { lv: 1, stars: 0 }));
     return {
       v: 1,
+      seed: (Math.random() * 1e9) | 0,
       gold: 0,
       shards: 0,
       stage: 1,
@@ -124,6 +169,7 @@
 
   CW.newGame = function (starter) {
     S = freshState(starter);
+    infoCache = new Map();
     M = null;
     B = null;
     startStage(true);
@@ -136,6 +182,8 @@
     const base = freshState(obj.main);
     S = Object.assign(base, obj);
     S.auto = Object.assign({ cast: true, push: true }, obj.auto || {});
+    if (!S.seed) S.seed = (Math.random() * 1e9) | 0;
+    infoCache = new Map();
     S.stats = Object.assign(base.stats, obj.stats || {});
     // sanitize references
     Object.keys(S.roster).forEach((id) => {
@@ -267,39 +315,87 @@
     };
   }
 
+  // ---- commanders fight on the front line next to their troops
+  function heroStats(lid, isMain, ctx) {
+    let a = 0;
+    let h = 0;
+    S.formation.forEach((id) => {
+      const st = squadStats(id, ctx);
+      a += st.atk / st.int;
+      h += st.hp;
+    });
+    a /= S.formation.length;
+    h /= S.formation.length;
+    const r = S.roster[lid] || { lv: 1, stars: 0 };
+    const b = (1 + 0.05 * (r.lv - 1)) * (1 + 0.1 * r.stars);
+    const m = isMain ? 1.4 : 1;
+    return { hp: h * CFG.heroHp * m * b, atk: a * 1.4 * CFG.heroAtk * m * b, int: 1.4 };
+  }
+  CW.heroStats = (lid, isMain) => heroStats(lid, isMain, armyContext());
+  function mkHero(lid, i, st) {
+    return {
+      sid: sid++, side: 'a', uid: null, lid, role: 'hero', isHero: true, main: i === 0, trait: null, era: LEADER[lid].era,
+      hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, t: Math.random() * 0.8, alive: true, stun: 0, struck: false,
+      isBoss: false, slot: 100 + i, flash: 0, lunge: 0,
+    };
+  }
+  const commandIds = () => [S.main].concat(S.partners).filter(Boolean);
+
   function buildAllies() {
     fixFormation();
     const ctx = armyContext();
     B.allies = S.formation.map((id, i) => mkSquad('a', id, squadStats(id, ctx), i));
+    commandIds().forEach((lid, i) => B.allies.push(mkHero(lid, i, heroStats(lid, i === 0, ctx))));
   }
   function refreshAllies() {
     if (!B) return;
     fixFormation();
     const ctx = armyContext();
-    const old = B.allies;
-    const same = old.length === S.formation.length && old.every((q, i) => q.uid === S.formation[i]);
+    const oldSq = B.allies.filter((q) => !q.isHero);
+    const oldH = B.allies.filter((q) => q.isHero);
+    let squads;
+    const same = oldSq.length === S.formation.length && oldSq.every((q, i) => q.uid === S.formation[i]);
     if (!same) {
-      const fresh = S.formation.map((id, i) => mkSquad('a', id, squadStats(id, ctx), i));
-      // keep health ratio of matching slots
-      fresh.forEach((q, i) => {
-        const o = old[i];
+      squads = S.formation.map((id, i) => mkSquad('a', id, squadStats(id, ctx), i));
+      squads.forEach((q, i) => {
+        const o = oldSq[i];
         if (o && o.uid === q.uid) {
           q.hp = o.alive ? q.maxHp * (o.hp / o.maxHp) : 0;
           q.alive = o.alive;
         }
       });
-      B.allies = fresh;
-      return;
+    } else {
+      squads = oldSq;
+      squads.forEach((q) => {
+        const st = squadStats(q.uid, ctx);
+        const ratio = q.maxHp > 0 ? q.hp / q.maxHp : 1;
+        q.maxHp = st.hp;
+        q.hp = q.alive ? st.hp * ratio : 0;
+        q.atk = st.atk;
+        q.int = st.int;
+      });
     }
-    old.forEach((q) => {
-      const st = squadStats(q.uid, ctx);
-      const ratio = q.maxHp > 0 ? q.hp / q.maxHp : 1;
-      q.maxHp = st.hp;
-      q.hp = q.alive ? st.hp * ratio : 0;
-      q.atk = st.atk;
-      q.int = st.int;
+    const heroes = commandIds().map((lid, i) => {
+      const st = heroStats(lid, i === 0, ctx);
+      const h = oldH.find((q) => q.lid === lid);
+      if (!h) return mkHero(lid, i, st);
+      const ratio = h.maxHp > 0 ? h.hp / h.maxHp : 1;
+      h.main = i === 0;
+      h.slot = 100 + i;
+      h.maxHp = st.hp;
+      h.hp = h.alive ? st.hp * ratio : 0;
+      h.atk = st.atk;
+      h.int = st.int;
+      return h;
     });
+    B.allies = squads.concat(heroes);
   }
+  function heroAlive(lid) {
+    if (!B) return true;
+    for (const q of B.allies) if (q.isHero && q.lid === lid) return q.alive;
+    return true;
+  }
+  CW.heroAlive = heroAlive;
 
   // ------------------------------------------------------------ battle flow
   function startStage(rebuild) {
@@ -340,7 +436,8 @@
 
   function spawnWave() {
     const info = B.info;
-    const g = growth(S.stage);
+    let g = growth(S.stage);
+    if (info.chaos) g *= CFG.chaos;
     const pool = UNITS.filter((u) => u.era === info.era);
     const pick = (role) => pool.find((u) => u.role === role);
     const roll = () => {
@@ -353,19 +450,19 @@
       const n = 2 + Math.floor(info.era / 3);
       for (let i = 0; i < n; i++) list.push(enemySquad(pick(i % 2 ? 'rng' : 'inf'), g, i));
       const lid = info.bossId;
-      const hp = ROLES.hvy.hp * g * CFG.enemyHp * CFG.bossHp * (info.echo ? 1.25 : 1) * Math.min(1, 0.55 + 0.03 * S.stage);
+      const hp = ROLES.hvy.hp * g * CFG.enemyHp * CFG.bossHp * (info.echo ? 1.25 : 1) * (info.mystery ? CFG.mysteryHp : 1) * Math.min(1, 0.55 + 0.03 * S.stage);
       const boss = {
         sid: sid++, side: 'e', uid: null, lid, role: 'boss', trait: null, era: info.era,
-        hp, maxHp: hp, atk: ROLES.hvy.atk * g * CFG.enemyAtk * CFG.bossAtk, int: 1.6, t: 0,
+        hp, maxHp: hp, atk: ROLES.hvy.atk * g * CFG.enemyAtk * CFG.bossAtk * (info.mystery ? CFG.mysteryAtk : 1), int: 1.6, t: 0,
         alive: true, stun: 0, struck: false, isBoss: true, slot: 99, flash: 0, lunge: 0,
       };
       list.push(boss);
       B.boss = boss;
-      B.bossT = CFG.bossTime + mods().bossTime;
+      B.bossT = CFG.bossTime + mods().bossTime + (info.mystery ? 15 : 0);
       B.bossTMax = B.bossT;
       B.bossSkillT = 6;
     } else {
-      const n = Math.min(8, 3 + Math.floor(info.era / 2) + (info.sub === 1 ? 1 : 0) + (B.wave === CFG.waves ? 1 : 0));
+      const n = Math.min(9, 3 + Math.floor(info.era / 2) + (info.sub === 1 ? 1 : 0) + (B.wave === CFG.waves ? 1 : 0) + (info.chaos ? 1 : 0));
       for (let i = 0; i < n; i++) list.push(enemySquad(pick(roll()), g, i));
     }
     // front units first, ranged behind, boss at the very back
@@ -500,6 +597,10 @@
   CW.addGold = addGold;
 
   function onDeath(q) {
+    if (q.isHero) {
+      B.fx.push({ k: 'herofall', lid: q.lid });
+      emit('heroFall', q.lid);
+    }
     if (q.side === 'e') {
       S.stats.kills++;
       if (!q.isBoss) {
@@ -655,7 +756,7 @@
     if (S.stage > S.runMax) S.runMax = S.stage;
     if (S.stage > S.best) S.best = S.stage;
     const info = CW.stageInfo(S.stage);
-    const reach = info.loop > 0 ? 9 : info.era;
+    const reach = info.chaos ? 9 : info.era;
     if (reach > S.eraReached) {
       // veterans train the new recruits: fresh units start partway to your best unit level
       const top = Math.max(1, ...Object.values(S.unitLv));
@@ -667,6 +768,7 @@
       fixFormation();
       emit('era', info);
     }
+    if (S.stage === PATH_LEN + 1) emit('chaos', info);
     startStage();
   }
 
@@ -705,7 +807,7 @@
     }
     if (m.shardDrop) S.shards += m.shardDrop;
     S.stats.bosses++;
-    B.reward = { lid, gold: g, res, echo: B.info.echo };
+    B.reward = { lid, gold: g, res, echo: B.info.echo, mystery: B.info.mystery };
     B.phase = 'victory';
     B.pt = 1.6;
     if (m.shardDrop || res === 'shard') dirty();
@@ -751,7 +853,9 @@
   CW.cast = function (key) {
     if (!B || B.phase !== 'fight') return false;
     const e = skillList().find((x) => x.key === key);
-    if (!e || (B.cd[key] || 0) > 0) return false;
+    if (!e || (B.cd[key] || 0) > 0 || !heroAlive(e.lid)) return false;
+    const hero = B.allies.find((q) => q.isHero && q.lid === e.lid);
+    if (hero) hero.lunge = 1.5;
     applyFx(e.sk.fx, skillPow(e));
     const c = skillCd(e);
     B.cd[key] = c;
@@ -807,7 +911,8 @@
         B.fx.push({ k: 'heal' });
       } else if (type === 'revive') {
         let n = a;
-        for (const q of B.allies)
+        const order = B.allies.slice().sort((x, y) => (y.isHero ? 1 : 0) - (x.isHero ? 1 : 0));
+        for (const q of order)
           if (!q.alive && n > 0) {
             q.alive = true;
             q.hp = q.maxHp * b;
@@ -1001,6 +1106,8 @@
     if (!n) return false;
     S.shards += n;
     S.stats.rifts++;
+    S.seed = (Math.random() * 1e9) | 0;
+    infoCache = new Map();
     Object.assign(S, {
       gold: 0, stage: 1, runMax: 1, farming: false, farmCount: 0, unitLv: {}, eraReached: 0, doctrines: {}, council: null,
       formation: ['spearman', 'spearman', 'slinger', 'chariot'],

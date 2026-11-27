@@ -22,6 +22,7 @@
     fdr: 'FDR', jfk: 'JFK', mlk: 'MLK', troosevelt: 'Teddy Roosevelt', mansa_musa: 'Mansa Musa', ho_chi_minh: 'Ho Chi Minh',
     kim_il_sung: 'Kim Il Sung', elizabeth2: 'Elizabeth II', elizabeth1: 'Elizabeth I', wilhelm: 'Kaiser Wilhelm', sun_tzu: 'Sun Tzu',
     vlad: 'Vlad Dracula', qin: 'Qin Shi Huang', genghis: 'Genghis Khan', che: 'Che Guevara', degaulle: 'De Gaulle', kirk: 'Charlie Kirk',
+    mobutu: 'Mobutu', alien: 'Alien Overlord', wraith: 'Time Wraith', void: 'Void Emperor', exterminator: 'Exterminator', caveman: 'The Caveman',
   };
   function short(id) {
     if (NICK[id]) return NICK[id];
@@ -162,12 +163,18 @@
   ro.observe(screenEl);
 
   const pos = new Map();
-  const COLX = [150, 106, 62];
+  const COLX = [126, 88, 50];
+  const HERO_POS = [[162, 180], [154, 153], [154, 207]];
   function place(list, side) {
     const front = [];
     const back = [];
     for (const q of list) {
       if (q.isBoss) continue;
+      if (q.isHero) {
+        const [x, gy] = HERO_POS[Math.min(2, q.slot - 100)];
+        pos.set(q.sid, { x, y: gy, gy, w: 30, side, hero: true });
+        continue;
+      }
       (q.role === 'rng' ? back : front).push(q);
     }
     const cols = [[], [], []];
@@ -177,15 +184,15 @@
       const n = col.length;
       col.forEach((q, ri) => {
         const sp = CW.unitSprite(q.uid, side);
-        const gy = n === 1 ? 172 : Math.round(140 + ri * (62 / (n - 1)));
-        const w = sp.multi ? 18 : sp.w;
-        let x = COLX[ci] + (ri % 2 ? -5 : 0) - (sp.multi ? 0 : Math.max(0, sp.w - 18));
+        const gy = n === 1 ? 172 : Math.round(140 + ri * (64 / (n - 1)));
+        const w = sp.multi ? 20 : sp.w;
+        let x = COLX[ci] + (ri % 2 ? -5 : 0) - (sp.multi ? 0 : Math.max(0, sp.w - 20));
         if (side === 'e') x = FW - x - w;
         pos.set(q.sid, { x, y: sp.air ? gy - 34 : gy, gy, w, sp, side, air: sp.air });
       });
     });
     const boss = list.find((q) => q.isBoss);
-    if (boss) pos.set(boss.sid, { x: 322, y: 150, gy: 150, w: 48, side, boss: true });
+    if (boss) pos.set(boss.sid, { x: 302, y: 184, gy: 184, w: 60, side, boss: true });
   }
 
   const proj = [];
@@ -195,7 +202,7 @@
   let shake = 0;
   let flashT = 0;
   let flashCol = '#fff';
-  const center = (p) => ({ x: p.x + p.w / 2, y: p.boss ? p.y - 26 : p.y - (p.sp ? p.sp.h / 2 + 2 : 8) });
+  const center = (p) => ({ x: p.x + p.w / 2, y: p.boss ? p.gy - 46 : p.hero ? p.gy - 22 : p.y - (p.sp ? p.sp.h / 2 + 2 : 8) });
 
   function num(x, y, txt, col, scale) {
     if (nums.length > 36) nums.shift();
@@ -277,8 +284,8 @@
           const p = pos.get(q.sid);
           if (p) boom(center(p).x, center(p).y, 7, '#ff5a3a');
         }
-      } else if (e.k === 'heal') {
-        // handled by cast
+      } else if (e.k === 'herofall') {
+        toast(short(e.lid) + ' is down! Their skills are locked until revived', 'red');
       }
     }
     B.fx.length = 0;
@@ -336,49 +343,91 @@
     }
   }
 
-  function drawBoss(q, p, t, B) {
-    if (!q.alive) return;
-    const echo = B.info.echo;
-    const img = CW.portrait(q.lid, echo ? 'echo' : '');
-    let ox = B.phase === 'march' ? Math.round((B.pt / 0.8) * 150) : 0;
-    if (q.lunge > 0) ox -= Math.round(q.lunge * 6);
-    const bob = Math.round(Math.sin(t * 3));
+  // commanders and enemy leaders: full-body sprites on the field (the enemy leader is drawn twice as big)
+  function drawHero(q, p, t, B) {
+    const isBoss = !!p.boss;
+    const sc = isBoss ? 2 : 1;
+    const info = B.info;
+    const spr = CW.heroSprite(q.lid, q.side, isBoss ? info.variant : '');
+    let ox = 0;
+    if (q.side === 'e' && B.phase === 'march') ox = Math.round((B.pt / 0.8) * (isBoss ? 40 : 150));
+    if (q.lunge > 0) ox += (q.side === 'a' ? 1 : -1) * Math.round(q.lunge * 4 * sc);
+    const bob = ((t * 2 + q.sid * 0.3) % 1) < 0.5 ? 0 : sc;
     const x = p.x + ox;
-    const y = p.y - 52 + bob;
-    R(x - 2, p.gy + 1, 52, 3, 'rgba(0,0,0,.35)');
-    R(x - 4, y - 4, 56, 56, '#0b0d08');
-    R(x - 3, y - 3, 54, 54, echo ? '#2ee6ff' : '#ff5a4a');
-    g.drawImage(img, x, y, 48, 48);
-    if (q.flash > 0.45) {
-      g.globalAlpha = 0.55;
-      R(x, y, 48, 48, '#ffffff');
+    const y = p.gy - 41 * sc - bob;
+    if (!q.alive) {
+      if (q.side === 'a') {
+        g.globalAlpha = 0.3;
+        g.drawImage(spr.shadow, x, p.gy - 41);
+        g.globalAlpha = 1;
+        CW.bitText(g, 'DOWN', x + 7, p.gy - 50, '#ff8a7a', 1, '#0b0d08');
+      }
+      return;
+    }
+    R(x + 4 * sc, p.gy, 22 * sc, 2, 'rgba(0,0,0,.35)');
+    if (isBoss) {
+      const aura = info.mystery ? '#d08aff' : info.chaos ? '#b070ff' : info.variant === 'echo' ? '#2ee6ff' : '#ff5a4a';
+      const au = CW.tinted(spr.c, aura);
+      g.globalAlpha = 0.45 + 0.25 * Math.sin(t * 5);
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) g.drawImage(au, x + dx * sc, y + dy * sc, 30 * sc, 42 * sc);
+      g.globalAlpha = 1;
+    } else if (q.main) {
+      g.globalAlpha = 0.35 + 0.2 * Math.sin(t * 4);
+      const au = CW.tinted(spr.c, '#ffd23f');
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1]]) g.drawImage(au, x + dx, y + dy);
       g.globalAlpha = 1;
     }
-    if (q.stun > 0) CW.bitText(g, 'STUN', x + 9, y - 12, '#ffe86a', 2, '#000');
+    const hidden = isBoss && info.mystery && B.phase === 'march';
+    const img = hidden ? spr.shadow : q.flash > 0.45 ? spr.flash : spr.c;
+    g.drawImage(img, x, y, 30 * sc, 42 * sc);
+    if (hidden) CW.bitText(g, '?', x + 24, y + 26, '#e8d0ff', 4, '#0b0d08');
+    if (!isBoss) {
+      const bw = 22;
+      const bx = x + 4;
+      const by = p.gy + 3;
+      R(bx - 1, by - 1, bw + 2, 4, '#0b0d08');
+      R(bx, by, Math.max(1, Math.round((bw * q.hp) / q.maxHp)), 2, q.main ? '#ffd23f' : '#5ad1ff');
+    }
+    if (q.stun > 0) {
+      const a = t * 8;
+      const c = center(p);
+      R(c.x + Math.cos(a) * 8 + ox, y - 4 + Math.sin(a) * 2, 2, 2, '#ffe86a');
+      R(c.x + Math.cos(a + 3) * 8 + ox, y - 4 + Math.sin(a + 3) * 2, 2, 2, '#ffe86a');
+    }
   }
 
   function drawCommander(st, t) {
+    const B = CW.battle();
     const x = 6;
     const y = 6;
-    R(x - 2, y - 2, 32, 32, '#0b0d08');
-    R(x - 1, y - 1, 30, 30, '#5ad1ff');
-    g.drawImage(CW.portrait(st.main), x, y, 28, 28);
-    st.partners.forEach((pid, i) => {
-      const px = x + 34;
-      const py = y + i * 15;
-      R(px - 1, py - 1, 15, 15, '#0b0d08');
-      g.drawImage(CW.portrait(pid), px, py, 13, 13);
+    const ids = [st.main].concat(st.partners);
+    ids.forEach((id, i) => {
+      const sz = i ? 16 : 32;
+      const px = i ? x + 36 : x;
+      const py = i ? y + (i - 1) * 18 : y;
+      R(px - 2, py - 2, sz + 4, sz + 4, '#0b0d08');
+      R(px - 1, py - 1, sz + 2, sz + 2, i ? '#5ad1ff' : '#ffd23f');
+      g.drawImage(CW.portrait(id), px, py, sz, sz);
+      if (!CW.heroAlive(id)) {
+        g.globalAlpha = 0.65;
+        R(px, py, sz, sz, '#0b0d08');
+        g.globalAlpha = 1;
+        for (let k = 0; k < sz; k += 2) {
+          R(px + k, py + k, 2, 2, '#ff5a4a');
+          R(px + sz - 2 - k, py + k, 2, 2, '#ff5a4a');
+        }
+      }
     });
   }
 
   function drawHud(B, st, t) {
     const info = B.info;
     // wave / battle label, top centre
-    const label = info.isBoss ? (info.echo ? 'ECHO BATTLE' : 'LEADER BATTLE') : 'WAVE ' + B.wave + '/' + CW.CFG.waves;
+    const label = info.isBoss ? (info.mystery ? 'MYSTERY BOSS' : info.variant === 'echo' ? 'ECHO BATTLE' : 'LEADER BATTLE') : 'WAVE ' + B.wave + '/' + CW.CFG.waves;
     CW.bitText(g, label, Math.round(FW / 2 - CW.bitWidth(label, 2) / 2), 6, info.isBoss ? '#ff8a7a' : '#ffffff', 2, '#0b0d08');
     if (st.farming) CW.bitText(g, 'REGROUPING', Math.round(FW / 2 - CW.bitWidth('REGROUPING', 1) / 2), 19, '#ffd23f', 1, '#0b0d08');
     if (B.boss) {
-      const nm = short(B.boss.lid).toUpperCase();
+      const nm = info.mystery && B.phase === 'march' ? '???' : short(B.boss.lid).toUpperCase();
       const w = CW.bitWidth(nm, 2);
       CW.bitText(g, nm, FW - 8 - w, 6, '#ffffff', 2, '#0b0d08');
       const bw = 130;
@@ -395,7 +444,7 @@
     if (B.phase === 'march' && B.wave === 1) {
       g.globalAlpha = Math.min(1, B.pt * 2);
       if (info.isBoss) {
-        mid('VS ' + short(info.bossId).toUpperCase(), '#ff8a7a', 3, 60);
+        mid('VS ' + (info.mystery ? '???' : short(info.bossId).toUpperCase()), info.mystery ? '#e8d0ff' : '#ff8a7a', 3, 60);
         mid(fmtYear(info.yr), '#ffffff', 2, 82);
       } else mid('STAGE ' + st.stage, '#ffffff', 3, 64);
       g.globalAlpha = 1;
@@ -439,7 +488,7 @@
     all.sort((a, b) => pos.get(a.sid).gy - pos.get(b.sid).gy);
     for (const q of all) {
       const p = pos.get(q.sid);
-      if (q.isBoss) drawBoss(q, p, t, B);
+      if (q.isBoss || q.isHero) drawHero(q, p, t, B);
       else drawSquad(q, p, t, B);
       q.flash = Math.max(0, q.flash - dt * 6);
       q.lunge = Math.max(0, q.lunge - dt * 7);
@@ -530,7 +579,7 @@
     let target = null;
     for (const [sid, p] of pos) {
       if (p.side !== 'e') continue;
-      const top = p.boss ? p.y - 52 : p.y - (p.sp ? p.sp.h : 12) - 6;
+      const top = p.boss ? p.gy - 84 : p.y - (p.sp ? p.sp.h : 12) - 6;
       if (x >= p.x - 3 && x <= p.x + p.w + 3 && y >= top && y <= p.gy + 4) target = sid;
     }
     const dmg = CW.tap(target);
@@ -543,7 +592,7 @@
   // ------------------------------------------------------------ toasts
   const toastEl = $('#toast');
   function toast(txt, cls) {
-    while (toastEl.children.length > 2) toastEl.firstChild.remove();
+    while (toastEl.children.length > 1) toastEl.firstChild.remove();
     const d = document.createElement('div');
     d.className = cls || '';
     d.textContent = txt;
@@ -563,6 +612,7 @@
   $('#icoClock').src = CW.icon('clock');
 
   let nextImgId = '';
+  let revealed = 0;
   function updateHUD() {
     const st = S();
     const B = CW.battle();
@@ -573,21 +623,29 @@
     el.dps.textContent = fmt(CW.armyDPS());
     const info = B.info;
     const era = ERAS[info.era];
-    el.era.textContent = 'Era ' + era.roman + ' · ' + era.name + (info.loop ? ' · Loop ' + (info.loop + 1) : '');
+    el.era.textContent = (info.chaos ? 'Shattered Time · ' : '') + 'Era ' + era.roman + ' · ' + era.name;
     el.year.textContent = fmtYear(info.yr);
-    el.stage.textContent = 'Stage ' + st.stage + (st.farming ? ' · regrouping' : '');
+    el.stage.textContent = 'Stage ' + st.stage + (info.chaos ? ' · depth ' + info.depth : '') + (st.farming ? ' · regrouping' : '');
+    if (info.mystery && B.boss && B.phase === 'fight' && revealed !== B.boss.sid) {
+      revealed = B.boss.sid;
+      toast('The mystery boss is revealed: ' + LEADER[B.boss.lid].name + '!', 'red');
+      SFX.play('bosscast');
+    }
     const bossStage = st.stage + (2 - info.sub);
     const bi = CW.stageInfo(bossStage);
-    const bid = bi.bossId + (bi.echo ? 'e' : '');
+    const shown = bi.mystery && !(info.isBoss && B.phase !== 'march');
+    const nv = shown ? 'mystery' : bi.variant;
+    const bid = bi.bossId + nv;
     if (nextImgId !== bid) {
       nextImgId = bid;
-      el.nextImg.src = CW.portraitURL(bi.bossId, bi.echo ? 'echo' : '');
+      el.nextImg.src = CW.portraitURL(bi.bossId, nv);
     }
+    const bname = shown ? '???' : short(bi.bossId);
     const prog = info.isBoss ? 1 : (info.sub + (B.wave - 1) / CW.CFG.waves) / 2;
     el.nextBar.style.width = 'calc((100% - 4px) * ' + prog.toFixed(3) + ')';
-    el.nextTxt.textContent = info.isBoss ? 'VS ' + short(bi.bossId) : short(bi.bossId) + ' in ' + (2 - info.sub) + (2 - info.sub === 1 ? ' stage' : ' stages');
+    el.nextTxt.textContent = info.isBoss ? 'VS ' + bname : bname + ' in ' + (2 - info.sub) + (2 - info.sub === 1 ? ' stage' : ' stages');
     el.challenge.hidden = !st.farming;
-    if (st.farming) el.challenge.textContent = 'Challenge ' + short(bi.bossId);
+    if (st.farming) el.challenge.textContent = 'Challenge ' + bname;
     el.council.hidden = !st.council;
     if (st.council) el.council.textContent = st.council.picks ? 'War Council (' + st.council.picks + ')' : 'War Council';
     const sig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars).join(',')].join('|');
@@ -597,7 +655,7 @@
   function skillBtn(e) {
     const label = e.key === 'ult' ? 'Main skill' : e.main ? 'Skill' : 'Partner skill';
     const kk = { ult: 1, s1: 2, s2: 3, p0: 4, p1: 5 }[e.key];
-    return `<button class="skill ${e.key === 'ult' ? 'ult' : ''}" data-skill="${e.key}" title="${esc(skillDesc(e.sk))}"><span class="t"></span><em>${label}<span class="kbd">${kk}</span></em><b>${esc(e.sk.n)}</b><small>${esc(skillShort(e.sk))}</small></button>`;
+    return `<button class="skill ${e.key === 'ult' ? 'ult' : ''}" data-skill="${e.key}" data-lid="${e.lid}" title="${esc(skillDesc(e.sk))}"><span class="t"></span><em>${label}<span class="kbd">${kk}</span></em><b>${esc(e.sk.n)}</b><small>${esc(skillShort(e.sk))}</small></button>`;
   }
   function renderDeck() {
     const st = S();
@@ -610,9 +668,9 @@
       const e = list.find((x) => x.key === 'p' + i);
       if (!e) return `<div class="partner box notch"><div class="who"><b>Open partner slot</b><small>Recruit leaders, then assign them at the War Council</small></div></div>`;
       const pr = st.roster[e.lid];
-      return `<div class="partner box notch"><img class="px" src="${CW.portraitURL(e.lid)}" alt=""><div class="who"><b>${esc(LEADER[e.lid].name)}</b><small>Partner · <span class="nw">Lv ${pr.lv}</span> ${stars(pr.stars)}</small></div>${skillBtn(e)}</div>`;
+      return `<div class="partner box notch"><img class="px" src="${CW.portraitURL(e.lid)}" alt=""><div class="who"><b>${esc(LEADER[e.lid].name)}</b><small>Partner · <span class="nw">Lv ${pr.lv}</span> ${stars(pr.stars)}</small><span class="hp"><i data-hp="${e.lid}"></i></span></div>${skillBtn(e)}</div>`;
     };
-    el.deck.innerHTML = `<div class="lead box notch"><img class="px" src="${CW.portraitURL(st.main)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>Commander · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)} · ${esc(L.title)}</small><small>${esc(cl.name)}: ${esc(cl.d)}</small></div><div class="skills">${list.filter((e) => e.main).map(skillBtn).join('')}</div></div>${partner(0)}${partner(1)}`;
+    el.deck.innerHTML = `<div class="lead box notch"><img class="px" src="${CW.portraitURL(st.main)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>Commander · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)} · ${esc(L.title)}</small><small>${esc(cl.name)}: ${esc(cl.d)}</small><span class="hp main"><i data-hp="${st.main}"></i></span></div><div class="skills">${list.filter((e) => e.main).map(skillBtn).join('')}</div></div>${partner(0)}${partner(1)}`;
   }
   function updateDeck() {
     const B = CW.battle();
@@ -622,8 +680,14 @@
       const cd = B.cd[k] || 0;
       const mx = B.cdMax[k] || 1;
       b.style.setProperty('--cd', (cd / mx).toFixed(3));
-      b.querySelector('.t').textContent = cd > 0 ? Math.ceil(cd) + 's' : '';
-      b.classList.toggle('ready', cd <= 0);
+      const down = !CW.heroAlive(b.dataset.lid);
+      b.querySelector('.t').textContent = down ? 'DOWN' : cd > 0 ? Math.ceil(cd) + 's' : '';
+      b.classList.toggle('ready', cd <= 0 && !down);
+      b.classList.toggle('down', down);
+    });
+    el.deck.querySelectorAll('[data-hp]').forEach((i) => {
+      const h = B.allies.find((q) => q.isHero && q.lid === i.dataset.hp);
+      i.style.width = h ? ((100 * Math.max(0, h.hp)) / h.maxHp).toFixed(1) + '%' : '0';
     });
   }
   el.deck.addEventListener('click', (e) => {
@@ -702,13 +766,6 @@
     }
   }
 
-  function bossStageOf(id) {
-    const l = LEADER[id];
-    if (l.starter) return 0;
-    const i = CW.BOSSES[l.era].indexOf(id);
-    return CW.ERA_START[l.era] + i * CW.CFG.stagesPerBoss + CW.CFG.stagesPerBoss;
-  }
-
   function renderArmy() {
     const st = S();
     const counts = {};
@@ -736,18 +793,28 @@
   function renderLeaders() {
     const st = S();
     let h = `<div class="phead"><h2>Leaders · ${Object.keys(st.roster).length} of ${LEADERS.length} recruited</h2></div><p class="note">Defeat a leader to recruit them. Beat them again in a later loop or after a Time Rift to earn stars (+15% skill power and faster recharge each). Tap a leader for their story, skills and training.</p>`;
-    for (let e = 0; e < 9; e++) {
+    for (let e = 0; e < 11; e++) {
       const ls = LEADERS.filter((l) => l.era === e);
-      h += `<div class="erahead"><span>Era ${ERAS[e].roman} · ${ERAS[e].name}</span><span>${fmtYear(ERAS[e].span[0])} to ${fmtYear(ERAS[e].span[1])}</span></div><div class="lgrid">${ls
+      if (e === 10) {
+        h += `<div class="erahead"><span>Mysteries · Shattered Time</span><span>beyond the end of time</span></div><p class="note">Once you finish the pathway to the Future, time shatters: every era comes at random, foes grow stronger, and every fourth leader battle is a mystery boss whose face stays hidden until the fight begins.</p><div class="lgrid">${ls
+          .map((l) => {
+            const r = st.roster[l.id];
+            return r
+              ? `<button class="lcard ${l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : ''}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small>${esc(l.yrs)}</small><small data-lvl="${l.id}"></small>${stars(r.stars)}</button>`
+              : `<button class="lcard locked" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id, 'mystery')}" alt=""><span class="nm">???</span><small>Shattered Time</small></button>`;
+          })
+          .join('')}</div>`;
+        continue;
+      }
+      h += `<div class="erahead"><span>Era ${ERAS[e].roman} · ${ERAS[e].name}</span><span>${fmtYear(ERAS[e].span[0])} to ${fmtYear(ERAS[e].span[1])}</span></div>${e === 9 ? '<p class="note">The end of the pathway. Between the cyborg and the alien you also face four echoes: history\'s most feared commanders, rebuilt as machines and different on every run.</p>' : ''}<div class="lgrid">${ls
         .map((l) => {
           const r = st.roster[l.id];
           const cls = !r ? 'locked' : l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : '';
-          const where = l.starter ? 'Starter' : 'Stage ' + bossStageOf(l.id);
+          const where = l.starter ? 'Starter' : 'Stage ' + CW.bossStageOf(l.id);
           return `<button class="lcard ${cls}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small>${esc(l.yrs)}</small><small ${r ? `data-lvl="${l.id}"` : ''}>${r ? '' : esc(where)}</small>${r ? stars(r.stars) : ''}</button>`;
         })
         .join('')}</div>`;
     }
-    h += `<div class="erahead"><span>Era X · Future</span><span>2030 onward</span></div><p class="note">No one from history has been born here yet. The future era pits you against echoes: machine-rebuilt versions of history's most feared commanders, different on every loop. Beating them earns stars.</p>`;
     return h;
   }
 
@@ -905,10 +972,12 @@
     showModal(
       'start',
       `<h2>Chrono Command</h2>
-      <p class="bio">History's commanders, conquerors, dictators and dreamers are scattered across time. Pick your first commander, raise an army and fight your way from the Bronze Age to the far future, one leader at a time.</p>
+      <p class="bio">History's commanders, conquerors, dictators and dreamers are scattered across time. Pick your first commander, raise an army and fight your way from the Stone Age to the far future, one leader at a time.</p>
       <ul class="plain">
         <li>Your army fights on its own, even while you're away. Tap the battlefield to strike.</li>
-        <li>Every third stage is a leader battle. Win it and that leader joins your roster. ${LEADERS.length} leaders in all, from Sargon to Hitler, Gandhi and Martin Luther King Jr.</li>
+        <li>Every third stage is a leader battle. Win it and that leader joins your roster. ${LEADERS.length} in all: a Stone Age caveman, Caesar, Napoleon, Hitler, Stalin, Gandhi, Martin Luther King Jr., Donald Trump, a cyborg assassin and an alien overlord.</li>
+        <li>Your commander and partners fight on the front line. If one falls, their skills lock until they're revived.</li>
+        <li>Past the Future, time shatters: eras come at random, foes get stronger and mystery bosses appear.</li>
         <li>After each leader battle the War Council meets: draw a random army doctrine, mix and match troops from the Bronze Age to the future, and pick your commander and two partners.</li>
         <li>Your commander brings a main skill, two skills and a passive. Each partner adds one skill.</li>
       </ul>
@@ -932,7 +1001,7 @@
       renderDeck();
       renderPanel();
       save();
-      toast('Campaign begins: ' + fmtYear(-3000), 'blue');
+      toast('Campaign begins: ' + fmtYear(-10000), 'blue');
       return;
     }
     const act = b.dataset.act;
@@ -982,7 +1051,7 @@
       const n = CW.rift();
       closeModal();
       if (n) {
-        toast('+' + fmt(n) + ' Chrono Shards. Back to ' + fmtYear(-3000), 'blue');
+        toast('+' + fmt(n) + ' Chrono Shards. Back to ' + fmtYear(-10000), 'blue');
         SFX.play('era');
         renderDeck();
         renderPanel();
@@ -1072,7 +1141,7 @@
         .map((id) => {
           const l = LEADER[id];
           const rr = st.roster[id];
-          return `<button class="pick" data-act="setlead" data-id="${id}" title="${esc(CLASSES[l.cls].name + ': ' + CLASSES[l.cls].d)}"><img class="px" src="${CW.portraitURL(id)}" alt=""><span><em>${esc(CLASSES[l.cls].name)} · Lv ${rr.lv}</em><b>${esc(l.name)}</b></span></button>`;
+          return `<button class="pick" data-act="setlead" data-id="${id}" title="${esc(CLASSES[l.cls].name + ': ' + CLASSES[l.cls].d)}"><img class="px por" src="${CW.portraitURL(id)}" alt=""><span><em>${esc(CLASSES[l.cls].name)} · Lv ${rr.lv}</em><b>${esc(l.name)}</b></span></button>`;
         })
         .join('')}</div>`;
     }
@@ -1090,15 +1159,19 @@
     const l = LEADER[id];
     const r = st.roster[id];
     const cl = CLASSES[l.cls];
-    const role = id === st.main ? 'Your commander' : st.partners.includes(id) ? 'Your partner' : r ? 'In reserve' : l.starter ? 'Starter' : 'Not yet defeated · Stage ' + bossStageOf(id);
+    if (l.era === 10 && !r) {
+      showModal('leader', `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id, 'mystery')}" alt="" style="width:96px;height:96px"><div class="who"><h2>???</h2><small>A mystery from beyond the end of time</small></div></div><p class="bio">Someone, or something, waits where the timeline breaks. Finish the pathway all the way to the Future and keep going to find out who.</p><div class="acts"><button class="btn ghost" data-act="close">Close</button></div>`);
+      return;
+    }
+    const role = id === st.main ? 'Your commander' : st.partners.includes(id) ? 'Your partner' : r ? 'In reserve' : l.starter ? 'Starter' : 'Not yet defeated · Stage ' + CW.bossStageOf(id);
     const labels = ['Main skill', 'Skill 1 · also their partner skill', 'Skill 2'];
     showModal(
       'leader',
-      `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:96px;height:96px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>Era ${ERAS[l.era].roman} · ${ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
+      `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:96px;height:96px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === 10 ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
       <p class="bio">${esc(l.bio)}</p>
       <div class="sk"><em>As commander · ${esc(cl.name)}</em>${esc(cl.d)}</div>
       <h3>Skills</h3><div class="sklist">${l.skills.map((s, i) => `<div class="sk"><em>${labels[i]} · recharge ${s.cd}s</em><b>${esc(s.n)}</b>: ${esc(skillDesc(s).replace(/ Recharge.*$/, ''))}</div>`).join('')}</div>
-      ${r ? `<p class="note">Each level adds +8% skill power, and +3% army ATK and HP while this leader commands.</p>` : ''}
+      ${r ? `<p class="note">This leader fights on the front line when assigned. Each level adds +8% skill power and +5% to their own strength, plus +3% army ATK and HP while they command.</p>` : ''}
       <div class="acts">${r ? `<button class="btn" data-act="train" data-id="${id}" ${CW.trainCost(id) > st.gold ? 'disabled' : ''}>Train to Lv ${r.lv + 1} · ${fmt(CW.trainCost(id))}</button>` : ''}<button class="btn ghost" data-act="close">Close</button></div>`
     );
   }
@@ -1131,6 +1204,10 @@
     SFX.play('era');
     const e = ERAS[info.era];
     toast('Era ' + e.roman + ': ' + e.name + '. New units unlocked', 'blue');
+  });
+  CW.on('chaos', () => {
+    SFX.play('era');
+    toast('The timeline shatters! Eras now come at random, foes grow stronger, and mystery bosses await', 'red');
   });
   CW.on('defeat', (d) => {
     SFX.play('lose');

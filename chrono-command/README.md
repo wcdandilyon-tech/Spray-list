@@ -1,7 +1,7 @@
 # Chrono Command
 
 An 8-bit idle war game. History's commanders, conquerors, dictators and peacemakers are scattered across time.
-Pick a commander, raise an army, and fight an endless campaign from the Bronze Age to the far future.
+Pick a commander, raise an army, and fight an endless campaign from the Stone Age to the far future, and beyond.
 
 Open `index.html` in any browser to play. No build step, no installs, no server needed.
 
@@ -9,9 +9,12 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 
 - **Idle battles.** Your army fights wave after wave by itself and keeps earning gold while you're away (up to 8 hours).
   Tap or click the battlefield to add commander strikes.
-- **Leader battles.** Every third stage you face a famous leader (a boss with a timer and their own signature skill).
-  Win and they join your roster. 69 leaders in all, from Sargon of Akkad and Alexander to Napoleon, Hitler, Stalin,
-  Mussolini, Gandhi, Martin Luther King Jr., Mandela and Charlie Kirk.
+- **Leader battles.** Every third stage you face a famous leader (a giant boss with a timer and their own signature skill).
+  Win and they join your roster. 87 in all: a Stone Age caveman, Alexander, Caesar, Genghis Khan, Napoleon, Hitler, Stalin,
+  Mussolini, Mao, Pol Pot, Idi Amin, Pinochet, Kim Jong Il, Gandhi, Martin Luther King Jr., Mandela, Charlie Kirk,
+  Donald Trump, a cyborg assassin, an alien overlord, the Devil and Santa Claus.
+- **Commanders on the front line.** Your commander and two partners fight in the battle as full-body sprites next to
+  their troops. If one falls, their skills lock until a revive skill or the next wave brings them back.
 - **Your command team.** One commander with a **main skill**, **two skills** and a class passive (Conqueror, Tyrant,
   Strategist, Defender, Revolutionary, Statesman, Peacemaker, Warrior, Orator), plus **two partners** with one skill each.
   Skills cast automatically, or by hand with the buttons or keys 1–5.
@@ -21,9 +24,13 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 - **30 unit types across 10 eras,** three per era (infantry, ranged, heavy), each with a trait: spearmen and chariots,
   legionaries and war elephants, knights, samurai, musketeers, cannons, landships, tanks, helicopters, drones,
   stealth bombers, power armor and battle mechs. New units arrive already trained to 40% of your best unit's level.
-- **Endless journey.** The tenth era is the Future, where you fight machine "echoes" of history's most feared commanders.
-  Then time loops and everyone returns stronger. Beating a leader again earns stars (+15% skill power each).
-- **Time Rift (prestige).** Once you reach stage 40, rift back to the Bronze Age for Chrono Shards (+5% ATK, HP and gold
+- **The time pathway.** Ten eras in order, from 10,000 BC to the Future, which ends with the Exterminator
+  (a cyborg assassin), four machine "echoes" of history's most feared commanders, and the Alien Overlord.
+- **Shattered Time.** Once the pathway is finished, time breaks: every era after that is picked at random, enemies hit
+  harder and come in bigger waves, and every fourth leader battle is a **mystery boss** (the Devil, Santa Claus,
+  the Time Wraith or the Void Emperor) whose identity stays hidden until the fight starts. It never ends.
+  Beating a leader again earns stars (+15% skill power each).
+- **Time Rift (prestige).** Once you reach stage 40, rift back to the start of time for Chrono Shards (+5% ATK, HP and gold
   each, forever). You keep your recruited leaders and their stars.
 
 ## Files
@@ -31,14 +38,15 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 | File | What's in it |
 | --- | --- |
 | `index.html` | Page layout and all styling |
-| `js/data.js` | Eras, unit types, traits, leader classes, all 69 leaders (bios, portraits, skills) and the 30 doctrines |
+| `js/data.js` | Eras, unit types, traits, leader classes, all 87 leaders (bios, portrait recipes, skills, weapons) and the 30 doctrines |
 | `js/engine.js` | Battle simulation, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
-| `js/art.js` | Procedural pixel art: 24x24 leader portraits, unit sprites, era backdrops, the bitmap damage font |
+| `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the bitmap damage font, outline and tint helpers |
+| `js/portraits.js` | Detailed 32x32 leader portraits and full-body battlefield sprites for every leader |
 | `js/ui.js` | Battlefield rendering and animation, command deck, panels, dialogs, sound effects, autosave and offline progress |
 
 Balance knobs live in `CW.CFG` at the top of `js/engine.js` (enemy growth, era power, costs, boss strength, rift reward).
-They were tuned with a headless bot: a first trip through all ten eras takes roughly 8 to 12 hours of idling,
-and Time Rifts keep progress moving after that.
+They were tuned with a headless bot: the first Time Rift usually comes after about 2 hours, Shattered Time
+opens after about 3 to 4 hours with rifts, and progress keeps moving deeper from there.
 
 Saves are stored in the browser's `localStorage` on each device. Use **Options → Export save** to move a game between devices.
 
@@ -50,7 +58,8 @@ Put these files at the root of a repository (or keep them in this folder), then 
 
 ## A note on the historical figures
 
-Everyone in the game is a real historical figure shown as a pixel caricature in a work of fiction.
+The real people in the game are historical and public figures shown as pixel caricatures in a work of fiction,
+alongside mythical and invented characters. The Exterminator is an original cyborg, not a licensed movie character.
 Inclusion is not endorsement. Several of these leaders were dictators responsible for wars of aggression, mass murder
 and genocide, and their in-game bios say so plainly. Skills are named for military history (Blitzkrieg, Winter Offensive,
 D-Day), never for atrocities.

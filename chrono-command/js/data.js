@@ -5,7 +5,7 @@
 
   // ---------------------------------------------------------------- eras
   CW.ERAS = [
-    { name: 'Bronze Age', span: [-3000, -480], roman: 'I' },
+    { name: 'Bronze Age', span: [-10000, -480], roman: 'I' },
     { name: 'Classical', span: [-480, 450], roman: 'II' },
     { name: 'Medieval', span: [450, 1450], roman: 'III' },
     { name: 'Gunpowder', span: [1450, 1750], roman: 'IV' },
@@ -132,6 +132,12 @@
     sk('Escape Vesuvius', [['heal', 0.3]], 22), true);
 
   // ---- Era I: Bronze Age
+  L('caveman', 'The Caveman', 'c. 10,000 BC', -10000, 0, 'warrior', 'First Warlord of the Stone Age',
+    'A Stone Age chieftain from before writing, cities or the wheel, who leads his clan with fire, flint and a very big club.',
+    { sk: '#c98f60', hr: '#4a2a14', hs: 'wild', fh: 'beard', unibrow: 1, acc: 'bone', out: 'pelt', oc: '#8a5a2a', ac: '#4a2a14', bg: '#4a3420' },
+    ult('Discover Fire', [['burn', 8, 6], ['buff', 'atk', 0.3, 8]]),
+    sk('Club Smash', [['strike', 'front', 8]], 16),
+    sk('Mammoth Stampede', [['strike', 'all', 4]], 22));
   L('sargon', 'Sargon of Akkad', 'c. 2334–2279 BC', -2300, 0, 'conqueror', 'King of the Four Corners',
     'Founded the Akkadian Empire, often called the first empire in history, by uniting the city-states of Mesopotamia.',
     { sk: SK.t, hr: HR.blk, hs: 'long', fh: 'longbeard', hat: 'circlet', hc: '#d9b45a', out: 'robe', oc: '#7a2e2e', ac: '#d9b45a', bg: '#5a3a1a' },
@@ -270,6 +276,12 @@
     ult('Magnificent Century', [['gold', 30], ['buff', 'atk', 0.3, 10]]),
     sk('Janissary Corps', [['strike', 'front', 7]], 16),
     sk('The Lawgiver', [['buff', 'def', 0.35, 8], ['heal', 0.15]], 22));
+  L('ivan', 'Ivan the Terrible', '1530–1584', 1552, 3, 'tyrant', 'First Tsar of Russia',
+    'First Tsar of Russia, who conquered Kazan and ruled through terror with his black-robed oprichniki; in a rage he killed his own son.',
+    { sk: SK.l, hr: HR.dbr, hs: 'long', fh: 'longbeard', hat: 'monomakh', hc: '#7a5a3a', ha: '#d9b45a', out: 'robe', oc: '#5a1a2a', ac: '#d9b45a', bg: '#2a1a1a' },
+    ult('Siege of Kazan', [['strike', 'all', 5], ['buff', 'atk', 0.3, 8]]),
+    sk('Streltsy Volley', [['strike', 'random', 7]]),
+    sk("Tsar's Wrath", [['weaken', 0.3, 8], ['stun', 1]], 22));
   L('elizabeth1', 'Elizabeth I', '1533–1603', 1588, 3, 'strategist', 'The Virgin Queen',
     'Queen of England whose navy defeated the Spanish Armada and whose reign became a golden age.',
     { sk: SK.p, hr: HR.red, hs: 'curly', fh: 'none', hat: 'tiara', hc: '#d9b45a', out: 'ruff', oc: '#2a2a5a', ac: '#ece8dc', bg: '#3a1a2a', fem: 1 },
@@ -308,6 +320,12 @@
     ult('Golden Age', [['gold', 30], ['buff', 'atk', 0.3, 10]]),
     sk('Cossack Raid', [['strike', 'random', 7]]),
     sk('Enlightened Rule', [['buff', 'crit', 0.25, 8]], 22));
+  L('robespierre', 'Maximilien Robespierre', '1758–1794', 1793, 4, 'tyrant', 'Voice of the Terror',
+    "Revolutionary leader whose Reign of Terror (1793–94) sent thousands to the guillotine, until he was guillotined himself.",
+    { sk: SK.p, hr: HR.wht, hs: 'powdered', fh: 'none', out: 'coat', oc: '#3a6a9a', ac: '#d9c08a', bg: '#2a2a3a' },
+    ult('Committee of Public Safety', [['buff', 'atk', 0.4, 10], ['buff', 'def', 0.3, 10]]),
+    sk('Levee en Masse', [['revive', 3, 0.5]], 22),
+    sk('Republic of Virtue', [['weaken', 0.35, 8]]));
   L('napoleon', 'Napoleon Bonaparte', '1769–1821', 1805, 4, 'conqueror', 'Emperor of the French',
     'French emperor and military genius who conquered most of Europe before his final defeat at Waterloo.',
     { sk: SK.l, hr: HR.dbr, hs: 'short', fh: 'none', hat: 'bicorne', hc: '#1d1d1d', ha: '#b3261e', out: 'uniform', oc: '#2a3f7a', ac: '#d9b45a', bg: '#4a1a1a' },
@@ -358,6 +376,12 @@
     ult('The Sun Never Sets', [['gold', 35], ['buff', 'atk', 0.3, 10]]),
     sk('Royal Navy', [['strike', 'all', 4]]),
     sk('Victoria Cross', [['buff', 'crit', 0.3, 8]], 22));
+  L('diaz', 'Porfirio Diaz', '1830–1915', 1876, 5, 'tyrant', 'Dictator of Mexico',
+    'Ruled Mexico as a dictator for over 30 years (1876–1911) until the Mexican Revolution drove him into exile.',
+    { sk: SK.t, hr: HR.wht, hs: 'short', fh: 'walrus', fc: HR.wht, out: 'uniform', oc: '#1d1d2a', ac: '#d9b45a', medals: 1, bg: '#2a3a2a' },
+    ult('The Porfiriato', [['gold', 25], ['buff', 'atk', 0.35, 10]]),
+    sk('Rurales Charge', [['strike', 'front', 8]], 16),
+    sk('Order and Progress', [['buff', 'def', 0.4, 8]], 22));
   L('gandhi', 'Mahatma Gandhi', '1869–1948', 1930, 5, 'peacemaker', 'Great Soul of India',
     "Led India's independence movement through nonviolent resistance and inspired civil-rights movements worldwide.",
     { sk: SK.o, hr: HR.gry, hs: 'bald', fh: 'mustache', fc: HR.gry, gl: 1, out: 'shawl', oc: '#ece8dc', ac: '#d9d0b8', bg: '#4a3a1a' },
@@ -414,6 +438,12 @@
     ult('Nationalist Advance', [['strike', 'all', 4], ['buff', 'atk', 0.3, 8]]),
     sk('Fortress Line', [['buff', 'def', 0.4, 8]]),
     sk('Iron Rule', [['weaken', 0.3, 8]], 22));
+  L('trujillo', 'Rafael Trujillo', '1891–1961', 1937, 6, 'tyrant', 'El Jefe',
+    'Ruled the Dominican Republic through terror for 31 years (1930–61), including the 1937 Parsley Massacre of thousands of Haitians.',
+    { sk: SK.t, hr: HR.dbr, hs: 'slick', fh: 'toothbrush', hat: 'bicorne', hc: '#1d1d1d', ha: '#ece8dc', plume: 1, out: 'uniform', oc: '#e8e4d8', ac: '#d9b45a', medals: 1, bg: '#1a2a4a' },
+    ult('El Jefe', [['buff', 'atk', 0.4, 10], ['weaken', 0.25, 10]]),
+    sk("Benefactor's Treasury", [['gold', 25]], 24),
+    sk('Island Fortress', [['buff', 'def', 0.4, 8]]));
   L('fdr', 'Franklin D. Roosevelt', '1882–1945', 1941, 6, 'statesman', '32nd U.S. President',
     'Four-term president who led America through the Great Depression and most of the Second World War.',
     { sk: SK.l, hr: HR.gry, hs: 'short', fh: 'none', gl: 1, acc: 'holder', out: 'suit', oc: '#3a3a4a', ac: '#2a3a6a', bg: '#1a2a4a' },
@@ -488,6 +518,24 @@
     ult('I Have a Dream', [['buff', 'atk', 0.5, 12], ['buff', 'spd', 0.3, 12], ['heal', 0.3]], 60),
     sk('March on Washington', [['revive', 3, 0.6]], 24),
     sk('Nonviolent Resolve', [['buff', 'def', 0.45, 8]]));
+  L('amin', 'Idi Amin', 'c. 1925–2003', 1972, 7, 'tyrant', 'Butcher of Uganda',
+    'Military dictator of Uganda (1971–79), notorious for his brutality; between 100,000 and 500,000 people were killed under his rule.',
+    { sk: SK.x, hr: HR.blk, hs: 'short', fh: 'none', jaw: 1, hat: 'peaked', hc: '#4a5a2a', ha: '#d9b45a', out: 'uniform', oc: '#5a6a3a', ac: '#d9b45a', medals: 2, bg: '#3a2a1a' },
+    ult('Conqueror of the British Empire', [['buff', 'atk', 0.45, 10], ['strike', 'all', 3]]),
+    sk('Heavyweight Champion', [['strike', 'front', 9]], 16),
+    sk("Field Marshal's Decree", [['weaken', 0.3, 8]], 22));
+  L('pinochet', 'Augusto Pinochet', '1915–2006', 1973, 7, 'tyrant', 'Dictator of Chile',
+    'Seized power in Chile in a 1973 coup and ruled as military dictator until 1990; thousands were killed or disappeared.',
+    { sk: SK.m, hr: HR.wht, hs: 'short', fh: 'mustache', fc: HR.wht, gl: 2, hat: 'peaked', hc: '#8a8a7a', ha: '#d9b45a', out: 'uniform', oc: '#8a8a7a', ac: '#d9b45a', bg: '#2a2a3a' },
+    ult('Junta Command', [['buff', 'atk', 0.35, 10], ['buff', 'def', 0.3, 10]]),
+    sk('Jet Strike', [['strike', 'random', 7]]),
+    sk('Iron Fist', [['weaken', 0.35, 8]], 22));
+  L('polpot', 'Pol Pot', '1925–1998', 1975, 7, 'tyrant', 'Brother Number One',
+    "Led Cambodia's Khmer Rouge regime (1975–79), whose genocide killed up to two million people, a quarter of the population.",
+    { sk: SK.t, hr: HR.blk, hs: 'slick', fh: 'none', out: 'maosuit', oc: '#1d1d1d', ac: '#b3261e', scarf: 1, bg: '#3a1a1a' },
+    ult('Fall of Phnom Penh', [['strike', 'all', 5], ['stun', 1.5]]),
+    sk('Jungle Insurgency', [['strike', 'random', 7]]),
+    sk('Khmer Rouge Ambush', [['strike', 'front', 8]], 16));
   L('reagan', 'Ronald Reagan', '1911–2004', 1987, 7, 'statesman', '40th U.S. President',
     'Confronted the Soviet Union in the last decade of the Cold War and urged "Mr. Gorbachev, tear down this wall!"',
     { sk: SK.l, hr: HR.dbr, hs: 'slick', fh: 'none', grin: 1, out: 'suit', oc: '#1a2a4a', ac: '#b3261e', bg: '#3a2a2a' },
@@ -526,12 +574,30 @@
     ult('The Green Book', [['buff', 'atk', 0.35, 10], ['weaken', 0.25, 10]]),
     sk('Desert Ambush', [['strike', 'all', 4]]),
     sk('Oil Fortune', [['gold', 30]], 25));
+  L('mobutu', 'Mobutu Sese Seko', '1930–1997', 1996, 8, 'tyrant', 'Dictator of Zaire',
+    'Seized power in Congo in 1965 and ruled it as Zaire for 32 years, looting billions while the country fell into ruin.',
+    { sk: SK.x, hr: HR.blk, hs: 'short', fh: 'none', gl: 1, hat: 'leopard', hc: '#d8a040', ha: '#3a2a1a', out: 'maosuit', oc: '#3a3a3a', ac: '#d9b45a', bg: '#1a3a2a' },
+    ult('Leopard Throne', [['buff', 'atk', 0.4, 10], ['gold', 20]]),
+    sk('Rumble in the Jungle', [['stun', 2.5]], 22),
+    sk('Zairean Paratroopers', [['strike', 'front', 8]], 16));
+  L('kim_jong_il', 'Kim Jong Il', '1941–2011', 1998, 8, 'tyrant', 'Dear Leader',
+    "Ruled North Korea from 1994 to 2011 through a famine that killed hundreds of thousands, while building nuclear weapons.",
+    { sk: SK.l, hr: HR.blk, hs: 'bouffant', fh: 'none', gl: 1, out: 'maosuit', oc: '#8a8470', ac: '#5a5a4a', bg: '#3a1a1a' },
+    ult('Military First', [['buff', 'atk', 0.4, 10], ['buff', 'def', 0.3, 10]]),
+    sk('Missile Test', [['strike', 'all', 4]]),
+    sk("Director's Cut", [['stun', 2]], 22));
   L('chavez', 'Hugo Chavez', '1954–2013', 2002, 8, 'revolutionary', 'President of Venezuela',
     "Venezuelan president who led a socialist 'Bolivarian Revolution' paid for with the country's oil wealth.",
     { sk: SK.o, hr: HR.blk, hs: 'short', fh: 'none', hat: 'beret', hc: '#b3261e', ha: '#d9b45a', out: 'fatigues', oc: '#b3261e', ac: '#7a1a14', bg: '#2a2a4a' },
     ult('Bolivarian Revolution', [['buff', 'atk', 0.35, 10], ['buff', 'spd', 0.3, 10]]),
     sk('Oil Bonanza', [['gold', 25]], 24),
     sk('Alo Presidente', [['stun', 2.5]], 22));
+  L('mugabe', 'Robert Mugabe', '1924–2019', 2008, 8, 'tyrant', 'Ruler of Zimbabwe',
+    "Led Zimbabwe's liberation war, then ruled for 37 years (1980–2017) as the economy collapsed and opponents were brutally repressed.",
+    { sk: SK.x, hr: HR.gry, hs: 'short', fh: 'toothbrush', fc: HR.blk, gl: 1, out: 'suit', oc: '#1d1d22', ac: '#2a6a2a', bg: '#2a3a1a' },
+    ult('Chimurenga', [['revive', 9, 0.5], ['buff', 'atk', 0.35, 10]]),
+    sk('Bush War Ambush', [['strike', 'front', 8]], 16),
+    sk('Print More Money', [['gold', 30]], 25));
   L('elizabeth2', 'Queen Elizabeth II', '1926–2022', 2012, 8, 'defender', 'Queen of the United Kingdom',
     "Britain's longest-reigning monarch, on the throne for 70 years, who served as a military mechanic in WWII.",
     { sk: SK.p, hr: HR.wht, hs: 'curly', fh: 'none', hat: 'crown', hc: '#d9b45a', out: 'dress', oc: '#3a7ab8', ac: '#ece8dc', pearls: 1, bg: '#2a1a4a', fem: 1 },
@@ -545,13 +611,68 @@
     sk('Prove Me Wrong', [['weaken', 0.35, 8], ['stun', 1]], 20),
     sk('Campus Tour', [['revive', 3, 0.5]], 24));
 
+  L('trump', 'Donald Trump', 'b. 1946', 2017, 8, 'statesman', '45th and 47th U.S. President',
+    'New York real-estate developer and reality-TV host who became the 45th and 47th President of the United States.',
+    { sk: '#f0b48a', hr: '#e8c060', hs: 'swoop', fh: 'none', out: 'suit', oc: '#1a2a4a', ac: '#c8102e', bg: '#1a2a5a' },
+    ult('Make America Great Again', [['buff', 'atk', 0.45, 10], ['gold', 20]]),
+    sk("You're Fired!", [['strike', 'front', 9]], 16),
+    sk('Build the Wall', [['buff', 'def', 0.5, 8]], 22));
+
+  // ---- Era X: Future (the end of the pathway)
+  L('exterminator', 'The Exterminator', 'Built 2029', 2029, 9, 'warrior', 'Cyborg Assassin from the Future',
+    'A cyborg assassin built in 2029 and sent back through time: a steel skeleton under living skin, programmed never to give up the hunt.',
+    { sk: '#e8c0a0', hr: '#3a2a1a', hs: 'buzz', fh: 'none', gl: 2, cyborg: 1, out: 'jacket', oc: '#1d1d22', ac: '#3a3a40', bg: '#3a0a0a' },
+    ult('Extermination Protocol', [['strike', 'all', 7], ['buff', 'crit', 0.3, 8]]),
+    sk('Plasma Rifle', [['strike', 'front', 10]], 16),
+    sk('Steel Endoskeleton', [['buff', 'def', 0.5, 8]], 22));
+  L('alien', 'The Alien Overlord', 'Arrives 2400', 2400, 9, 'strategist', 'Invader from Zeta Reticuli',
+    'A grey visitor from another star whose saucers have haunted sky-watchers since the 1940s. In 2400 it stops watching and invades.',
+    { sk: '#a8b8a0', head: 'alien', hs: 'none', fh: 'none', out: 'silver', oc: '#a8b0c0', ac: '#2ee6ff', bg: '#0a1a2a' },
+    ult('Mothership Beam', [['strike', 'all', 8]], 60),
+    sk('Abduction', [['stun', 2.5]], 22),
+    sk('Alien Probe', [['expose', 0.45, 8]]));
+
+  // ---- Mysteries: they only appear once time shatters (after the Future)
+  L('devil', 'The Devil', 'Since the beginning', null, 10, 'tyrant', 'Lord of the Underworld',
+    'The ancient adversary of countless myths and scriptures, said to bargain for souls from a kingdom of fire.',
+    { sk: '#c8302a', hr: '#1d1714', hs: 'slick', fh: 'goatee', ears: 'pointy', eyes: '#ffd23f', fangs: 1, hat: 'horns', hc: '#e8dcc0', out: 'cloak', oc: '#1a0a0a', ac: '#b3261e', bg: '#5a0e08' },
+    ult('Infernal Legion', [['revive', 9, 0.6], ['burn', 10, 6]], 60),
+    sk('Hellfire', [['burn', 10, 6]]),
+    sk('Deal with the Devil', [['gold', 40], ['buff', 'atk', 0.3, 8]], 25));
+  L('santa', 'Santa Claus', 'Legend since c. AD 280', null, 10, 'statesman', 'Lord of the North Pole',
+    "The jolly gift-bringer of Christmas legend, inspired by the 4th-century bishop Saint Nicholas, who commands an army of elves.",
+    { sk: '#f6d9bd', hr: '#f4f0e8', hs: 'short', fh: 'santa', fc: '#f4f0e8', rosy: 1, nose: 'round', hat: 'santa', hc: '#c8102e', ha: '#f4f0e8', out: 'santa', oc: '#c8102e', ac: '#f4f0e8', bg: '#0e3a2a' },
+    ult('The Night Before Christmas', [['gold', 50], ['heal', 0.5]], 60),
+    sk('Snowball Barrage', [['strike', 'random', 8], ['stun', 1]]),
+    sk('Reindeer Stampede', [['strike', 'all', 5]], 22));
+  L('wraith', 'The Time Wraith', 'Outside of time', null, 10, 'strategist', 'Devourer of Moments',
+    'A hooded phantom born where the timeline shattered. It feeds on lost moments and is glimpsed only at the edges of history.',
+    { sk: '#2a2438', head: 'hood', hc: '#2a2438', eyes: '#2ee6ff', out: 'wraith', oc: '#2a2438', ac: '#2ee6ff', bg: '#0a0a14' },
+    ult('Stolen Moments', [['stun', 3], ['cdr', 10]], 60),
+    sk('Rewind', [['heal', 0.4], ['revive', 2, 0.5]], 22),
+    sk('Temporal Rift', [['expose', 0.5, 8]]));
+  L('void', 'The Void Emperor', 'Beyond the end of time', null, 10, 'conqueror', 'Ruler Beyond the Stars',
+    'A cosmic tyrant from after the last star burns out, ruling the empty space between eras. No historian has ever recorded its name.',
+    { sk: '#2a1a4a', hs: 'none', fh: 'none', cosmic: 1, eyes: '#ffffff', hat: 'shards', hc: '#d08aff', out: 'void', oc: '#140a28', ac: '#d08aff', bg: '#05030a' },
+    ult('Event Horizon', [['strike', 'all', 10]], 60),
+    sk('Gravity Well', [['stun', 2], ['weaken', 0.3, 8]], 22),
+    sk('Dark Star', [['burn', 12, 6]]));
   CW.LEADERS = LEADERS;
   CW.LEADER = {};
   LEADERS.forEach((l) => (CW.LEADER[l.id] = l));
 
-  // Future era: echoes of the past rebuilt as war machines. Rotates every time loop.
+  // weapon each leader carries on the battlefield (default: sword, or a banner for statesmen, orators and peacemakers)
+  CW.WPN = {
+    castro: 'rifle', che: 'rifle', ho_chi_minh: 'rifle', chavez: 'rifle', tubman: 'rifle', polpot: 'rifle', kirk: 'mic', trump: 'flag',
+    caveman: 'club', devil: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
+  };
+  CW.weaponOf = (id) => CW.WPN[id] || (['statesman', 'orator', 'peacemaker'].includes(CW.LEADER[id].cls) ? 'flag' : 'sword');
+  CW.MYSTERY = LEADERS.filter((l) => l.era === 10).map((l) => l.id);
+
+  // Future era: echoes of the past rebuilt as war machines.
   CW.ECHO_POOL = ['alexander', 'caesar', 'genghis', 'napoleon', 'hitler', 'stalin', 'hannibal', 'attila', 'timur', 'qin',
     'wilhelm', 'mao', 'nobunaga', 'saladin', 'patton', 'churchill', 'shaka', 'ramesses'];
+  CW.FUTURE_POOL = ['exterminator', 'alien'].concat(CW.ECHO_POOL);
 
   // ---------------------------------------------------------------- doctrines (random army-management skills)
   // r: rarity 0 common, 1 rare, 2 epic ; max: stack limit
