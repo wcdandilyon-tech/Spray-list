@@ -106,7 +106,7 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 /* commander deck */
 .deck{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:14px}
 .lead,.partner{padding:14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;align-content:start}
-.lead>img,.partner>img{width:56px;height:56px;border-radius:10px}
+.lead>img,.partner>img{width:64px;height:64px;border-radius:10px}
 .lead>img{box-shadow:0 0 0 2px var(--brass)}
 .partner>img{box-shadow:0 0 0 2px var(--ally)}
 .who b{display:block;font-weight:800;font-size:16px;letter-spacing:-.01em;line-height:1.2}
@@ -194,7 +194,7 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
 .lcard{border:1px solid var(--line);cursor:pointer;text-align:left;background:var(--surface2);border-radius:10px;padding:10px;display:grid;gap:4px;align-content:start;color:var(--ink)}
 .lcard:hover{border-color:var(--line2)}
-.lcard img{width:56px;height:56px;border-radius:8px}
+.lcard img{width:64px;height:64px;border-radius:8px}
 .lcard .nm{font-weight:700;font-size:13px;line-height:1.25}
 .lcard small{font-size:12px;color:var(--muted);line-height:1.2}
 .lcard.locked img{filter:grayscale(1) brightness(.4)}
@@ -233,7 +233,7 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
 .cmdrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .pick{border:1px solid var(--line);cursor:pointer;text-align:left;color:var(--ink);background:var(--surface2);border-radius:10px;padding:9px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center}
 .pick:hover{border-color:var(--line2)}
-.pick img{width:36px;height:36px;border-radius:7px}
+.pick img{width:32px;height:32px;border-radius:7px}
 .pick em{font-size:12px;font-style:normal;color:var(--muted);display:block;font-weight:600}
 .pick b{font-weight:700;display:block;line-height:1.25}
 .pick.sel{border-color:var(--brass)}
@@ -328,7 +328,7 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
 <script src="js/data.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/art.js"></script>
-<script src="js/portraits.js"></script>
+<script src="js/sprites.js"></script>
 <script src="js/ui.js"></script>
 </body>
 </html>

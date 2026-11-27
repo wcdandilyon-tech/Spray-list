@@ -58,7 +58,7 @@ version, your stage moves to the matching era and you get a full army of that er
 | `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 134 leaders and the 31 doctrines |
 | `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
-| `js/portraits.js` | 64x64 leader portraits and full-body battlefield sprites for every leader |
+| `js/sprites.js` | The leader sprite generator: every leader drawn as a 64x64 chibi battle sprite, with signature props |
 | `js/ui.js` | Battlefield rendering and its HUD overlay, the army builder, command deck, panels, dialogs, sound effects, autosave and offline progress |
 
 Balance knobs live in `CW.CFG` at the top of `js/engine.js` (enemy growth, era power, army capacity, recruit and training
@@ -71,16 +71,21 @@ Saves are stored in the browser's `localStorage` on each device. Use **Options â
 
 ## Art and performance
 
-Every leader is designed on a 32x32 grid, upscaled to 64x64 with Scale2x (a pixel-art upscaler that rounds off
-stair-steps without blurring), then finished with edge lighting, cloth and hair texture, eye highlights and a thin outline.
-Units, battlefield leaders and era backdrops get the same 2x treatment.
+Every leader is a chibi battle sprite on a 64x64 grid: a big head and hair, large anime eyes with a glint, a 3/4 action pose
+with an oversized weapon, light-to-shadow shading in four bands and dark outlines. The sprites are drawn pixel by pixel
+from each leader's recipe (skin, hair, beard, hat, outfit, colours) plus signature props that make famous figures
+recognisable: Napoleon's hand in his waistcoat, Churchill's cigar and V sign, Stalin's pipe, Mao's red book, Gandhi's
+walking staff and round glasses, Lincoln's top hat and axe, Thatcher's handbag, Teddy Roosevelt's big stick, Leonidas's
+lambda shield and spear, Elizabeth II's corgi, Santa's sack, the Devil's tail. The same sprite is used on the cards and on
+the battlefield, where your commanders stand on coloured rings and the enemy leader fights at double size.
+Units and era backdrops use Scale2x (a pixel-art upscaler) with edge lighting and outlines.
 
 The battlefield is a tilted top-down view: soldiers further away are drawn smaller and higher up. Sprites are prepared
 at a handful of fixed sizes so they grow in clean pixel steps as they move toward the camera instead of shimmering, and
 fallen soldiers are painted once onto the ground layer instead of being redrawn every frame. Shadows are pre-made at each
 size, and the HUD is a light page overlay rather than canvas text. The field is drawn on a fixed 768x432 pixel grid that the
 browser scales up, so the work per frame stays the same on any screen size. In headless Chromium (software drawing, no GPU),
-a late-game battle with about 350 soldiers on the field runs at about 390 fps, or about 75 fps with the CPU throttled 4x.
+a late-game battle with about 350 soldiers on the field runs at about 390 fps, or about 50 to 75 fps with the CPU throttled 4x (depending on the era).
 
 The menus around the battlefield use a quiet, modern style (Manrope, graphite panels, one brass accent); the pixel art
 stays on the battlefield and the portraits.

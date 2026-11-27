@@ -987,7 +987,7 @@
     sk('Drone Program', [['strike', 'random', 5]]));
   L('kim_jong_un', 'Kim Jong Un', 'b. 1984', 2017, 10, 'tyrant', 'Supreme Leader of North Korea',
     "Third ruler of North Korea's Kim dynasty, who expanded its nuclear and missile programs and heads a state that a UN inquiry found responsible for crimes against humanity.",
-    { sk: SK.l, hr: HR.blk, hs: 'neat', fh: 'none', out: 'maosuit', oc: '#2a2a2a', ac: '#c8102e', bg: '#3a1a1a' },
+    { sk: SK.l, hr: HR.blk, hs: 'top', fh: 'none', out: 'maosuit', oc: '#2a2a2a', ac: '#c8102e', bg: '#3a1a1a' },
     ult('Missile Test', [['strike', 'all', 7]]),
     sk('Juche', [['buff', 'def', 0.3, 8]]),
     sk('Military First', [['buff', 'atk', 0.3, 8]]));
@@ -1050,6 +1050,11 @@
 
   // weapon each leader carries on the battlefield (default: sword, or a banner for statesmen, orators and peacemakers)
   CW.WPN = {
+    // signature weapons and props
+    leonidas: 'spear', shaka: 'spear', ragnar: 'axe', ivar: 'axe', erik: 'axe', harald: 'axe', lincoln: 'axe',
+    genghis: 'bow', kublai: 'bow', attila: 'bow', nobunaga: 'katana', tokugawa: 'katana', saladin: 'scimitar', suleiman: 'scimitar', mehmed: 'scimitar',
+    troosevelt: 'club', mao: 'book', thatcher: 'handbag', mlk: 'mic', elizabeth1: 'sceptre', catherine: 'sceptre', ivan: 'sceptre', victoria: 'sceptre',
+    gandhi: 'staff', mobutu: 'staff', cleopatra: 'sceptre', hatshepsut: 'sceptre', ramesses: 'sceptre', patton: 'gun', churchill: 'none', lenin: 'none', mandela: 'none', elizabeth2: 'flag',
     castro: 'rifle', che: 'rifle', ho_chi_minh: 'rifle', chavez: 'rifle', tubman: 'rifle', polpot: 'rifle', kirk: 'mic', trump: 'flag',
     caveman: 'club', neanderthal: 'club', otzi: 'club', firekeeper: 'club', mammothmother: 'club', zelensky: 'rifle', synth: 'raygun', admiral: 'raygun', moonking: 'staff', archon: 'staff', cosmickhan: 'raygun', devil: 'trident', overmind: 'staff', warlord: 'gun', hive: 'trident', santa: 'candy', alien: 'raygun', exterminator: 'gun', wraith: 'scythe', void: 'staff',
   };

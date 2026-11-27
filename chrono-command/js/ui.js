@@ -186,7 +186,7 @@
     const P = proj(q.x, q.z);
     let img;
     if (q.kind === 'unit') img = sized(unitImg(q).c, unitScale(q, P.s));
-    else img = sized(CW.heroSprite(q.lid, q.side, q.isBoss ? groundOf.info.variant : '').c, P.s * (q.isBoss ? 1.4 : 0.75));
+    else img = sized(CW.heroSprite(q.lid, q.side, q.isBoss ? groundOf.info.variant : '').c, q.isBoss ? 2 : 1);
     const body = CW.corpse(img);
     gg.globalAlpha = 0.7;
     gg.drawImage(body, Math.round(P.x * K - body.width / 2), Math.round(P.y * K - body.height * 0.75));
@@ -227,7 +227,8 @@
   // the point a projectile or spark should aim at: roughly the chest of the sprite
   function chest(q) {
     const P = proj(q.x, q.z);
-    const h = q.isBoss ? 56 : q.isHero ? 28 : q.air ? 30 : 7;
+    if (q.isBoss || q.isHero) return { x: P.x, y: P.y - (q.isBoss ? 34 : 17), s: P.s };
+    const h = q.air ? 30 : 7;
     return { x: P.x, y: P.y - h * P.s, s: P.s };
   }
 
@@ -365,13 +366,41 @@
     }
     return c;
   }
+  const rings = new Map();
+  function ringOf(wpx, col) {
+    const key = wpx + col;
+    let c = rings.get(key);
+    if (!c) {
+      c = document.createElement('canvas');
+      c.width = wpx + 4;
+      c.height = Math.round(wpx * 0.36) + 4;
+      const x = c.getContext('2d');
+      const rx = wpx / 2;
+      const ry = c.height / 2 - 2;
+      x.fillStyle = col;
+      for (let y = 0; y < c.height; y++)
+        for (let i = 0; i < c.width; i++) {
+          const dx = (i + 0.5 - c.width / 2) / rx;
+          const dy = (y + 0.5 - c.height / 2) / ry;
+          const d = dx * dx + dy * dy;
+          if (d <= 1 && d >= 0.62) x.fillRect(i, y, 1, 1);
+        }
+      rings.set(key, c);
+    }
+    return c;
+  }
   function drawShadow(q, B) {
     const P = q._P;
     let w;
-    if (q.isBoss) w = 44;
-    else if (q.isHero) w = 18;
-    else w = (unitImg(q).w || 10) * 0.85 * (UNIT[q.uid].size || 1);
-    const c = shadowOf(Math.max(4, Math.round(w * P.s * K)));
+    if (q.isBoss || q.isHero) {
+      // leaders stand on a ring: gold for your commander, blue for partners, red for the enemy leader
+      w = q.isBoss ? 40 : 20;
+      const ring = ringOf(Math.round(w * K), q.isBoss ? '#e0675a' : q.main ? '#e0be6a' : '#86b4d3');
+      g.globalAlpha = 0.75;
+      blit(ring, P.x - ring.width / (2 * K), P.y - ring.height / (2 * K));
+      g.globalAlpha = 1;
+    } else w = (unitImg(q).w || 10) * 0.85 * (UNIT[q.uid].size || 1) * P.s;
+    const c = shadowOf(Math.max(4, Math.round(w * K)));
     if (q.air) g.globalAlpha = 0.6;
     blit(c, P.x - c.width / (2 * K), P.y - c.height / (2 * K));
     if (q.air) g.globalAlpha = 1;
@@ -406,7 +435,8 @@
     const info = B.info;
     const P = q._P;
     const hs = CW.heroSprite(q.lid, q.side, isBoss ? info.variant : '');
-    const ds = P.s * (isBoss ? 1.4 : 0.75);
+    // leaders are drawn pixel for pixel (the enemy leader at double size), never squashed by distance
+    const ds = isBoss ? 2 : 1;
     const img = sized(hs.c, ds);
     const W = img.width / K;
     const H = img.height / K;
@@ -758,7 +788,7 @@
     const bid = bi.bossId + nv;
     if (nextImgId !== bid) {
       nextImgId = bid;
-      el.nextImg.src = CW.portraitURL(bi.bossId, nv);
+      el.nextImg.src = CW.headURL(bi.bossId, nv);
     }
     const bname = shown ? '???' : short(bi.bossId);
     const killed = B.e.length ? 1 - B.aliveE / B.e.length : 0;
@@ -1299,7 +1329,7 @@
         if (!id) return `<button class="pick ${sel ? 'sel' : ''}" data-act="pickcmd" data-w="${w}"><span></span><span><em>${cmdLabel[w]}</em><b>Empty</b></span></button>`;
         const l = LEADER[id];
         const sk = w === 0 ? l.skills[0].n + ' +2 more' : l.skills[1].n;
-        return `<button class="pick ${sel ? 'sel' : ''}" data-act="pickcmd" data-w="${w}"><img class="px" src="${CW.portraitURL(id)}" alt=""><span><em>${cmdLabel[w]}</em><b>${esc(l.name)}</b><small class="hint">${esc(sk)}</small></span></button>`;
+        return `<button class="pick ${sel ? 'sel' : ''}" data-act="pickcmd" data-w="${w}"><img class="px" src="${CW.headURL(id)}" alt=""><span><em>${cmdLabel[w]}</em><b>${esc(l.name)}</b><small class="hint">${esc(sk)}</small></span></button>`;
       })
       .join('');
     let chooser = '';
@@ -1308,7 +1338,7 @@
         .map((id) => {
           const l = LEADER[id];
           const rr = st.roster[id];
-          return `<button class="pick" data-act="setlead" data-id="${id}" title="${esc(l.skills[0].n + ': ' + CW.attrText(id, 0))}"><img class="px por" src="${CW.portraitURL(id)}" alt=""><span><em>${picker.w === 0 ? esc(l.skills[0].n) : esc(l.skills[1].n)}</em><b>${esc(l.name)}</b></span></button>`;
+          return `<button class="pick" data-act="setlead" data-id="${id}" title="${esc(l.skills[0].n + ': ' + CW.attrText(id, 0))}"><img class="px por" src="${CW.headURL(id)}" alt=""><span><em>${picker.w === 0 ? esc(l.skills[0].n) : esc(l.skills[1].n)}</em><b>${esc(l.name)}</b></span></button>`;
         })
         .join('')}</div>`;
     }

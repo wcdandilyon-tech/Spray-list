@@ -564,7 +564,7 @@
       face: side === 'a' ? 1 : -1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: false, isBoss: false,
     };
   }
-  const RANGED_W = { gun: 'bullet', rifle: 'bullet', raygun: 'laser', staff: 'plasma' };
+  const RANGED_W = { gun: 'bullet', rifle: 'bullet', raygun: 'laser', staff: 'plasma', bow: 'arrow' };
   const commandIds = () => [S.main].concat(S.partners).filter(Boolean);
   function heroStats(lid, isMain, ctx) {
     let dps = 0;
@@ -586,7 +586,7 @@
   function mkHero(lid, i, st) {
     const w = CW.weaponOf(lid);
     return {
-      id: eid++, side: 'a', uid: null, lid, kind: 'hero', role: 'hero', trait: null, era: LEADER[lid].era, x: 100, z: [60, 42, 78][i],
+      id: eid++, side: 'a', uid: null, lid, kind: 'hero', role: 'hero', trait: null, era: LEADER[lid].era, x: 100, z: [60, 32, 88][i],
       hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, range: RANGED_W[w] ? 55 : 9, speed: 24, ua: {}, rad: 5,
       proj: RANGED_W[w] || null, splash: 0, air: false, cost: 0, t: Math.random() * 0.8, rt: 0, target: null, alive: true, stun: 0,
       struck: false, face: 1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: true, isBoss: false, main: i === 0,
