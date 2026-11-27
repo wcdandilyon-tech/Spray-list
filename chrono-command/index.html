@@ -35,7 +35,7 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .hud{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin-bottom:10px}
 .logo{margin:0;font-size:clamp(18px,3.2vw,30px);line-height:1.15;color:var(--brass);text-shadow:3px 3px 0 #6a3a10,6px 6px 0 var(--shadow)}
 .logo span{display:block;font-size:.42em;color:var(--dim);text-shadow:none;margin-top:6px;line-height:1.4}
-.res{display:grid;grid-template-columns:repeat(4,minmax(0,auto));gap:6px}
+.res{display:grid;grid-template-columns:repeat(3,minmax(0,auto));gap:6px}
 .stat{padding:8px 12px 7px;display:grid;grid-template-columns:auto 1fr;gap:0 7px;align-items:center}
 .stat img{width:16px;height:16px;grid-row:span 2}
 .stat b{font:13px "Press Start 2P",monospace;white-space:nowrap}
@@ -107,6 +107,19 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .partner{padding:12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-content:start}
 .partner .skill{grid-column:1/-1}
 .nw{white-space:nowrap}
+.attrs{grid-column:1/-1;list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.attrs li{background:var(--panel2);box-shadow:inset 0 0 0 2px var(--edge);padding:6px 9px 7px;font-size:18px;line-height:1.15}
+.attrs b{font:9px/1.6 "Press Start 2P",monospace;color:var(--brass);margin-right:8px}
+.reserve{margin-top:12px}
+.reserve summary{cursor:pointer;font:10px/1.5 "Press Start 2P",monospace;color:var(--dim);padding:8px 0;list-style:none}
+.reserve summary::-webkit-details-marker{display:none}
+.reserve summary::before{content:"+ ";color:var(--brass)}
+.reserve[open] summary::before{content:"- "}
+.deck [data-card]{cursor:pointer}
+.deck [data-card]:hover{filter:brightness(1.08)}
+.box.down{opacity:.5}
+.box.down .who b::after{content:" · down";color:var(--foe)}
+.starter .an{display:block;font:8px/1.6 "Press Start 2P",monospace;color:var(--ink);margin-bottom:2px}
 .kbd{font:8px "Press Start 2P",monospace;color:var(--dim);background:var(--shadow);padding:2px 4px;margin-left:4px}
 
 /* tabs + panel */
@@ -132,9 +145,9 @@ img.px,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .ucard .nm{font:9px/1.5 "Press Start 2P",monospace}
 .ucard .meta{font-size:17px;color:var(--dim);line-height:1.05}
 .ucard .tr{grid-column:1/-1;font-size:17px;color:var(--ink);line-height:1.05}
-.ucard .row{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.ucard .row{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 8px;margin-top:4px}
 .ucard .st{font-size:18px;white-space:nowrap}
-.ucard .btn{padding:8px 10px 7px;font-size:9px}
+.ucard .btn{padding:8px 10px 7px;font-size:9px;white-space:nowrap;margin-left:auto}
 .tag{font:8px "Press Start 2P",monospace;padding:3px 5px 2px;background:var(--shadow);color:var(--dim);white-space:nowrap}
 .tag.inf{color:#ffb060}.tag.rng{color:var(--good)}.tag.hvy{color:#ff8a8a}
 .erahead{font:10px/1.5 "Press Start 2P",monospace;color:var(--dim);margin:18px 0 8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -201,7 +214,7 @@ textarea{width:100%;min-height:90px;background:var(--shadow);border:0;box-shadow
 @media (max-width:760px){
   .deck{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .deck .lead{grid-column:1/-1}
-  .res{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .res{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
   .two{grid-template-columns:minmax(0,1fr)}
   .next{margin-left:0;width:100%}
 }
@@ -228,12 +241,11 @@ textarea{width:100%;min-height:90px;background:var(--shadow);border:0;box-shadow
 <body>
 <main class="wrap">
   <header class="hud">
-    <h1 class="logo d">Chrono Command<span>Leaders of history at war, across all of time</span></h1>
+    <h1 class="logo d">Chrono Command</h1>
     <div class="res">
       <div class="stat gold box notch"><img class="px" id="icoGold" alt=""><b id="gold">0</b><small>gold</small></div>
       <div class="stat box notch"><img class="px" id="icoClock" alt=""><b id="gps">0</b><small>per second</small></div>
-      <div class="stat shard box notch"><img class="px" id="icoShard" alt=""><b id="shards">0</b><small>chrono shards</small></div>
-      <div class="stat box notch"><img class="px" id="icoSword" alt=""><b id="dps">0</b><small>army damage/s</small></div>
+      <div class="stat shard box notch"><img class="px" id="icoShard" alt=""><b id="shards">0</b><small>shards</small></div>
     </div>
   </header>
 
@@ -253,9 +265,8 @@ textarea{width:100%;min-height:90px;background:var(--shadow);border:0;box-shadow
       <button class="btn red" id="btnChallenge" hidden>Challenge</button>
       <button class="btn blue pulse" id="btnCouncil" hidden>War Council</button>
       <label class="tog"><input type="checkbox" id="autoPush" checked> Auto-advance</label>
-      <label class="tog"><input type="checkbox" id="autoCast" checked> Auto skills</label>
       <span class="spacer"></span>
-      <span class="hint" id="hint">Tap the battlefield to strike · keys 1-5 cast skills</span>
+      <span class="hint" id="hint">Tap the field to strike</span>
     </div>
   </section>
 
@@ -270,7 +281,7 @@ textarea{width:100%;min-height:90px;background:var(--shadow);border:0;box-shadow
   </nav>
   <section class="panel box notch" id="panel" role="tabpanel"></section>
 
-  <p class="foot">Real historical and public figures appear here as pixel caricatures in a fictional game, alongside mythical and invented characters. Including someone is not an endorsement: many were dictators responsible for war crimes and genocide, and their bios say so.</p>
+  <p class="foot">Real people appear here as pixel caricatures in a work of fiction. Inclusion is not endorsement; the dictators' bios note their crimes.</p>
 </main>
 
 <div class="modal" id="modal" hidden><div class="dlg notch" id="dlg" role="dialog" aria-modal="true"></div></div>

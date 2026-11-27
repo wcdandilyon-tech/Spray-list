@@ -9,16 +9,18 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 
 - **Idle battles.** Your army fights wave after wave by itself and keeps earning gold while you're away (up to 8 hours).
   Tap or click the battlefield to add commander strikes.
-- **Leader battles.** Every third stage you face a famous leader (a giant boss with a timer and their own signature skill).
+- **Leader battles.** Every third stage you face a famous leader (a giant boss with a timer whose attributes power the enemy army).
   Win and they join your roster. 87 in all: a Stone Age caveman, Alexander, Caesar, Genghis Khan, Napoleon, Hitler, Stalin,
   Mussolini, Mao, Pol Pot, Idi Amin, Pinochet, Kim Jong Il, Gandhi, Martin Luther King Jr., Mandela, Charlie Kirk,
   Donald Trump, a cyborg assassin, an alien overlord, the Devil and Santa Claus.
 - **Commanders on the front line.** Your commander and two partners fight in the battle as full-body sprites next to
-  their troops. If one falls, their skills lock until a revive skill or the next wave brings them back.
-- **Your command team.** One commander with a **main skill**, **two skills** and a class passive (Conqueror, Tyrant,
-  Strategist, Defender, Revolutionary, Statesman, Peacemaker, Warrior, Orator), plus **two partners** with one skill each.
-  Skills cast automatically, or by hand with the buttons or keys 1–5.
-- **War Council.** After every leader battle you draw a **random doctrine** (30 army-management skills such as
+  their troops. If one falls, their attributes switch off until they get back up.
+- **Leader attributes, not moves.** Every leader has three always-on attributes, each explained in plain words
+  (for example Blitzkrieg: *every hit also strikes all other enemies for 20% damage, and +15% attack speed*).
+  Your commander brings all three plus a class bonus (Conqueror, Tyrant, Strategist, Defender, Revolutionary,
+  Statesman, Peacemaker, Warrior, Orator); each of your two partners brings one. Nothing to press: the only active
+  action is tapping the battlefield to strike.
+- **War Council.** After every leader battle you draw a **random doctrine** (30 army-management bonuses such as
   Conscription, Supply Lines, Combined Arms, Blitz Doctrine, Field Hospitals), then **mix and match your army** and
   reassign your commander and partners. Your formation is locked between councils.
 - **30 unit types across 10 eras,** three per era (infantry, ranged, heavy), each with a trait: spearmen and chariots,
@@ -29,7 +31,7 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 - **Shattered Time.** Once the pathway is finished, time breaks: every era after that is picked at random, enemies hit
   harder and come in bigger waves, and every fourth leader battle is a **mystery boss** (the Devil, Santa Claus,
   the Time Wraith or the Void Emperor) whose identity stays hidden until the fight starts. It never ends.
-  Beating a leader again earns stars (+15% skill power each).
+  Beating a leader again earns stars (+10% attribute strength each).
 - **Time Rift (prestige).** Once you reach stage 40, rift back to the start of time for Chrono Shards (+5% ATK, HP and gold
   each, forever). You keep your recruited leaders and their stars.
 
@@ -38,7 +40,7 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
 | File | What's in it |
 | --- | --- |
 | `index.html` | Page layout and all styling |
-| `js/data.js` | Eras, unit types, traits, leader classes, all 87 leaders (bios, portrait recipes, skills, weapons) and the 30 doctrines |
+| `js/data.js` | Eras, unit types, traits, leader classes, all 87 leaders (bios, portrait recipes, attributes, weapons) and the 30 doctrines |
 | `js/engine.js` | Battle simulation, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
 | `js/portraits.js` | 64x64 leader portraits and full-body battlefield sprites for every leader |

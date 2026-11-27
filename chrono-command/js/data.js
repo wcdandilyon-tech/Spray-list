@@ -84,13 +84,13 @@
   CW.CLASSES = {
     conqueror: { name: 'Conqueror', d: '+25% army ATK', fx: { atk: 0.25 } },
     tyrant: { name: 'Tyrant', d: '+15% ATK, enemies deal 12% less damage', fx: { atk: 0.15, enemyAtk: 0.12 } },
-    strategist: { name: 'Strategist', d: 'Skills recharge 20% faster', fx: { cdr: 0.2 } },
+    strategist: { name: 'Strategist', d: 'All your leaders\' attributes are 25% stronger', fx: { attrMain: 0.25, attrPartner: 0.25 } },
     defender: { name: 'Defender', d: '+35% army HP', fx: { hp: 0.35 } },
     revolutionary: { name: 'Revolutionary', d: '+25% attack speed', fx: { spd: 0.25 } },
     statesman: { name: 'Statesman', d: '+35% gold', fx: { gold: 0.35 } },
     peacemaker: { name: 'Peacemaker', d: '+20% HP and 1% HP regen per second', fx: { hp: 0.2, regen: 0.01 } },
     warrior: { name: 'Warrior', d: '+15% critical chance', fx: { crit: 0.15 } },
-    orator: { name: 'Orator', d: 'Skills +35% power', fx: { skill: 0.35 } },
+    orator: { name: 'Orator', d: '+15% army ATK and +20% gold', fx: { atk: 0.15, gold: 0.2 } },
   };
 
   // ---------------------------------------------------------------- portraits palette shortcuts
@@ -98,7 +98,8 @@
   const HR = { blk: '#1d1714', dbr: '#3b2618', brn: '#6b4426', aub: '#8b3a1e', red: '#b5501f', bld: '#d9b45a', gry: '#9c9c9c', wht: '#e9e6df' };
 
   // ---------------------------------------------------------------- leaders
-  // skills: [ult, s1, s2]; each = [name, cooldown, effects]
+  // skills: three always-on attributes [signature, partner attribute, third]; each = [name, cooldown (unused), effects]
+  // engine.js turns each effect into a passive stat (see CW.attr); the cooldowns are left over from an older design
   // effects: ['strike', 'front'|'all'|'random'|'boss', mult] (mult = seconds of army damage)
   //          ['buff', 'atk'|'spd'|'crit'|'def', value, seconds]
   //          ['heal', fraction] ['revive', count, hpFraction] ['stun', seconds]
@@ -688,7 +689,7 @@
     D('plunder', 'Spoils of Conquest', 1, 3, 'Leader battles pay +75% gold', { bossGold: 0.75 }),
     D('veterans', 'Veteran Corps', 1, 3, 'Unit upgrades cost 10% less', { cost: 0.1 }),
     D('logistics', 'Logistics Corps', 0, 5, '+12% attack speed', { spd: 0.12 }),
-    D('academy', 'Officer Academy', 1, 3, 'Commander skills recharge 10% faster', { cdr: 0.1 }),
+    D('academy', 'Officer Academy', 1, 3, 'Your leaders on the field have +40% health', { heroHp: 0.4 }),
     D('combined', 'Combined Arms', 1, 3, '+15% ATK and HP while you field all three roles', { combined: 0.15 }),
     D('pride', 'Era Pride', 1, 3, "+5% ATK for each squad from your commander's era", { pride: 0.05 }),
     D('flanking', 'Flanking Maneuvers', 0, 4, '+7% critical chance', { crit: 0.07 }),
@@ -697,8 +698,8 @@
     D('propaganda', 'Propaganda Ministry', 0, 4, 'Enemies deal 8% less damage', { enemyAtk: 0.08 }),
     D('mobilization', 'Total Mobilization', 2, 3, '+25% ATK and HP', { atk: 0.25, hp: 0.25 }),
     D('siege', 'Siege Engineers', 1, 4, '+30% damage to enemy leaders', { bossDmg: 0.3 }),
-    D('radio', 'Command Radio', 1, 3, 'Commander skills +25% power', { skill: 0.25 }),
-    D('liaison', 'Liaison Officers', 1, 3, 'Partner skills recharge 15% faster', { pcdr: 0.15 }),
+    D('radio', 'Command Radio', 1, 3, "Your commander's attributes are 20% stronger", { attrMain: 0.2 }),
+    D('liaison', 'Liaison Officers', 1, 3, "Your partners' attributes are 30% stronger", { attrPartner: 0.3 }),
     D('dilation', 'Time Dilation', 1, 3, '+10s on the leader battle clock', { bossTime: 10 }),
     D('salvage', 'Chrono Salvage', 2, 3, '+1 Chrono Shard for every leader defeated', { shardDrop: 1 }),
     D('quarter', 'Quartermaster', 1, 3, '+50% offline earnings', { offline: 0.5 }),

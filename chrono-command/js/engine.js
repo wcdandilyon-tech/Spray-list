@@ -212,7 +212,7 @@
     if (M) return M;
     const m = {
       atk: 0, hp: 0, spd: 0, crit: 0.05, critDmg: 0, def: 0, gold: 0, regen: 0, waveHeal: 0, bossGold: 0, cost: 0,
-      cdr: 0, pcdr: 0, skill: 0, combined: 0, pride: 0, enemyAtk: 0, enemyHp: 0, bossDmg: 0, bossTime: 0, shardDrop: 0,
+      cdr: 0, pcdr: 0, skill: 0, attrMain: 0, attrPartner: 0, heroHp: 0, combined: 0, pride: 0, enemyAtk: 0, enemyHp: 0, bossDmg: 0, bossTime: 0, shardDrop: 0,
       offline: 0, blitz: 0, lastStand: 0, firstStrike: 0, reviveHp: 0, slots: 0, inf: 0, rng: 0, hvy: 0,
     };
     for (const id in S.doctrines) {
@@ -242,7 +242,7 @@
   CW.lvlMult = lvlMult;
   function bounty() {
     const m = mods();
-    return CFG.bounty * growth(S.stage) * (1 + m.gold) * m.shard;
+    return CFG.bounty * growth(S.stage) * (1 + m.gold + (B && B.sa ? B.sa.gold : 0)) * m.shard;
   }
   CW.bounty = bounty;
 
@@ -329,7 +329,7 @@
     const r = S.roster[lid] || { lv: 1, stars: 0 };
     const b = (1 + 0.05 * (r.lv - 1)) * (1 + 0.1 * r.stars);
     const m = isMain ? 1.4 : 1;
-    return { hp: h * CFG.heroHp * m * b, atk: a * 1.4 * CFG.heroAtk * m * b, int: 1.4 };
+    return { hp: h * CFG.heroHp * m * b * (1 + mods().heroHp), atk: a * 1.4 * CFG.heroAtk * m * b, int: 1.4 };
   }
   CW.heroStats = (lid, isMain) => heroStats(lid, isMain, armyContext());
   function mkHero(lid, i, st) {
@@ -403,26 +403,15 @@
     if (!B || rebuild) {
       B = {
         allies: [], enemies: [], boss: null, phase: 'march', pt: 0.8, wave: 1, info,
-        buffs: [], burns: [], cd: {}, cdMax: {}, fx: [], waveT: 0, bossT: 0, bossSkillT: 0,
-        goldAcc: 0, gpsT: 0, time: 0,
+        fx: [], waveT: 0, bossT: 0, goldAcc: 0, gpsT: 0, time: 0, sa: zeroSide(), se: zeroSide(),
       };
       buildAllies();
-      initCooldowns();
     }
     B.info = info;
     B.wave = 1;
-    B.buffs = B.buffs.filter((b) => b.side === 'a');
-    B.burns = [];
     spawnWave();
+    sides();
     emit('stage', info);
-  }
-
-  function initCooldowns() {
-    skillList().forEach((e) => {
-      const c = skillCd(e);
-      B.cd[e.key] = c * 0.35;
-      B.cdMax[e.key] = c;
-    });
   }
 
   function enemySquad(u, g, i) {
@@ -450,7 +439,9 @@
       const n = 2 + Math.floor(info.era / 3);
       for (let i = 0; i < n; i++) list.push(enemySquad(pick(i % 2 ? 'rng' : 'inf'), g, i));
       const lid = info.bossId;
-      const hp = ROLES.hvy.hp * g * CFG.enemyHp * CFG.bossHp * (info.echo ? 1.25 : 1) * (info.mystery ? CFG.mysteryHp : 1) * Math.min(1, 0.55 + 0.03 * S.stage);
+      let treasury = 0;
+      for (let j = 0; j < 3; j++) treasury += CW.attr(lid, j).stats.gold || 0;
+      const hp = ROLES.hvy.hp * g * CFG.enemyHp * CFG.bossHp * (info.echo ? 1.25 : 1) * (info.mystery ? CFG.mysteryHp : 1) * Math.min(1, 0.55 + 0.03 * S.stage) * (1 + treasury * 0.5);
       const boss = {
         sid: sid++, side: 'e', uid: null, lid, role: 'boss', trait: null, era: info.era,
         hp, maxHp: hp, atk: ROLES.hvy.atk * g * CFG.enemyAtk * CFG.bossAtk * (info.mystery ? CFG.mysteryAtk : 1), int: 1.6, t: 0,
@@ -460,7 +451,6 @@
       B.boss = boss;
       B.bossT = CFG.bossTime + mods().bossTime + (info.mystery ? 15 : 0);
       B.bossTMax = B.bossT;
-      B.bossSkillT = 6;
     } else {
       const n = Math.min(9, 3 + Math.floor(info.era / 2) + (info.sub === 1 ? 1 : 0) + (B.wave === CFG.waves ? 1 : 0) + (info.chaos ? 1 : 0));
       for (let i = 0; i < n; i++) list.push(enemySquad(pick(roll()), g, i));
@@ -479,21 +469,13 @@
     emit('wave', { wave: B.wave, info });
   }
 
-  // ---- buffs
-  function addBuff(side, stat, v, t) {
-    B.buffs.push({ side, stat, v, t, max: t });
-  }
-  function buff(side, stat) {
-    let s = 0;
-    for (const b of B.buffs) if (b.side === side && b.stat === stat) s += b.v;
-    return s;
-  }
-  CW.buffValue = (side, stat) => (B ? buff(side, stat) : 0);
-  const allyAtkMult = () => Math.max(0.2, 1 + Math.min(2, buff('a', 'atk')) - buff('a', 'weak'));
-  const allySpd = () => 1 + mods().spd + Math.min(1.5, buff('a', 'spd')) + (B.waveT < 6 ? mods().blitz : 0);
-  const allyTaken = () => (1 - Math.min(0.8, mods().def + buff('a', 'def'))) * (1 + buff('a', 'exposed'));
-  const enemyAtkMult = () => Math.max(0.2, 1 + buff('e', 'atk') - Math.min(0.7, buff('e', 'weak')) - mods().enemyAtk);
-  const enemyTaken = () => (1 + Math.min(1.5, buff('e', 'exposed'))) * (1 - Math.min(0.7, buff('e', 'def')));
+  // ---- combat multipliers from both sides' attributes (B.sa = yours, B.se = the enemy leader's)
+  const allyAtkMult = () => Math.max(0.2, 1 + Math.min(2, B.sa.atk) - Math.min(0.7, B.se.weak));
+  const allySpd = () => 1 + mods().spd + Math.min(1.5, B.sa.spd) + (B.waveT < 6 ? mods().blitz : 0);
+  const allyTaken = () => (1 - Math.min(0.8, mods().def + B.sa.def)) * (1 + Math.min(1.5, B.se.expose));
+  const enemyAtkMult = () => Math.max(0.2, 1 + B.se.atk - Math.min(0.7, B.sa.weak + mods().enemyAtk));
+  const enemyTaken = () => (1 + Math.min(1.5, B.sa.expose)) * (1 - Math.min(0.7, B.se.def));
+  const enemySpd = () => 1 + Math.min(1.5, B.se.spd);
 
   function armyDPS(includeDead) {
     let s = 0;
@@ -535,7 +517,9 @@
     const t = pickTarget(a, foes);
     if (!t) return;
     const m = mods();
+    const sd = ally ? B.sa : B.se;
     let dmg = a.atk * (ally ? allyAtkMult() : enemyAtkMult());
+    if (a.role === 'rng') dmg *= 1 + sd.ranged;
     if (!a.struck) {
       a.struck = true;
       if (a.trait === 'charge') dmg *= 4;
@@ -543,7 +527,7 @@
     }
     if (ally && m.lastStand && a.hp < a.maxHp * 0.35) dmg *= 1 + m.lastStand;
     if (a.trait === 'snipe') dmg *= 1.3;
-    const cc = (ally ? m.crit + buff('a', 'crit') : 0.05) + (a.trait === 'crit' ? 0.25 : 0);
+    const cc = (ally ? m.crit : 0.05) + sd.crit + (a.trait === 'crit' ? 0.25 : 0);
     const crit = Math.random() < cc;
     if (crit) dmg *= ally ? 2 + m.critDmg : 2;
     a.lunge = 1;
@@ -552,22 +536,24 @@
       const o = aliveOf(foes).filter((q) => q !== t);
       if (o.length) hit(a, o[(Math.random() * o.length) | 0], dmg * 0.6, false, true);
     }
-    if (a.trait === 'splash' || a.isBoss) {
-      const f = a.isBoss ? 0.3 : 0.35;
-      for (const q of foes) if (q.alive && q !== t) hit(a, q, dmg * f, false, true);
-    }
-    if (a.trait === 'stun' && Math.random() < 0.15 && t.alive) t.stun = Math.max(t.stun, t.isBoss ? 0.6 : 1.2);
+    const sp = sd.splash + (a.trait === 'splash' ? 0.35 : 0) + (a.isBoss ? 0.3 : 0);
+    if (sp > 0) for (const q of foes) if (q.alive && q !== t) hit(a, q, dmg * sp, false, true);
+    const stn = sd.stun + (a.trait === 'stun' ? 0.15 : 0);
+    if (stn && t.alive && Math.random() < stn) t.stun = Math.max(t.stun, t.isBoss ? 0.6 : 1.1);
   }
 
-  function dealTo(t, dmg, fromAlly, bossbane) {
+  function dealTo(t, dmg, fromAlly, bossbane, quiet) {
     const m = mods();
     if (fromAlly) {
       dmg *= enemyTaken();
-      if (t.isBoss) dmg *= 1 + m.bossDmg + (bossbane ? 0.6 : 0);
-    } else dmg *= allyTaken();
+      if (t.isBoss) dmg *= 1 + m.bossDmg + B.sa.boss + (bossbane ? 0.6 : 0);
+    } else {
+      dmg *= allyTaken();
+      if (t.isHero) dmg *= 1 + B.se.boss;
+    }
     if (t.trait === 'armor') dmg *= 0.7;
     t.hp -= dmg;
-    t.flash = 1;
+    if (!quiet) t.flash = 1;
     if (t.hp <= 0 && t.alive) {
       t.hp = 0;
       t.alive = false;
@@ -581,12 +567,6 @@
     const done = dealTo(t, dmg, ally, a.trait === 'bossbane');
     if (a.trait === 'drain' && a.alive) a.hp = Math.min(a.maxHp, a.hp + done * 0.3);
     if (!secondary || B.fx.length < 120) B.fx.push({ k: 'hit', from: a.sid, to: t.sid, dmg: done, crit, role: a.isBoss ? 'boss' : a.role, side: a.side, sec: secondary });
-  }
-
-  function skillHit(t, dmg) {
-    if (!t) return;
-    const done = dealTo(t, dmg, true, false);
-    B.fx.push({ k: 'skillhit', to: t.sid, dmg: done });
   }
 
   function addGold(g) {
@@ -615,9 +595,6 @@
   function step(dt) {
     S.stats.time += dt;
     B.time += dt;
-    for (const k in B.cd) B.cd[k] = Math.max(0, B.cd[k] - dt);
-    for (const b of B.buffs) b.t -= dt;
-    B.buffs = B.buffs.filter((b) => b.t > 0);
     B.gpsT += dt;
     if (B.gpsT >= 10) {
       const cur = B.goldAcc / B.gpsT;
@@ -646,18 +623,32 @@
         if (B.pt <= 0) afterVictory();
         break;
     }
-    if (S.auto.cast && B.phase === 'fight') autoCast();
   }
 
   function fight(dt) {
     const m = mods();
     B.waveT += dt;
+    sides();
+    const sa = B.sa;
+    const se = B.se;
     const aSpd = allySpd();
-    const eSpd = 1 + Math.min(1.5, buff('e', 'spd'));
-    const regen = m.regen;
+    const eSpd = enemySpd();
+    const regen = m.regen + sa.regen;
     for (const q of B.allies) {
-      if (!q.alive) continue;
-      let r = regen + (q.trait === 'regen' ? 0.03 : 0);
+      if (!q.alive) {
+        // attribute: fallen squads get back up on their own
+        if (sa.revive) {
+          q.down = (q.down || 0) + dt;
+          if (q.down >= sa.revive) {
+            q.alive = true;
+            q.hp = q.maxHp * 0.35;
+            q.stun = 0;
+            q.down = 0;
+          }
+        }
+        continue;
+      }
+      const r = regen + (q.trait === 'regen' ? 0.03 : 0);
       if (r) q.hp = Math.min(q.maxHp, q.hp + q.maxHp * r * dt);
       if (q.stun > 0) {
         q.stun -= dt;
@@ -671,8 +662,19 @@
       }
     }
     for (const q of B.enemies) {
-      if (!q.alive) continue;
-      if (q.trait === 'regen') q.hp = Math.min(q.maxHp, q.hp + q.maxHp * 0.03 * dt);
+      if (!q.alive) {
+        if (se.revive && !q.isBoss) {
+          q.down = (q.down || 0) + dt;
+          if (q.down >= se.revive) {
+            q.alive = true;
+            q.hp = q.maxHp * 0.35;
+            q.down = 0;
+          }
+        }
+        continue;
+      }
+      const r = se.regen + (q.trait === 'regen' ? 0.03 : 0);
+      if (r) q.hp = Math.min(q.maxHp, q.hp + q.maxHp * r * dt);
       if (q.stun > 0) {
         q.stun -= dt;
         continue;
@@ -684,24 +686,20 @@
         attack(q);
       }
     }
-    // burns
-    for (const b of B.burns) {
-      const d = b.dps * Math.min(dt, b.t);
-      b.t -= dt;
-      const arr = b.side === 'e' ? B.enemies : B.allies;
-      for (const q of arr) if (q.alive) dealTo(q, d, b.side === 'e', false);
+    // attribute: burning
+    if (sa.burn) {
+      const d = sa.burn * armyDPS() * dt;
+      for (const q of B.enemies) if (q.alive) dealTo(q, d, true, false, true);
     }
-    B.burns = B.burns.filter((b) => b.t > 0);
-    // boss clock & boss skill
+    if (se.burn) {
+      let eDps = 0;
+      for (const q of B.enemies) if (q.alive) eDps += q.atk / q.int;
+      const d = se.burn * eDps * enemyAtkMult() * dt;
+      for (const q of B.allies) if (q.alive) dealTo(q, d, false, false, true);
+    }
+    // leader battle clock
     if (B.boss && B.boss.alive) {
       B.bossT -= dt;
-      if (B.boss.stun <= 0) {
-        B.bossSkillT -= dt;
-        if (B.bossSkillT <= 0) {
-          B.bossSkillT = 10;
-          bossCast();
-        }
-      }
       if (B.bossT <= 0) {
         lose('time');
         return;
@@ -729,6 +727,7 @@
         q.hp = q.maxHp * rev;
         q.stun = 0;
       }
+      q.down = 0;
     }
   }
 
@@ -784,7 +783,6 @@
     let t = S.stage - 1;
     while (t > 1 && CW.stageInfo(t).isBoss) t--;
     S.stage = Math.max(1, t);
-    B.buffs = [];
     startStage(true);
   }
 
@@ -825,149 +823,102 @@
     emit('council', S.council);
   }
 
-  // ------------------------------------------------------------ skills
-  function skillList() {
-    const out = [];
-    const ml = LEADER[S.main];
-    ['ult', 's1', 's2'].forEach((k, i) => out.push({ key: k, lid: S.main, sk: ml.skills[i], main: true }));
-    S.partners.forEach((p, i) => {
-      if (p && LEADER[p]) out.push({ key: 'p' + i, lid: p, sk: LEADER[p].skills[1], main: false });
+  // ------------------------------------------------------------ leader attributes
+  // Leaders don't cast moves. Each has three always-on attributes: the commander brings all three,
+  // each partner brings their first attribute, and an enemy leader's three power the enemy army while they stand.
+  // A fallen leader's attributes switch off until they get back up.
+  const AV = { atk: 0.3, spd: 0.25, crit: 0.15, def: 0.25, regen: 0.02, revive: 6, stun: 0.12, weak: 0.2, expose: 0.2, burn: 0.12, gold: 0.4, splash: 0.2, ranged: 0.35, boss: 0.5 };
+  function zeroSide() {
+    return { atk: 0, spd: 0, crit: 0, def: 0, regen: 0, revive: 0, stun: 0, weak: 0, expose: 0, burn: 0, gold: 0, splash: 0, ranged: 0, boss: 0 };
+  }
+  function effStat(f) {
+    switch (f[0]) {
+      case 'strike':
+        return f[1] === 'all' ? 'splash' : f[1] === 'random' ? 'ranged' : f[1] === 'boss' ? 'boss' : 'atk';
+      case 'buff':
+        return f[1] === 'crit' ? 'crit' : f[1] === 'def' ? 'def' : f[1] === 'spd' ? 'spd' : 'atk';
+      case 'heal':
+        return 'regen';
+      case 'weaken':
+        return 'weak';
+      case 'cdr':
+        return 'spd';
+      default:
+        return f[0]; // revive, stun, expose, burn, gold
+    }
+  }
+  const attrCache = {};
+  // attribute i of a leader: 0 is their signature, 1 is what they bring as a partner, 2 is their third
+  CW.attr = function (lid, i) {
+    const key = lid + '|' + i;
+    if (attrCache[key]) return attrCache[key];
+    const sk = LEADER[lid].skills[i];
+    const stats = {};
+    sk.fx.forEach((f, j) => {
+      const st = effStat(f);
+      const k = (i === 0 ? 1 : 0.6) * (j === 0 ? 1 : 0.6);
+      if (st === 'revive') {
+        const v = AV.revive / k;
+        stats.revive = stats.revive ? Math.min(stats.revive, v) : v;
+      } else stats[st] = (stats[st] || 0) + AV[st] * k;
     });
-    return out;
-  }
-  CW.skillList = skillList;
-  function skillCd(e) {
-    const m = mods();
-    const r = S.roster[e.lid] || { stars: 0 };
-    const red = Math.min(0.6, (e.main ? m.cdr : m.pcdr) + 0.04 * r.stars);
-    return e.sk.cd * (1 - red);
-  }
-  CW.skillCd = skillCd;
-  function skillPow(e) {
-    const m = mods();
-    const r = S.roster[e.lid] || { lv: 1, stars: 0 };
-    return (1 + 0.08 * (r.lv - 1)) * (1 + 0.15 * r.stars) * (e.main ? 1 + m.skill : 1);
-  }
-  CW.skillPow = skillPow;
-
-  CW.cast = function (key) {
-    if (!B || B.phase !== 'fight') return false;
-    const e = skillList().find((x) => x.key === key);
-    if (!e || (B.cd[key] || 0) > 0 || !heroAlive(e.lid)) return false;
-    const hero = B.allies.find((q) => q.isHero && q.lid === e.lid);
-    if (hero) hero.lunge = 1.5;
-    applyFx(e.sk.fx, skillPow(e));
-    const c = skillCd(e);
-    B.cd[key] = c;
-    B.cdMax[key] = c;
-    B.fx.push({ k: 'cast', key, lid: e.lid, name: e.sk.n, kinds: e.sk.fx.map((f) => f[0]) });
-    emit('cast', e);
-    return true;
+    return (attrCache[key] = { name: sk.n, stats });
   };
-
-  function needsHeal() {
-    let hp = 0;
-    let max = 0;
-    let dead = 0;
-    for (const q of B.allies) {
-      hp += q.hp;
-      max += q.maxHp;
-      if (!q.alive) dead++;
-    }
-    return dead > 0 || hp / max < 0.7;
-  }
-  function autoCast() {
-    if (B.waveT < 0.4) return;
-    for (const e of skillList()) {
-      if ((B.cd[e.key] || 0) > 0) continue;
-      const kinds = e.sk.fx.map((f) => f[0]);
-      const support = kinds.every((k) => k === 'heal' || k === 'revive');
-      if (support && !needsHeal()) continue;
-      if (kinds.every((k) => k === 'gold') && aliveOf(B.enemies).length === 0) continue;
-      CW.cast(e.key);
+  function addStats(o, stats, k) {
+    for (const st in stats) {
+      if (st === 'revive') {
+        const v = stats.revive / k;
+        o.revive = o.revive ? Math.min(o.revive, v) : v;
+      } else o[st] += stats[st] * k;
     }
   }
-
-  function applyFx(fx, P) {
-    const dps = armyDPS();
-    for (const f of fx) {
-      const [type, a, b, c] = f;
-      if (type === 'strike') {
-        const dmg = b * dps * P;
-        const alive = aliveOf(B.enemies);
-        if (!alive.length) continue;
-        if (a === 'all') alive.forEach((t) => skillHit(t, dmg));
-        else if (a === 'random') {
-          for (let i = 0; i < 4; i++) {
-            const al = aliveOf(B.enemies);
-            if (!al.length) break;
-            skillHit(al[(Math.random() * al.length) | 0], dmg / 2.5);
-          }
-        } else if (a === 'boss') skillHit(B.boss && B.boss.alive ? B.boss : frontOf(B.enemies), dmg);
-        else skillHit(frontOf(B.enemies), dmg);
-      } else if (type === 'buff') addBuff('a', a, b, c);
-      else if (type === 'heal') {
-        for (const q of B.allies) if (q.alive) q.hp = Math.min(q.maxHp, q.hp + q.maxHp * a);
-        B.fx.push({ k: 'heal' });
-      } else if (type === 'revive') {
-        let n = a;
-        const order = B.allies.slice().sort((x, y) => (y.isHero ? 1 : 0) - (x.isHero ? 1 : 0));
-        for (const q of order)
-          if (!q.alive && n > 0) {
-            q.alive = true;
-            q.hp = q.maxHp * b;
-            q.stun = 0;
-            n--;
-          }
-        B.fx.push({ k: 'heal' });
-      } else if (type === 'stun') {
-        for (const q of B.enemies) if (q.alive) q.stun = Math.max(q.stun, q.isBoss ? a * 0.5 : a);
-      } else if (type === 'weaken') addBuff('e', 'weak', a, b);
-      else if (type === 'expose') addBuff('e', 'exposed', a, b);
-      else if (type === 'burn') B.burns.push({ side: 'e', dps: (a * dps * P) / b, t: b });
-      else if (type === 'gold') {
-        const g = a * bounty() * P;
-        addGold(g);
-        B.fx.push({ k: 'goldburst', v: g });
-      } else if (type === 'cdr') {
-        for (const k in B.cd) B.cd[k] = Math.max(0, B.cd[k] - a);
-      }
+  // how strong a leader's attributes are in a given role: stars add 10% each, doctrines and classes add more
+  CW.attrStrength = function (lid, role) {
+    const m = mods();
+    const r = S.roster[lid] || { stars: 0 };
+    return (1 + 0.1 * r.stars) * (role === 'main' ? 1 + m.attrMain : role === 'partner' ? 1 + m.attrPartner : 1);
+  };
+  function sides() {
+    const a = zeroSide();
+    const e = zeroSide();
+    commandIds().forEach((lid, i) => {
+      if (!heroAlive(lid)) return;
+      const k = CW.attrStrength(lid, i === 0 ? 'main' : 'partner');
+      (i === 0 ? [0, 1, 2] : [1]).forEach((j) => addStats(a, CW.attr(lid, j).stats, k));
+    });
+    if (B.boss && B.boss.alive) {
+      const k = B.info.mystery ? 1.3 : B.info.echo ? 1.15 : 1;
+      for (let j = 0; j < 3; j++) addStats(e, CW.attr(B.boss.lid, j).stats, k);
     }
+    B.sa = a;
+    B.se = e;
   }
-
-  function bossCast() {
-    const boss = B.boss;
-    const l = LEADER[boss.lid];
-    const sk = l.skills[0];
-    for (const f of sk.fx) {
-      const [type, a, b, c] = f;
-      if (type === 'strike') {
-        const mult = a === 'front' || a === 'boss' ? 3 : a === 'random' ? 1.4 : 1.1;
-        if (a === 'front' || a === 'boss') {
-          const t = frontOf(B.allies);
-          if (t) dealTo(t, boss.atk * mult * enemyAtkMult(), false);
-        } else for (const q of B.allies) if (q.alive) dealTo(q, boss.atk * mult * enemyAtkMult(), false);
-        B.fx.push({ k: 'bossblast' });
-      } else if (type === 'buff') addBuff('e', a, b * 0.7, c);
-      else if (type === 'heal' || type === 'gold') boss.hp = Math.min(boss.maxHp, boss.hp + boss.maxHp * (type === 'heal' ? 0.06 : 0.04));
-      else if (type === 'revive') {
-        let n = a;
-        for (const q of B.enemies)
-          if (!q.alive && !q.isBoss && n > 0) {
-            q.alive = true;
-            q.hp = q.maxHp * 0.5;
-            n--;
-          }
-      } else if (type === 'stun') {
-        for (const q of B.allies) if (q.alive) q.stun = Math.max(q.stun, Math.min(2, a) * 0.6);
-      } else if (type === 'weaken') addBuff('a', 'weak', a * 0.7, b);
-      else if (type === 'expose') addBuff('a', 'exposed', a * 0.7, b);
-      else if (type === 'burn') B.burns.push({ side: 'a', dps: boss.atk * 0.35, t: b });
-      else if (type === 'cdr') addBuff('e', 'spd', 0.3, 6);
-    }
-    B.fx.push({ k: 'bosscast', lid: boss.lid, name: sk.n });
-    emit('bossCast', { lid: boss.lid, name: sk.n });
-  }
+  // plain-language description of an attribute at strength k
+  const pc = (v) => Math.round(v * 100) + '%';
+  const ATXT = {
+    atk: (v) => `+${pc(v)} army damage`,
+    spd: (v) => `+${pc(v)} attack speed`,
+    crit: (v) => `+${pc(v)} chance of critical hits`,
+    def: (v) => `your army takes ${pc(v)} less damage`,
+    regen: (v) => `your army heals ${+(v * 100).toFixed(1)}% health every second`,
+    revive: (v) => `fallen squads get back up after ${Math.round(v)} seconds`,
+    stun: (v) => `${pc(v)} chance to stun on every hit`,
+    weak: (v) => `enemies deal ${pc(v)} less damage`,
+    expose: (v) => `enemies take ${pc(v)} more damage`,
+    burn: (v) => `every enemy burns for ${pc(v)} of your army's damage each second`,
+    gold: (v) => `+${pc(v)} gold`,
+    splash: (v) => `every hit also strikes all other enemies for ${pc(v)} damage`,
+    ranged: (v) => `+${pc(v)} damage from ranged units`,
+    boss: (v) => `+${pc(v)} damage to enemy leaders`,
+  };
+  CW.attrText = function (lid, i, k) {
+    k = k || 1;
+    const st = CW.attr(lid, i).stats;
+    const t = Object.keys(st)
+      .map((x) => ATXT[x](x === 'revive' ? st[x] / k : st[x] * k))
+      .join(', and ');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  };
 
   // tap / click: a commander strike on the front enemy (or the one clicked)
   CW.tap = function (targetSid) {
@@ -1081,9 +1032,6 @@
     S.main = main;
     S.partners = [p0, p1].filter(Boolean);
     M = null;
-    B.cd = {};
-    B.cdMax = {};
-    initCooldowns();
     dirty();
     return true;
   };

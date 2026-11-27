@@ -34,44 +34,11 @@
   const fmtYear = CW.fmtYear;
   const stars = (n) => (n ? '<span class="stars">' + '*'.repeat(n) + '</span>' : '');
 
-  // ------------------------------------------------------------ skill text
-  const TGT = { front: 'the front enemy', all: 'every enemy', boss: 'the enemy leader' };
-  const BUFF = { atk: 'attack', spd: 'attack speed', crit: 'crit chance', def: 'damage reduction' };
-  const pct = (v) => Math.round(v * 100) + '%';
-  function fxText(f) {
-    const [k, a, b, c] = f;
-    switch (k) {
-      case 'strike':
-        return a === 'random' ? `4 strikes of ${pct(b / 2.5)} army damage at random enemies` : `${pct(b)} army damage to ${TGT[a]}`;
-      case 'buff':
-        return `+${pct(b)} ${BUFF[a]} for ${c}s`;
-      case 'heal':
-        return `heals the army ${pct(a)}`;
-      case 'revive':
-        return a >= 9 ? `revives every fallen squad at ${pct(b)} HP` : `revives ${a} fallen squads at ${pct(b)} HP`;
-      case 'stun':
-        return `stuns all enemies for ${a}s`;
-      case 'weaken':
-        return `enemies deal ${pct(a)} less damage for ${b}s`;
-      case 'expose':
-        return `enemies take ${pct(a)} more damage for ${b}s`;
-      case 'burn':
-        return `burns every enemy for ${pct(a)} army damage over ${b}s`;
-      case 'gold':
-        return `seizes ${a}x the kill bounty in gold`;
-      case 'cdr':
-        return `other skills recharge ${a}s sooner`;
-    }
-    return '';
+  // ------------------------------------------------------------ attributes
+  // a leader's always-on attributes as list rows: name, then what it does in plain words
+  function attrRows(lid, idxs, k) {
+    return idxs.map((i) => `<li><b>${esc(CW.attr(lid, i).name)}</b><span>${esc(CW.attrText(lid, i, k))}</span></li>`).join('');
   }
-  const skillDesc = (sk) => {
-    const t = sk.fx.map(fxText).join(', ');
-    return t.charAt(0).toUpperCase() + t.slice(1) + '. Recharge ' + sk.cd + 's.';
-  };
-  const skillShort = (sk) => {
-    const t = fxText(sk.fx[0]);
-    return t.charAt(0).toUpperCase() + t.slice(1) + (sk.fx.length > 1 ? ' +' : '');
-  };
 
   // ------------------------------------------------------------ audio
   const SFX = (() => {
@@ -276,53 +243,22 @@
           const kind = e.role === 'rng' ? 'bullet' : e.role === 'boss' ? 'orb' : 'shell';
           if (proj.length < 90 && !(e.sec && kind === 'bullet')) proj.push({ x0: f.x, y0: f.y, x1: c.x, y1: c.y, t: 0, d: kind === 'bullet' ? 0.16 : 0.34, kind, side: e.side });
         }
-        if (!e.sec) {
-          num(c.x + (Math.random() * 8 - 4), c.y - 6, fmt(e.dmg), e.side === 'a' ? (e.crit ? '#ffd23f' : '#ffffff') : '#ff7a6a', e.crit ? 2 : 1);
-          SFX.play(e.crit ? 'crit' : 'hit');
-        }
+        // only critical hits get a number, to keep the field readable
+        if (!e.sec && e.crit && e.side === 'a') num(c.x + (Math.random() * 6 - 3), c.y - 6, fmt(e.dmg), '#ffd23f', 1);
+        if (!e.sec) SFX.play(e.crit ? 'crit' : 'hit');
         const t = findSquad(e.to);
         if (t && !t.alive) burst(c.x, c.y, 8, t.side === 'e' ? '#c8c0b0' : '#ff7a6a');
-      } else if (e.k === 'skillhit' || e.k === 'tap') {
+      } else if (e.k === 'tap') {
         if (!tp) continue;
         const c = center(tp);
-        boom(c.x, c.y, e.k === 'tap' ? 5 : 9, e.k === 'tap' ? '#ffffff' : '#ffb040');
-        num(c.x, c.y - 10, fmt(e.dmg), e.k === 'tap' ? '#bff4ff' : '#ffb040', 2);
-        if (e.k === 'skillhit') SFX.play('boom');
+        boom(c.x, c.y, 5, '#ffffff');
+        num(c.x, c.y - 10, fmt(e.dmg), '#bff4ff', 1);
       } else if (e.k === 'gold') {
         if (!tp) continue;
-        const c = center(tp);
-        burst(c.x, c.y, 4, '#ffd23f', 'coin');
-        num(c.x, c.y + 4, '+' + fmt(e.v), '#ffd23f', 1);
+        burst(center(tp).x, center(tp).y, 3, '#ffd23f', 'coin');
         SFX.play('coin');
-      } else if (e.k === 'goldburst') {
-        for (let i = 0; i < 6; i++) burst(40 + Math.random() * 300, 30 + Math.random() * 30, 4, '#ffd23f', 'coin');
-        toast('+' + fmt(e.v) + ' gold', '');
-        SFX.play('coin');
-      } else if (e.k === 'cast') {
-        toast(short(e.lid) + ': ' + e.name, 'blue');
-        flashT = 1;
-        flashCol = e.kinds.includes('strike') || e.kinds.includes('burn') ? '#ffb040' : e.kinds.includes('heal') || e.kinds.includes('revive') ? '#7ddc6a' : e.kinds.includes('stun') ? '#9ad8ff' : e.kinds.includes('gold') ? '#ffd23f' : '#ffffff';
-        if (e.kinds.includes('strike')) shake = Math.max(shake, 0.25);
-        const up = e.kinds.includes('heal') || e.kinds.includes('revive') ? '#7ddc6a' : e.kinds.includes('buff') ? '#ffd23f' : null;
-        if (up)
-          for (const q of B.allies) {
-            const p = pos.get(q.sid);
-            if (p && q.alive) burst(center(p).x, center(p).y, 3, up, 'up');
-          }
-        SFX.play('cast');
-      } else if (e.k === 'bosscast') {
-        toast(short(e.lid) + ' uses ' + e.name + '!', 'red');
-        shake = Math.max(shake, 0.4);
-        flashT = 0.8;
-        flashCol = '#ff3a2a';
-        SFX.play('bosscast');
-      } else if (e.k === 'bossblast') {
-        for (const q of B.allies) {
-          const p = pos.get(q.sid);
-          if (p) boom(center(p).x, center(p).y, 7, '#ff5a3a');
-        }
       } else if (e.k === 'herofall') {
-        toast(short(e.lid) + ' is down! Their skills are locked until revived', 'red');
+        toast(short(e.lid) + ' is down', 'red');
       }
     }
     B.fx.length = 0;
@@ -477,33 +413,6 @@
     if (hidden) text('?', x + W / 2, y + 26, '#e8d0ff', 4, 'c');
     if (!isBoss) hpBar(q, x + 4, p.gy + 3, 22, q.main ? '#ffd23f' : '#5ad1ff');
     if (q.stun > 0) stunStars(x + W / 2, y - 4, t, 8 * sc);
-  }
-
-  function drawCommander(st) {
-    const ids = [st.main].concat(st.partners);
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      const sz = i ? 16 : 32;
-      const px = i ? 42 : 6;
-      const py = i ? 6 + (i - 1) * 18 : 6;
-      R(px - 2, py - 2, sz + 4, sz + 4, '#0b0d08');
-      R(px - 1, py - 1, sz + 2, sz + 2, i ? '#5ad1ff' : '#ffd23f');
-      if (i) {
-        g.imageSmoothingEnabled = true;
-        g.imageSmoothingQuality = 'high';
-      }
-      g.drawImage(CW.portrait(id), px, py, sz, sz);
-      g.imageSmoothingEnabled = false;
-      if (!CW.heroAlive(id)) {
-        g.globalAlpha = 0.65;
-        R(px, py, sz, sz, '#0b0d08');
-        g.globalAlpha = 1;
-        for (let k = 0; k < sz; k += 2) {
-          R(px + k, py + k, 2, 2, '#ff5a4a');
-          R(px + sz - 2 - k, py + k, 2, 2, '#ff5a4a');
-        }
-      }
-    }
   }
 
   function drawHud(B, st) {
@@ -666,7 +575,6 @@
     }
     g.globalAlpha = 1;
     g.restore();
-    drawCommander(st);
     drawHud(B, st);
     if (flashT > 0) {
       g.globalAlpha = Math.min(0.3, flashT * 0.3);
@@ -713,13 +621,12 @@
 
   // ------------------------------------------------------------ HUD + deck
   const el = {
-    gold: $('#gold'), gps: $('#gps'), shards: $('#shards'), dps: $('#dps'), era: $('#eraName'), year: $('#year'), stage: $('#stage'),
+    gold: $('#gold'), gps: $('#gps'), shards: $('#shards'), era: $('#eraName'), year: $('#year'), stage: $('#stage'),
     nextImg: $('#nextImg'), nextBar: $('#nextBar'), nextTxt: $('#nextTxt'), challenge: $('#btnChallenge'), council: $('#btnCouncil'),
-    deck: $('#deck'), panel: $('#panel'), autoPush: $('#autoPush'), autoCast: $('#autoCast'), modal: $('#modal'), dlg: $('#dlg'),
+    deck: $('#deck'), panel: $('#panel'), autoPush: $('#autoPush'), modal: $('#modal'), dlg: $('#dlg'),
   };
   $('#icoGold').src = CW.icon('coin');
   $('#icoShard').src = CW.icon('shard');
-  $('#icoSword').src = CW.icon('sword');
   $('#icoClock').src = CW.icon('clock');
 
   // only touch the page when something actually changed
@@ -741,7 +648,6 @@
     setText(el.gold, fmt(st.gold));
     setText(el.gps, fmt(st.gps || 0));
     setText(el.shards, fmt(st.shards));
-    setText(el.dps, fmt(CW.armyDPS()));
     const info = B.info;
     const era = ERAS[info.era];
     setText(el.era, (info.chaos ? 'Shattered Time · ' : '') + 'Era ' + era.roman + ' · ' + era.name);
@@ -749,7 +655,7 @@
     setText(el.stage, 'Stage ' + st.stage + (info.chaos ? ' · depth ' + info.depth : '') + (st.farming ? ' · regrouping' : ''));
     if (info.mystery && B.boss && B.phase === 'fight' && revealed !== B.boss.sid) {
       revealed = B.boss.sid;
-      toast('The mystery boss is revealed: ' + LEADER[B.boss.lid].name + '!', 'red');
+      toast("It's " + LEADER[B.boss.lid].name + '!', 'red');
       SFX.play('bosscast');
     }
     const bossStage = st.stage + (2 - info.sub);
@@ -774,26 +680,19 @@
     if (sig !== deckSig) renderDeck();
   }
 
-  function skillBtn(e) {
-    const label = e.key === 'ult' ? 'Main skill' : e.main ? 'Skill' : 'Partner skill';
-    const kk = { ult: 1, s1: 2, s2: 3, p0: 4, p1: 5 }[e.key];
-    return `<button class="skill ${e.key === 'ult' ? 'ult' : ''}" data-skill="${e.key}" data-lid="${e.lid}" title="${esc(skillDesc(e.sk))}"><span class="t"></span><em>${label}<span class="kbd">${kk}</span></em><b>${esc(e.sk.n)}</b><small>${esc(skillShort(e.sk))}</small></button>`;
-  }
   function renderDeck() {
     const st = S();
-    const L = LEADER[st.main];
-    const r = st.roster[st.main];
-    const cl = CLASSES[L.cls];
-    const list = CW.skillList();
     deckSig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars).join(',')].join('|');
-    const partner = (i) => {
-      const e = list.find((x) => x.key === 'p' + i);
-      if (!e) return `<div class="partner box notch"><div class="who"><b>Open partner slot</b><small>Recruit leaders, then assign them at the War Council</small></div></div>`;
-      const pr = st.roster[e.lid];
-      return `<div class="partner box notch"><img class="px" src="${CW.portraitURL(e.lid)}" alt=""><div class="who"><b>${esc(LEADER[e.lid].name)}</b><small>Partner · <span class="nw">Lv ${pr.lv}</span> ${stars(pr.stars)}</small><span class="hp"><i data-hp="${e.lid}"></i></span></div>${skillBtn(e)}</div>`;
-    };
     deckEls = null;
-    el.deck.innerHTML = `<div class="lead box notch"><img class="px" src="${CW.portraitURL(st.main)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>Commander · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)} · ${esc(L.title)}</small><small>${esc(cl.name)}: ${esc(cl.d)}</small><span class="hp main"><i data-hp="${st.main}"></i></span></div><div class="skills">${list.filter((e) => e.main).map(skillBtn).join('')}</div></div>${partner(0)}${partner(1)}`;
+    const card = (lid, i) => {
+      if (!lid) return '<div class="partner box notch"><div class="who"><b>Open slot</b></div></div>';
+      const L = LEADER[lid];
+      const r = st.roster[lid];
+      const main = i === 0;
+      const cl = CLASSES[L.cls];
+      return `<div class="${main ? 'lead' : 'partner'} box notch" data-card="${lid}" title="Tap for details"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small><span class="hp${main ? ' main' : ''}"><i data-hp="${lid}"></i></span></div><ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul></div>`;
+    };
+    el.deck.innerHTML = card(st.main, 0) + card(st.partners[0], 1) + card(st.partners[1], 2);
   }
   let deckEls = null;
   function updateDeck() {
@@ -801,24 +700,15 @@
     if (!B) return;
     if (!deckEls) {
       deckEls = {
-        skills: Array.from(el.deck.querySelectorAll('[data-skill]')).map((b) => ({ b, k: b.dataset.skill, lid: b.dataset.lid, t: b.querySelector('.t') })),
+        cards: Array.from(el.deck.querySelectorAll('[data-card]')).map((c) => ({ c, lid: c.dataset.card })),
         hps: Array.from(el.deck.querySelectorAll('[data-hp]')).map((i) => ({ i, lid: i.dataset.hp })),
       };
     }
-    for (const s of deckEls.skills) {
-      const cd = B.cd[s.k] || 0;
-      const v = Math.round((cd / (B.cdMax[s.k] || 1)) * 200) / 200;
-      if (s.v !== v) {
-        s.v = v;
-        s.b.style.setProperty('--cd', v);
-      }
-      const down = !CW.heroAlive(s.lid);
-      setText(s.t, down ? 'DOWN' : cd > 0 ? Math.ceil(cd) + 's' : '');
-      const state = down ? 2 : cd <= 0 ? 1 : 0;
-      if (s.state !== state) {
-        s.state = state;
-        s.b.classList.toggle('ready', state === 1);
-        s.b.classList.toggle('down', state === 2);
+    for (const c of deckEls.cards) {
+      const down = !CW.heroAlive(c.lid);
+      if (c.down !== down) {
+        c.down = down;
+        c.c.classList.toggle('down', down);
       }
     }
     for (const h of deckEls.hps) {
@@ -832,14 +722,11 @@
     }
   }
   el.deck.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-skill]');
-    if (!b) return;
-    SFX.ensure();
-    CW.cast(b.dataset.skill);
+    const c = e.target.closest('[data-card]');
+    if (c) openLeader(c.dataset.card);
   });
 
   el.autoPush.addEventListener('change', () => CW.setAuto('push', el.autoPush.checked));
-  el.autoCast.addEventListener('change', () => CW.setAuto('cast', el.autoCast.checked));
   el.challenge.addEventListener('click', () => {
     SFX.ensure();
     CW.challenge();
@@ -847,7 +734,6 @@
   el.council.addEventListener('click', () => openCouncil());
   function syncControls() {
     el.autoPush.checked = S().auto.push;
-    el.autoCast.checked = S().auto.cast;
   }
 
   // ------------------------------------------------------------ panels
@@ -899,7 +785,7 @@
     if (tab === 'leaders') {
       el.panel.querySelectorAll('[data-lvl]').forEach((s) => {
         const r = st.roster[s.dataset.lvl];
-        if (r) setText(s, 'Lv ' + r.lv + ' · train ' + fmt(CW.trainCost(s.dataset.lvl)));
+        if (r) setText(s, 'Lv ' + r.lv);
       });
     }
     if (tab === 'rift') {
@@ -908,110 +794,84 @@
     }
   }
 
+  let reserveOpen = false;
+  el.panel.addEventListener('toggle', (e) => {
+    if (e.target.matches && e.target.matches('details.reserve')) reserveOpen = e.target.open;
+  }, true);
   function renderArmy() {
     const st = S();
     const counts = {};
     st.formation.forEach((id) => (counts[id] = (counts[id] || 0) + 1));
     const order = { inf: 0, rng: 1, hvy: 2 };
-    const units = CW.unlockedUnits().slice().sort((a, b) => (counts[b.id] ? 1 : 0) - (counts[a.id] ? 1 : 0) || b.era - a.era || order[a.role] - order[b.role]);
-    const council = !!st.council;
-    const next = UNITS.filter((u) => u.era === st.eraReached + 1);
-    return `<div class="phead"><h2>Your army · ${st.formation.length} squads</h2><div class="seg" role="group" aria-label="Upgrade amount">${[1, 10, 'max']
+    const units = CW.unlockedUnits().slice().sort((a, b) => b.era - a.era || order[a.role] - order[b.role]);
+    const card = (u) => {
+      const n = counts[u.id] || 0;
+      return `<div class="ucard ${n ? 'on' : ''}"><img class="px" src="${CW.unitURL(u.id)}" alt=""><div class="nm">${esc(u.name)}${n > 1 ? ' x' + n : ''}</div><div class="meta"><span class="tag ${u.role}">${ROLES[u.role].name}</span></div><div class="tr">${esc(TRAITS[u.trait])}</div><div class="row"><span class="st" data-stat="${u.id}"></span><button class="btn" data-act="buy" data-id="${u.id}">+1</button></div></div>`;
+    };
+    const inArmy = units.filter((u) => counts[u.id]);
+    const reserve = units.filter((u) => !counts[u.id]);
+    return `<div class="phead"><h2>Army</h2><div class="seg" role="group" aria-label="Upgrade amount">${[1, 10, 'max']
       .map((m) => `<button data-act="mode" data-m="${m}" aria-pressed="${st.buyMode === m}">${m === 'max' ? 'Max' : 'x' + m}</button>`)
       .join('')}</div></div>
-      <p class="note">${council ? 'The War Council is in session, so you can mix and match your army right now.' : 'Your formation is locked until you defeat the next leader. Then the War Council lets you mix and match. Upgrades work any time and apply instantly.'}</p>
-      ${council ? '<p><button class="btn blue" data-act="council">Open War Council</button></p>' : ''}
+      ${st.council ? '<p><button class="btn blue" data-act="council">Swap units at the War Council</button></p>' : '<p class="note">Swap units after each leader battle.</p>'}
       <div class="formation">${st.formation.map((id) => `<div class="slot" title="${esc(UNIT[id].name)}"><img class="px" src="${CW.unitURL(id)}" alt="${esc(UNIT[id].name)}"><span data-slotlv="${id}">Lv ${CW.unitLevel(id)}</span></div>`).join('')}</div>
-      <h3>Unit types · ${units.length} of ${UNITS.length} unlocked</h3>
-      <div class="ugrid">${units
-        .map((u) => {
-          const n = counts[u.id] || 0;
-          return `<div class="ucard ${n ? 'on' : ''}"><img class="px" src="${CW.unitURL(u.id)}" alt=""><div class="nm">${esc(u.name)}</div><div class="meta"><span class="tag ${u.role}">${ROLES[u.role].name}</span> ${ERAS[u.era].name}${n ? ' · in army x' + n : ' · reserve'}</div><div class="tr">${esc(TRAITS[u.trait])}</div><div class="row"><span class="st" data-stat="${u.id}"></span><button class="btn" data-act="buy" data-id="${u.id}">+1</button></div></div>`;
-        })
-        .join('')}</div>
-      ${next.length ? `<p class="note">Reaching Era ${ERAS[st.eraReached + 1].roman} (${ERAS[st.eraReached + 1].name}) unlocks ${next.map((u) => u.name).join(', ')}, plus one more army slot. New units arrive already trained to 40% of your best unit's level.</p>` : ''}`;
+      <div class="ugrid">${inArmy.map(card).join('')}</div>
+      ${reserve.length ? `<details class="reserve" ${reserveOpen ? 'open' : ''}><summary>Reserve units · ${reserve.length}</summary><div class="ugrid">${reserve.map(card).join('')}</div></details>` : ''}`;
   }
 
   function renderLeaders() {
     const st = S();
-    let h = `<div class="phead"><h2>Leaders · ${Object.keys(st.roster).length} of ${LEADERS.length} recruited</h2></div><p class="note">Defeat a leader to recruit them. Beat them again in a later loop or after a Time Rift to earn stars (+15% skill power and faster recharge each). Tap a leader for their story, skills and training.</p>`;
+    let h = `<div class="phead"><h2>Leaders · ${Object.keys(st.roster).length}/${LEADERS.length}</h2></div>`;
     for (let e = 0; e < 11; e++) {
       const ls = LEADERS.filter((l) => l.era === e);
       if (e === 10) {
-        h += `<div class="erahead"><span>Mysteries · Shattered Time</span><span>beyond the end of time</span></div><p class="note">Once you finish the pathway to the Future, time shatters: every era comes at random, foes grow stronger, and every fourth leader battle is a mystery boss whose face stays hidden until the fight begins.</p><div class="lgrid">${ls
+        h += `<div class="erahead"><span>Mysteries</span></div><div class="lgrid">${ls
           .map((l) => {
             const r = st.roster[l.id];
             return r
-              ? `<button class="lcard ${l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : ''}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small>${esc(l.yrs)}</small><small data-lvl="${l.id}"></small>${stars(r.stars)}</button>`
+              ? `<button class="lcard ${l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : ''}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small data-lvl="${l.id}"></small>${stars(r.stars)}</button>`
               : `<button class="lcard locked" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id, 'mystery')}" alt=""><span class="nm">???</span><small>Shattered Time</small></button>`;
           })
           .join('')}</div>`;
         continue;
       }
-      h += `<div class="erahead"><span>Era ${ERAS[e].roman} · ${ERAS[e].name}</span><span>${fmtYear(ERAS[e].span[0])} to ${fmtYear(ERAS[e].span[1])}</span></div>${e === 9 ? '<p class="note">The end of the pathway. Between the cyborg and the alien you also face four echoes: history\'s most feared commanders, rebuilt as machines and different on every run.</p>' : ''}<div class="lgrid">${ls
+      h += `<div class="erahead"><span>${ERAS[e].name}</span></div><div class="lgrid">${ls
         .map((l) => {
           const r = st.roster[l.id];
           const cls = !r ? 'locked' : l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : '';
           const where = l.starter ? 'Starter' : 'Stage ' + CW.bossStageOf(l.id);
-          return `<button class="lcard ${cls}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small>${esc(l.yrs)}</small><small ${r ? `data-lvl="${l.id}"` : ''}>${r ? '' : esc(where)}</small>${r ? stars(r.stars) : ''}</button>`;
+          return `<button class="lcard ${cls}" data-act="leader" data-id="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="nm">${esc(l.name)}</span><small ${r ? `data-lvl="${l.id}"` : ''}>${r ? '' : esc(where)}</small>${r ? stars(r.stars) : ''}</button>`;
         })
         .join('')}</div>`;
     }
     return h;
   }
 
-  const MODS = [
-    ['atk', 'ATK', 1], ['hp', 'HP', 1], ['spd', 'Attack speed', 1], ['crit', 'Crit chance', 1], ['critDmg', 'Crit damage', 1], ['def', 'Damage reduction', 1],
-    ['gold', 'Gold', 1], ['regen', 'Regen per second', 1], ['enemyAtk', 'Enemy damage cut', 1], ['bossDmg', 'Damage to leaders', 1], ['cdr', 'Commander recharge', 1],
-    ['pcdr', 'Partner recharge', 1], ['skill', 'Commander skill power', 1], ['waveHeal', 'Between-wave healing', 1], ['inf', 'Infantry', 1], ['rng', 'Ranged', 1], ['hvy', 'Heavy', 1],
-    ['bossTime', 'Leader clock', 0], ['slots', 'Extra army slots', 0], ['shardDrop', 'Shards per leader', 0],
-  ];
   function renderDoctrines() {
     const st = S();
     const owned = DOCTRINES.filter((d) => st.doctrines[d.id]);
-    const m = CW.mods();
-    const sums = MODS.filter(([k]) => m[k] && !(k === 'crit' && m[k] === 0.05))
-      .map(([k, n, p]) => `<div class="sum"><span>${n}</span><b>+${p ? Math.round((k === 'crit' ? m[k] - 0.05 : m[k]) * 100) + '%' : m[k] + (k === 'bossTime' ? 's' : '')}</b></div>`)
-      .join('');
-    return `<div class="phead"><h2>Doctrines · ${owned.length} of ${DOCTRINES.length}</h2>${st.council && st.council.picks ? '<button class="btn blue" data-act="council">Choose a doctrine</button>' : ''}</div>
-      <p class="note">Doctrines are random army-management skills. After every leader battle the War Council offers three; pick one. Most can stack. A Time Rift clears them.</p>
-      ${owned.length ? `<div class="dgrid">${owned.map((d) => `<div class="doc r${d.r}"><span class="rar">${RARITY[d.r]} · ${st.doctrines[d.id]}/${d.max}</span><span class="nm">${esc(d.name)}</span><small>${esc(d.d)}</small></div>`).join('')}</div>` : '<p class="note">None yet. Win your first leader battle to hold a War Council.</p>'}
-      <h3>Your bonuses right now</h3><p class="note">From doctrines, your commander's class passive and commander level.</p>
-      <div class="sumgrid">${sums || '<p class="note">No bonuses yet.</p>'}</div>`;
+    return `<div class="phead"><h2>Doctrines · ${owned.length}</h2>${st.council && st.council.picks ? '<button class="btn blue" data-act="council">Pick one</button>' : ''}</div>
+      ${owned.length ? `<div class="dgrid">${owned.map((d) => `<div class="doc r${d.r}"><span class="rar">${RARITY[d.r]} · ${st.doctrines[d.id]}/${d.max}</span><span class="nm">${esc(d.name)}</span><small>${esc(d.d)}</small></div>`).join('')}</div>` : '<p class="note">Win a leader battle to pick your first one.</p>'}`;
   }
 
   function renderRift() {
     const st = S();
     const n = CW.riftShards();
     return `<div class="phead"><h2>Time Rift</h2></div>
-      <div class="two"><div><div class="big">${fmt(st.shards)}</div><p class="note">Chrono Shards. Each adds +5% ATK, HP and gold, for a total of +${fmt(st.shards * 5)}% right now. They are never lost.</p>
-      <p class="note">Deepest stage this run: ${st.runMax}. Best ever: ${st.best}. Rifts opened: ${st.stats.rifts}.</p></div>
-      <div><p class="bio">Tear open a rift to send your campaign back to the Bronze Age, carrying shards forward.</p>
-      <ul class="plain"><li>You keep: shards, every recruited leader and their stars.</li><li>You lose: gold, unit levels, doctrines, leader levels and stage progress.</li></ul>
-      <p class="bio">Reward now: <b data-rift>${fmt(n)}</b> shards</p>
-      <button class="btn blue" data-act="rift" ${n ? '' : 'disabled'}>${n ? 'Open the rift' : 'Reach stage 40 to open'}</button></div></div>
-      <p class="note">The reward grows 4% for every stage you push deeper, so rift when progress stalls for a while.</p>`;
+      <div class="big">${fmt(st.shards)}</div><p class="note">Chrono Shards: +${fmt(st.shards * 5)}% ATK, HP and gold, forever.</p>
+      <p class="bio">Restart from stage 1 for <b data-rift>${fmt(n)}</b> more shards. You keep your leaders.</p>
+      <button class="btn blue" data-act="rift" ${n ? '' : 'disabled'}>${n ? 'Open the rift' : 'Reach stage 40 to open'}</button>`;
   }
 
   function renderOptions() {
     const st = S();
     const s = st.stats;
-    const h = Math.floor(s.time / 3600);
-    const mm = Math.floor((s.time % 3600) / 60);
     return `<div class="phead"><h2>Options</h2></div>
-      <div class="two"><div>
-        <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound effects</label>
-        <p class="note">The game saves on this device every 15 seconds and when you leave. Your army keeps earning while you're away (up to 8 hours).</p>
-        <p><button class="btn ghost" data-act="save">Save now</button> <button class="btn ghost" data-act="export">Export save</button> <button class="btn ghost" data-act="import">Import save</button></p>
-        <div id="saveBox"></div>
-        <h3>Stats</h3>
-        <ul class="plain"><li>Time in command: ${h}h ${mm}m</li><li>Enemy squads destroyed: ${fmt(s.kills)}</li><li>Leader battles won: ${fmt(s.bosses)}</li><li>Gold earned: ${fmt(s.gold)}</li><li>Commander strikes: ${fmt(s.taps)}</li></ul>
-      </div><div>
-        <h3>How it works</h3>
-        <ul class="plain"><li>Your army fights by itself. Tap the battlefield to add commander strikes.</li><li>Each era has a line of leader battles. Every third stage is one.</li><li>Lose a fight and you fall back a stage to regroup; with Auto-advance on, you try again after two stages.</li><li>Keys 1 to 5 cast skills; Space strikes.</li></ul>
-        <h3>Start over</h3><p class="note">Wipes this save completely, shards and leaders included.</p>
-        <button class="btn red" data-act="reset">Reset game</button>
-      </div></div>`;
+      <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound</label>
+      <p><button class="btn ghost" data-act="save">Save now</button> <button class="btn ghost" data-act="export">Export save</button> <button class="btn ghost" data-act="import">Import save</button></p>
+      <div id="saveBox"></div>
+      <p class="note">${Math.floor(s.time / 3600)}h ${Math.floor((s.time % 3600) / 60)}m played · ${fmt(s.bosses)} leaders beaten · ${fmt(s.kills)} squads destroyed</p>
+      <p><button class="btn red" data-act="reset">Reset game</button></p>`;
   }
 
   el.panel.addEventListener('click', (e) => {
@@ -1097,11 +957,6 @@
       if (e.key === 'Escape') closeModal();
       return;
     }
-    const map = { 1: 'ult', 2: 's1', 3: 's2', 4: 'p0', 5: 'p1' };
-    if (map[e.key]) {
-      SFX.ensure();
-      CW.cast(map[e.key]);
-    }
     if (e.key === ' ' && !e.target.closest('button')) {
       e.preventDefault();
       SFX.ensure();
@@ -1114,20 +969,11 @@
     showModal(
       'start',
       `<h2>Chrono Command</h2>
-      <p class="bio">History's commanders, conquerors, dictators and dreamers are scattered across time. Pick your first commander, raise an army and fight your way from the Stone Age to the far future, one leader at a time.</p>
-      <ul class="plain">
-        <li>Your army fights on its own, even while you're away. Tap the battlefield to strike.</li>
-        <li>Every third stage is a leader battle. Win it and that leader joins your roster. ${LEADERS.length} in all: a Stone Age caveman, Caesar, Napoleon, Hitler, Stalin, Gandhi, Martin Luther King Jr., Donald Trump, a cyborg assassin and an alien overlord.</li>
-        <li>Your commander and partners fight on the front line. If one falls, their skills lock until they're revived.</li>
-        <li>Past the Future, time shatters: eras come at random, foes get stronger and mystery bosses appear.</li>
-        <li>After each leader battle the War Council meets: draw a random army doctrine, mix and match troops from the Bronze Age to the future, and pick your commander and two partners.</li>
-        <li>Your commander brings a main skill, two skills and a passive. Each partner adds one skill.</li>
-      </ul>
-      <h3>Choose your first commander</h3>
+      <p class="bio">Lead history's commanders through an endless war across time. Your army fights on its own. Beat each era's leaders to recruit them.</p>
+      <h3>Pick your commander</h3>
       <div class="starters">${starters
-        .map((l) => `<button class="starter" data-start="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><b>${esc(l.name)}</b><small>${esc(CLASSES[l.cls].name)}: ${esc(CLASSES[l.cls].d)}</small><small>Main skill: ${esc(l.skills[0].n)}</small></button>`)
-        .join('')}</div>
-      <p class="note">The other two join you as partners.</p>`
+        .map((l) => `<button class="starter" data-start="${l.id}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><b>${esc(l.name)}</b><small><span class="an">${esc(l.skills[0].n)}</span> ${esc(CW.attrText(l.id, 0))}</small></button>`)
+        .join('')}</div>`
     );
   }
   el.dlg.addEventListener('click', (e) => {
@@ -1143,16 +989,12 @@
       renderDeck();
       renderPanel();
       save();
-      toast('Campaign begins: ' + fmtYear(-10000), 'blue');
       return;
     }
     const act = b.dataset.act;
     if (act === 'close') closeModal();
     else if (act === 'doc') {
-      if (CW.councilPick(b.dataset.id)) {
-        SFX.play('buy');
-        toast(DOC[b.dataset.id].name + ' adopted', 'blue');
-      }
+      if (CW.councilPick(b.dataset.id)) SFX.play('buy');
       renderCouncil();
     } else if (act === 'reroll') {
       CW.councilReroll();
@@ -1239,7 +1081,7 @@
     if (!c) return closeModal();
     const L = LEADER[c.lid];
     const r = st.roster[c.lid];
-    const lead = r.stars ? `${L.name} is beaten again and earns a star (${r.stars}/5).` : `${L.name} is defeated and joins your cause.`;
+    const lead = r.stars ? `${L.name} earns a star (${r.stars}/5).` : `${L.name} joins you.`;
     const docs = c.picks
       ? `<div class="dgrid">${c.offers
           .map((id) => {
@@ -1247,7 +1089,7 @@
             return `<button class="doc r${d.r}" data-act="doc" data-id="${id}"><span class="rar">${RARITY[d.r]} · owned ${st.doctrines[id] || 0}/${d.max}</span><span class="nm">${esc(d.name)}</span><small>${esc(d.d)}</small></button>`;
           })
           .join('')}</div><p><button class="btn ghost" data-act="reroll" ${CW.rerollCost() > st.gold ? 'disabled' : ''}>Redraw · ${fmt(CW.rerollCost())} gold</button></p>`
-      : '<p class="note">Doctrine adopted. Remix your army below, then head back to the front.</p>';
+      : '';
     const cmd = [st.main, st.partners[0], st.partners[1]];
     const cmdLabel = ['Commander', 'Partner 1', 'Partner 2'];
     const cmdRow = cmd
@@ -1255,7 +1097,7 @@
         const sel = picker && picker.type === 'cmd' && picker.w === w;
         if (!id) return `<button class="pick ${sel ? 'sel' : ''}" data-act="pickcmd" data-w="${w}"><span></span><span><em>${cmdLabel[w]}</em><b>Empty</b></span></button>`;
         const l = LEADER[id];
-        const sk = w === 0 ? 'Main: ' + l.skills[0].n : 'Skill: ' + l.skills[1].n;
+        const sk = w === 0 ? l.skills[0].n + ' +2 more' : l.skills[1].n;
         return `<button class="pick ${sel ? 'sel' : ''}" data-act="pickcmd" data-w="${w}"><img class="px" src="${CW.portraitURL(id)}" alt=""><span><em>${cmdLabel[w]}</em><b>${esc(l.name)}</b><small class="hint">${esc(sk)}</small></span></button>`;
       })
       .join('');
@@ -1283,16 +1125,16 @@
         .map((id) => {
           const l = LEADER[id];
           const rr = st.roster[id];
-          return `<button class="pick" data-act="setlead" data-id="${id}" title="${esc(CLASSES[l.cls].name + ': ' + CLASSES[l.cls].d)}"><img class="px por" src="${CW.portraitURL(id)}" alt=""><span><em>${esc(CLASSES[l.cls].name)} · Lv ${rr.lv}</em><b>${esc(l.name)}</b></span></button>`;
+          return `<button class="pick" data-act="setlead" data-id="${id}" title="${esc(l.skills[0].n + ': ' + CW.attrText(id, 0))}"><img class="px por" src="${CW.portraitURL(id)}" alt=""><span><em>${picker.w === 0 ? esc(l.skills[0].n) : esc(l.skills[1].n)}</em><b>${esc(l.name)}</b></span></button>`;
         })
         .join('')}</div>`;
     }
     const cmdChooser = picker && picker.type === 'cmd' ? chooser : '';
     const slotChooser = picker && picker.type === 'slot' ? chooser : '';
     el.dlg.innerHTML = `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(c.lid)}" alt=""><div class="who"><h2>War Council</h2><small>${esc(lead)}</small></div></div>
-      <h3>${c.picks ? 'Draw a doctrine' + (c.picks > 1 ? ' · ' + c.picks + ' picks waiting' : '') : 'Doctrine'}</h3>${docs}
-      <h3>Command · your commander has a main skill and two skills, each partner adds one</h3><div class="cmdrow">${cmdRow}</div>${cmdChooser}
-      <h3>Army · ${st.formation.length} slots · tap a slot to swap its unit</h3><div class="slots">${slots}</div>${slotChooser}
+      ${c.picks ? `<h3>Pick a doctrine${c.picks > 1 ? ' · ' + c.picks + ' left' : ''}</h3>${docs}` : ''}
+      <h3>Leaders</h3><div class="cmdrow">${cmdRow}</div>${cmdChooser}
+      <h3>Army · tap a slot to swap</h3><div class="slots">${slots}</div>${slotChooser}
       <div class="acts"><button class="btn ghost" data-act="autofill">Auto-fill strongest</button>${c.picks ? '<button class="btn ghost" data-act="later">Decide later</button>' : '<button class="btn" data-act="close">Back to battle</button>'}</div>`;
   }
 
@@ -1306,14 +1148,13 @@
       return;
     }
     const role = id === st.main ? 'Your commander' : st.partners.includes(id) ? 'Your partner' : r ? 'In reserve' : l.starter ? 'Starter' : 'Not yet defeated · Stage ' + CW.bossStageOf(id);
-    const labels = ['Main skill', 'Skill 1 · also their partner skill', 'Skill 2'];
+    const labels = ['Signature · as commander', 'As commander or partner', 'As commander'];
     showModal(
       'leader',
       `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:128px;height:128px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === 10 ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
       <p class="bio">${esc(l.bio)}</p>
-      <div class="sk"><em>As commander · ${esc(cl.name)}</em>${esc(cl.d)}</div>
-      <h3>Skills</h3><div class="sklist">${l.skills.map((s, i) => `<div class="sk"><em>${labels[i]} · recharge ${s.cd}s</em><b>${esc(s.n)}</b>: ${esc(skillDesc(s).replace(/ Recharge.*$/, ''))}</div>`).join('')}</div>
-      ${r ? `<p class="note">This leader fights on the front line when assigned. Each level adds +8% skill power and +5% to their own strength, plus +3% army ATK and HP while they command.</p>` : ''}
+      <h3>Attributes · always on</h3><div class="sklist">${[0, 1, 2].map((i) => `<div class="sk"><em>${labels[i]}</em><b>${esc(CW.attr(id, i).name)}</b>: ${esc(CW.attrText(id, i, r ? CW.attrStrength(id, i === 1 && st.main !== id ? 'partner' : 'main') : 1))}</div>`).join('')}<div class="sk"><em>Commander bonus · ${esc(cl.name)}</em>${esc(cl.d)}</div></div>
+      <p class="note">They work while this leader is standing. When you fight them, they power the enemy army instead.</p>
       <div class="acts">${r ? `<button class="btn" data-act="train" data-id="${id}" ${CW.trainCost(id) > st.gold ? 'disabled' : ''}>Train to Lv ${r.lv + 1} · ${fmt(CW.trainCost(id))}</button>` : ''}<button class="btn ghost" data-act="close">Close</button></div>`
     );
   }
@@ -1321,7 +1162,7 @@
   function openRiftConfirm() {
     const n = CW.riftShards();
     if (!n) return;
-    showModal('confirm', `<h2>Open a Time Rift?</h2><p class="bio">You return to the Bronze Age with <b>${fmt(n)}</b> new Chrono Shards (+${fmt(n * 5)}% ATK, HP and gold). Gold, unit levels, doctrines, leader levels and stage progress reset. Leaders and stars stay.</p><div class="acts"><button class="btn ghost" data-act="close">Not yet</button><button class="btn blue" data-act="dorift">Open the rift</button></div>`);
+    showModal('confirm', `<h2>Open a Time Rift?</h2><p class="bio">Back to stage 1 with <b>${fmt(n)}</b> more shards. Gold, upgrades and doctrines reset; your leaders stay.</p><div class="acts"><button class="btn ghost" data-act="close">Not yet</button><button class="btn blue" data-act="dorift">Open the rift</button></div>`);
   }
   function openResetConfirm() {
     showModal('confirm', `<h2>Reset everything?</h2><p class="bio">This deletes your save on this device: shards, leaders, all of it. It can't be undone.</p><div class="acts"><button class="btn ghost" data-act="close">Keep my game</button><button class="btn red" data-act="doreset">Reset game</button></div>`);
@@ -1335,7 +1176,6 @@
   // ------------------------------------------------------------ events
   CW.on('victory', (r) => {
     SFX.play('win');
-    toast(r.res === 'recruit' ? LEADER[r.lid].name + ' joins your cause!' : r.res === 'star' ? short(r.lid) + ' earns a star!' : '+1 Chrono Shard', '');
   });
   CW.on('council', () => {
     if (started && !modalKind) setTimeout(() => {
@@ -1345,11 +1185,11 @@
   CW.on('era', (info) => {
     SFX.play('era');
     const e = ERAS[info.era];
-    toast('Era ' + e.roman + ': ' + e.name + '. New units unlocked', 'blue');
+    toast(e.name + ' era: new units', 'blue');
   });
   CW.on('chaos', () => {
     SFX.play('era');
-    toast('The timeline shatters! Eras now come at random, foes grow stronger, and mystery bosses await', 'red');
+    toast('Time shatters: random eras ahead', 'red');
   });
   CW.on('defeat', (d) => {
     SFX.play('lose');
