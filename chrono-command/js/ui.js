@@ -42,6 +42,8 @@
   }
   const KIND = { barrage: 'Barrage', charge: 'Charge', snipe: 'Snipe', rally: 'Rally', fortify: 'Fortify', heal: 'Heal', revive: 'Revive', stun: 'Stun', terror: 'Terror', inferno: 'Inferno', tribute: 'Tribute', reinforce: 'Reinforce', execute: 'Execute', drain: 'Drain', shield: 'Shield' };
   const nfmt = (n) => Math.floor(n).toLocaleString('en-US');
+  // each kind of special move has its own little pixel icon
+  const kicon = (t, cls) => `<img class="ki${cls ? ' ' + cls : ''}" src="img/kinds/${t}.png" alt="">`;
   const pips = (lid) => '<span class="pips" title="Prestige ' + CW.prestige(lid) + ' of 2">' + [1, 2].map((i) => `<i class="${CW.prestige(lid) >= i ? 'on' : ''}"></i>`).join('') + '</span>';
   // a leader's three specials: the equipped one, the others they've unlocked, and what it takes to unlock the rest
   function specialRows(lid, mine) {
@@ -49,7 +51,7 @@
     const goals = CW.PRESTIGE[lid];
     return CW.specials(lid)
       .map((sp, i) => {
-        const head = `<b>${esc(sp.name)}</b><em>${KIND[sp.t]} · ${sp.cost}% meter</em><span>${esc(CW.specialText(sp))}</span>`;
+        const head = `<b>${kicon(sp.t)}${esc(sp.name)}</b><em>${KIND[sp.t]} · ${sp.cost}% meter</em><span>${esc(CW.specialText(sp))}</span>`;
         if (sp.unlocked) {
           const act = !mine ? '' : sp.equipped ? '<span class="eqd">Equipped</span>' : `<button class="btn ghost sm" data-act="eqsp" data-id="${lid}" data-i="${i}">Equip</button>`;
           return `<li class="${sp.equipped && mine ? 'on' : ''}"><div>${head}</div>${act}</li>`;
@@ -306,7 +308,23 @@
   }
   // which frame of the base-body animation a fighter shows right now
   const ATK_T = 0.42;
+  // a hand-made character plays its own moves at their own speeds: the special, its attack, a hit, walking, idling
+  function customPose(q, B, t, C) {
+    const R = C.rows;
+    const fr = (name, time, loop) => {
+      const r = R[name];
+      const k = Math.floor(time * r[2]);
+      return [name, loop ? k % r[1] : Math.min(r[1] - 1, k)];
+    };
+    if (q._sp !== undefined && q._sp < R.special[1] / R.special[2]) return fr('special', q._sp, false);
+    if (B.phase === 'victory' && q.side === 'a') return fr('jump', t + q.id * 0.3, true);
+    if (q._atk !== undefined && q._atk < R.attack[1] / R.attack[2]) return fr('attack', q._atk, false);
+    if (q.flash > 0.45) return ['hit', 1];
+    if (stepping(B, q)) return fr(q.speed > 26 ? 'run' : 'walk', t + q.id * 0.37, true);
+    return fr('idle', t + q.id * 0.21, true);
+  }
   function pose(q, B, t, kind, who) {
+    if (kind === 'L' && CW.hasCustom(who)) return customPose(q, B, t, CW.CUSTOM[who]);
     if (B.phase === 'victory' && q.side === 'a') return ['cheer', Math.floor(t * 7 + q.id) % 4];
     if (q._atk !== undefined && q._atk < ATK_T) {
       const a = q._aa || (q._aa = CW.attackAnim(kind, who));
@@ -372,7 +390,17 @@
       gg.globalAlpha = 1;
       return;
     } else if (q.kind === 'unit') img = sized(unitImg(q).c, unitScale(q, P.s));
-    else {
+    else if (CW.hasCustom(q.lid)) {
+      const C = CW.CUSTOM[q.lid];
+      const ds = q.isBoss ? 2 : 1;
+      const f = CW.leaderFrame(q.lid, q.side, '', 'ko', C.rows.ko[1] - 1, q.side === 'e');
+      if (!f) return;
+      const v = sized(f, ds);
+      gg.globalAlpha = 0.8;
+      gg.drawImage(v, Math.round(P.x * K - (q.side === 'e' ? C.cx : C.cell[0] - C.cx) * ds), Math.round(P.y * K - C.ground * ds));
+      gg.globalAlpha = 1;
+      return;
+    } else {
       const f = CW.leaderFrame(q.lid, q.side, q.isBoss ? groundOf.info.variant : '', 'idle', 0);
       img = f ? sized(f, q.isBoss ? 2 : 1) : null;
     }
@@ -480,7 +508,14 @@
         }
       } else if (e.k === 'herofall') {
         if (!e.champ) toast(short(e.lid) + ' is down', 'red');
-      } else if (e.k === 'special') showSpecial(e, B);
+      } else if (e.k === 'special') {
+        showSpecial(e, B);
+        const C = CW.CUSTOM[e.lid];
+        if (C && CW.SPECIALS[e.lid][C.special || 0][0] === e.name) {
+          const who = (e.side === 'a' ? B.a : B.e).find((q) => (q.isHero || q.isBoss) && q.lid === e.lid);
+          if (who) who._sp = 0;
+        }
+      }
     }
     B.fx.length = 0;
   }
@@ -492,6 +527,7 @@
   function showSpecial(e, B) {
     const ally = e.side === 'a';
     setText(hud.sbT, e.name);
+    if (hud.sbI._t !== e.t) hud.sbI.src = 'img/kinds/' + (hud.sbI._t = e.t) + '.png';
     setText(hud.sbS, ally ? LEADER[e.lid].name : 'Enemy ' + short(e.lid));
     setClass(hud.sb, 'sbanner on' + (ally ? '' : ' foe'));
     sbT = 1.8;
@@ -536,6 +572,9 @@
     q.flash = Math.max(0, q.flash - dt * 6);
     if (q.lunge > (q._pl || 0) + 0.01) q._atk = 0;
     if (q._atk !== undefined) q._atk += dt;
+    if (q._sp !== undefined) q._sp += dt;
+    if (!q.alive) q._ko = (q._ko || 0) + dt;
+    else if (q._ko) q._ko = 0;
     q.lunge = Math.max(0, q.lunge - dt * 5);
     q._pl = q.lunge;
   }
@@ -697,14 +736,23 @@
     // leaders are drawn pixel for pixel (the enemy leader at double size), never squashed by distance
     const ds = isBoss ? 2 : 1;
     const flip = q.side === 'e';
-    let [an, fi] = q.alive ? pose(q, B, t, 'L', q.lid) : ['idle', 0];
+    const C = CW.hasCustom(q.lid) ? CW.CUSTOM[q.lid] : null;
+    let [an, fi] = q.alive ? pose(q, B, t, 'L', q.lid) : C ? ['ko', Math.min(C.rows.ko[1] - 1, Math.floor((q._ko || 0) * C.rows.ko[2]))] : ['idle', 0];
     const f = CW.leaderFrame(q.lid, q.side, variant, an, fi, flip);
     if (!f) return;
     const img = sized(f, ds);
     const W = img.width / K;
     const H = img.height / K;
-    const x0 = P.x - W / 2;
-    const y0 = P.y - (H * (f.height - 2)) / f.height;
+    const x0 = C ? P.x - ((flip ? C.cx : C.cell[0] - C.cx) / K) * ds : P.x - W / 2;
+    const y0 = C ? P.y - (C.ground / K) * ds : P.y - (H * (f.height - 2)) / f.height;
+    if (!q.alive && C) {
+      // hand-made characters fall with their own KO animation
+      g.globalAlpha = 0.9;
+      blit(img, x0, y0 + 0.5);
+      g.globalAlpha = 1;
+      if (q.side === 'a') text('DOWN', P.x, y0 + ((C.head - 6) / K) * ds, '#ff8a7a', 1, 'c');
+      return;
+    }
     if (!q.alive) {
       if (q.side === 'a') {
         g.globalAlpha = 0.35;
@@ -736,7 +784,7 @@
     }
     if (hidden) text('?', P.x, y + H * 0.3, '#e8d0ff', 4, 'c');
     if (!isBoss) hpBar(q, P.x - 9, P.y + 1.5, 18, q.main ? '#ffd23f' : q.champ ? '#c9a8ff' : '#5ad1ff');
-    if (q.stun > 0) stunStars(P.x, y + 2, t, 7);
+    if (q.stun > 0) stunStars(P.x, C ? y + ((C.head - 2) / K) * ds : y + 2, t, 7);
   }
 
   // ---- projectiles straight from the simulation: arrows and shells arc, bullets and lasers fly flat
@@ -825,7 +873,7 @@
   const hud = {
     label: $('#hudLabel'), sub: $('#hudSub'), tug: $('#hudTug'), a: $('#hudA'), e: $('#hudE'), boss: $('#hudBoss'), bossName: $('#hudBossName'),
     time: $('#hudTime'), bossHp: $('#hudBossHp'), bossT: $('#hudBossT'), banner: $('#banner'), bt: $('#bannerT'), bs: $('#bannerS'),
-    bossSp: $('#hudBossSp'), sb: $('#sbanner'), sbT: $('#sbT'), sbS: $('#sbS'),
+    bossSp: $('#hudBossSp'), sb: $('#sbanner'), sbT: $('#sbT'), sbS: $('#sbS'), sbI: $('#sbI'),
   };
   function setW(node, f) {
     const w = (Math.max(0, Math.min(1, f || 0)) * 100).toFixed(1) + '%';
@@ -1182,17 +1230,17 @@
     if (st.farming) setText(el.challenge, 'Challenge ' + bname);
     setHidden(el.council, !st.council);
     if (st.council) setText(el.council, st.council.picks ? 'War Council (' + st.council.picks + ')' : 'War Council');
-    const sig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars).join(',')].join('|');
+    const sig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars + ':' + CW.equippedIndex(id)).join(',')].join('|');
     if (sig !== deckSig) renderDeck();
   }
 
   function renderDeck() {
     const st = S();
-    deckSig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars).join(',')].join('|');
+    deckSig = [st.main, st.partners.join(','), [st.main].concat(st.partners).map((id) => st.roster[id].lv + ':' + st.roster[id].stars + ':' + CW.equippedIndex(id)).join(',')].join('|');
     deckEls = null;
     el.deck.innerHTML = [st.main, st.partners[0], st.partners[1]]
       .filter(Boolean)
-      .map((lid, i) => `<button class="chip ${i === 0 ? 'main' : ''}" data-card="${lid}" title="${esc(LEADER[lid].name)}: tap for their special"><img class="px" src="${CW.headURL(lid)}" alt=""><span><span class="cn">${esc(short(lid))}</span><span class="hp${i === 0 ? ' main' : ''}"><i data-hp="${lid}"></i></span><span class="spm"><i data-sp="${lid}"></i></span></span></button>`)
+      .map((lid, i) => `<button class="chip ${i === 0 ? 'main' : ''}" data-card="${lid}" title="${esc(LEADER[lid].name)}: tap for their special"><img class="px" src="${CW.headURL(lid)}" alt="">${kicon(CW.special(lid).t, 'cki').replace('class="ki cki"', 'class="cki"')}<span><span class="cn">${esc(short(lid))}</span><span class="hp${i === 0 ? ' main' : ''}"><i data-hp="${lid}"></i></span><span class="spm"><i data-sp="${lid}"></i></span></span></button>`)
       .join('');
     if (!el.sheet.hidden && tab === 'command') renderPanel();
   }
@@ -1282,9 +1330,9 @@
     const others = all.filter((x) => x.unlocked && !x.equipped);
     const locked = all.filter((x) => !x.unlocked);
     el.spop.innerHTML = `<h4><span>${esc(LEADER[lid].name)} ${pips(lid)}</span><span data-spv></span></h4><div class="m"><i data-spm></i></div>
-      <button class="spb" data-use><b>${esc(sp.name)}<span>${KIND[sp.t]} · ${sp.cost}%</span></b><small>${esc(CW.specialText(sp))}</small></button>
-      ${others.map((x) => `<button class="spe" data-eq="${x.i}"><span>Equip <b>${esc(x.name)}</b></span><em>${KIND[x.t]} · ${x.cost}%</em></button>`).join('')}
-      ${locked.length ? (gl && gl.locked ? `<div class="splock"><span>Prestige opens after the main story: finish the Galactic Age. Then <b>${esc(locked[0].name)}</b> unlocks when ${esc(LEADER[lid].name)} meets their goal: ${esc(CW.goalText(gl).charAt(0).toLowerCase() + CW.goalText(gl).slice(1))}.</span></div>` : `<div class="splock">${gl ? `<span>Prestige ${gl.rank} unlocks <b>${esc(locked[0].name)}</b>: ${esc(CW.goalText(gl))}</span><span class="gbar"><i data-gbar="${lid}" style="width:${((100 * gl.have) / gl.n).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(gl.have)} / ${nfmt(gl.n)}</small>` : ''}${gl && gl.done ? `<button class="btn sm" data-pre>Prestige now</button>` : ''}</div>`) : '<p class="splock done">All three specials unlocked</p>'}
+      <button class="spb" data-use><b><i class="kn">${kicon(sp.t)}${esc(sp.name)}</i><span>${KIND[sp.t]} · ${sp.cost}%</span></b><small>${esc(CW.specialText(sp))}</small></button>
+      ${others.map((x) => `<button class="spe" data-eq="${x.i}"><span>${kicon(x.t)}Equip <b>${esc(x.name)}</b></span><em>${KIND[x.t]} · ${x.cost}%</em></button>`).join('')}
+      ${locked.length ? (gl && gl.locked ? `<div class="splock"><span>Prestige opens after the main story: finish the Galactic Age. Then <b>${esc(locked[0].name)}</b> unlocks when ${esc(LEADER[lid].name)} meets their goal: ${esc(CW.goalText(gl).charAt(0).toLowerCase() + CW.goalText(gl).slice(1))}.</span></div>` : `<div class="splock">${gl ? `<span>Prestige ${gl.rank} unlocks ${kicon(locked[0].t)}<b>${esc(locked[0].name)}</b>: ${esc(CW.goalText(gl))}</span><span class="gbar"><i data-gbar="${lid}" style="width:${((100 * gl.have) / gl.n).toFixed(1)}%"></i></span><small class="gnum" data-gnum="${lid}">${nfmt(gl.have)} / ${nfmt(gl.n)}</small>` : ''}${gl && gl.done ? `<button class="btn sm" data-pre>Prestige now</button>` : ''}</div>`) : '<p class="splock done">All three specials unlocked</p>'}
       <button class="more" data-more>Leader details</button>`;
     el.spop.hidden = false;
     if (gCur) {
@@ -1636,7 +1684,7 @@
           const cls = l.id === st.main ? 'main' : st.partners.includes(l.id) ? 'mine' : '';
           const hay = [l.name, l.title, CLASSES[l.cls].name, ERAS[Math.min(l.era, NERA - 1)].name].concat([0, 1, 2].map((i) => CW.attr(l.id, i).name), CW.SPECIALS[l.id].map((x) => x[0])).join(' ').toLowerCase();
           const sub = esc(CLASSES[l.cls].name) + ' · ' + (CW.prefPos(l.id) === 'front' ? 'front' : 'behind');
-          return `<button class="cx ${cls}${gl && gl.done ? ' pre' : ''}" data-act="leader" data-id="${l.id}" data-hay="${esc(hay)}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="cx-b"><b>${esc(l.name)}</b><small>${sub}</small><small class="cx-sp">${esc(sp.name)}</small></span><span class="cx-r">${pips(l.id)}${stars(r.stars)}</span></button>`;
+          return `<button class="cx ${cls}${gl && gl.done ? ' pre' : ''}" data-act="leader" data-id="${l.id}" data-hay="${esc(hay)}"><img class="px" src="${CW.portraitURL(l.id)}" alt=""><span class="cx-b"><b>${esc(l.name)}</b><small>${sub}</small><small class="cx-sp">${kicon(sp.t)}${esc(sp.name)}</small></span><span class="cx-r">${pips(l.id)}${stars(r.stars)}</span></button>`;
         })
         .join('')}${left ? `<div class="cx locked hidden-left" data-hay=""><span class="cx-q">?</span><span class="cx-b"><b>${left} still to find</b><small>${e === NERA ? 'They wait beyond the end of time' : 'Beat this era\'s leader battles'}</small></span></div>` : ''}</div></div>`;
     }
@@ -2686,7 +2734,7 @@
     if (hot && hot.snapshot) hot.snapshot(() => (started ? { save: CW.serialize() } : {}));
   } catch (e) {}
   // the base bodies load first, so every leader and soldier can be dressed before the first frame
-  const start = (d) => CW.bodiesReady.then(() => boot(d));
+  const start = (d) => Promise.all([CW.bodiesReady, CW.customReady]).then(() => boot(d));
   if (hot && hot.ready) hot.ready(start);
   else start((hot && hot.data) || {});
 })();

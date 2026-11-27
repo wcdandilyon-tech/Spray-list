@@ -1442,6 +1442,18 @@
     void: [['spkills', 5000], ['kills', 50000]],
     god: [['wins', 7], ['flawless', 777]],
   };
+  // ---------------------------------------------------------------- hand-made characters
+  // Characters the game's owner has drawn themselves (from their character bibles): their own sprite sheet and
+  // portrait replace the generated look. Sheets face left; every cell stands on the ground line.
+  // rows: move -> [row, frames, fps, loops]. special: which of the leader's specials has its own animation.
+  CW.CUSTOM = {
+    neanderthal: {
+      sheet: 'img/leaders/neanderthal/sheet.png', portrait: 'img/leaders/neanderthal/portrait.png',
+      cell: [112, 96], ground: 84, cx: 64, head: 21, special: 0,
+      rows: { idle: [0, 4, 6, 1], walk: [1, 6, 10, 1], run: [2, 6, 12, 1], jump: [3, 4, 8, 0], hit: [4, 2, 8, 0], ko: [5, 4, 6, 0], attack: [6, 6, 12, 0], special: [7, 8, 12, 0] },
+    },
+  };
+
   // where each class leads best: fighters at the front, thinkers behind the army
   CW.FRONT_CLASSES = ['warrior', 'conqueror', 'revolutionary', 'defender'];
 

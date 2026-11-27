@@ -44,7 +44,9 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   Every leader has **three specials of their own** (411 in all) and equips one at a time; its kind sets the meter it
   needs, from 70% (stuns, tributes) to 100% (barrages, charges, infernos, executions). There are 15 kinds, from barrages,
   charges and snipes on the enemy leader to rallies, fortify, mass heals, revives, stuns, terror, infernos, war tributes,
-  reinforcements, executions, life drain and shields. Tap a leader's chip to fire it or swap to another unlocked one.
+  reinforcements, executions, life drain and shields. Each kind has its own pixel icon (`img/kinds/`), shown on the
+  leader chips, in the special popup, on the Team page, in the Codex and on the banner when a special fires.
+  Tap a leader's chip to fire it or swap to another unlocked one.
   Auto specials fires a charged special after 4 seconds. Enemy leaders have a meter too; once time shatters they may use
   any of their three.
 - **Leader prestige (after the main story).** Leaders start with only their first special. Prestige opens once the main
@@ -84,6 +86,8 @@ version, your stage moves to the matching era and you get a full army of that er
 | `index.html` | Page layout and all styling |
 | `js/data.js` | Eras, unit roles, 56 unit types, traits, the 19 unit attributes, leader classes, all 138 leaders, their three specials each, their prestige goals and the 31 doctrines |
 | `img/nibnub.png` | Nib Nub, the guide (artwork supplied by the game's owner) |
+| `img/kinds/*.png` | The 15 special-kind icons (barrage, charge, snipe, rally, fortify, heal, revive, stun, terror, inferno, tribute, reinforce, execute, drain, shield) |
+| `img/leaders/<id>/` | Hand-made character sprites supplied by the game's owner: `sheet.png` (the animation sheet) and `portrait.png` |
 | `LEADERS.md` | Every leader with their class, best position, attributes, three special moves, prestige goals and what they bring in the ranks |
 | `js/engine.js` | The battle simulator (movement, targeting, projectiles, splash, crowding), special meters and specials, leader prestige and its stats, leader positions, leaders in the ranks, recruiting and army building, economy, progression, War Council, Time Rift and saving. No DOM code, so it runs in Node too |
 | `js/art.js` | Procedural pixel art: unit sprites, era backdrops, the angled battlefield and its projection, the full-screen era scene around it, the bitmap font, plus the Scale2x upscaler, edge lighting, outlines and image caches |
@@ -148,6 +152,18 @@ on coloured rings and the enemy leader fights at double size. Vehicles, animals 
 (banded shading, soft outlines, team-coloured trim): wolves, mammoths and war elephants with their riders, chariots,
 horsemen carrying the era's rider, siege engines, cannons, landships, tanks, planes, helicopters, drones, hoverbikes and
 mechs. Each has moving frames (legs, wheels, tracks or rotors) and a firing frame, and leaves a wreck where it falls.
+
+**Hand-made characters.** A leader can swap the generated figure for a hand-drawn sprite sheet. The Neanderthal Chief
+is the first: his sheet (`img/leaders/neanderthal/sheet.png`, eight rows of 112x96 cells facing left: idle, walk, run,
+jump, hit, knock-out, Club Smash and Cave Bear Ambush) and his portrait come from his character bible. Each one is a
+single entry in `CW.CUSTOM` in `js/data.js`: the sheet and portrait paths, the cell size, the ground line and body centre
+in the cell, the head height, which of their specials gets the special row, and for every row its index, frame count,
+frames per second and whether it loops. The battle picks the row from what the leader is doing: walk or run when moving
+(run when fast), the attack row when striking, the special row when that special fires, the jump row when cheering a
+win, a hit frame when struck, and the knock-out row when they fall (an enemy leader leaves its last knock-out frame on the
+ground). The same sheet is mirrored for your side, drawn at double size as an enemy leader, and the portrait replaces
+the generated one in the chips, Team page and Codex. To add another character, drop a sheet and portrait in
+`img/leaders/<id>/` and add a `CW.CUSTOM` entry for that leader's id.
 
 The battlefield is a tilted top-down view: soldiers further away are drawn smaller and higher up. Sprites are prepared
 at a handful of fixed sizes so they grow in clean pixel steps as they move toward the camera instead of shimmering, and

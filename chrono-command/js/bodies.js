@@ -1315,7 +1315,50 @@
     return u.role === 'inf' && ['spear', 'lance'].includes(w) ? 'thrust' : 'swing';
   };
   CW.usesBody = (uid) => CW.UNIT[uid].sp.k === 'soldier';
-  CW.leaderFrame = (id, side, variant, anim, i, flip) => frame('L', id, side, variant, anim, i, flip === undefined ? side === 'e' : flip);
+  // hand-made characters (CW.CUSTOM): their sheets load alongside the base figure, and their frames are cut straight
+  // from them, mirrored when they face right (the sheets face left)
+  const customImg = {};
+  const customCache = new Map();
+  CW.customReady = typeof document === 'undefined' ? Promise.resolve() : Promise.all(Object.keys(CW.CUSTOM || {}).map((id) => new Promise((res) => {
+    const im = new Image();
+    im.onload = () => {
+      customImg[id] = im;
+      res();
+    };
+    im.onerror = () => res();
+    im.src = CW.CUSTOM[id].sheet;
+  })));
+  CW.hasCustom = (id) => !!customImg[id];
+  const CUSTOM_ANIM = { idle: 'idle', walk: 'walk', run: 'run', cheer: 'jump', jump: 'jump', thrust: 'attack', shoot: 'attack', swing: 'attack', throw: 'attack', attack: 'attack', special: 'special', hit: 'hit', ko: 'ko' };
+  CW.customFrame = function (id, move, i, faceLeft) {
+    const C = CW.CUSTOM[id];
+    const im = customImg[id];
+    if (!C || !im) return null;
+    const r = C.rows[CUSTOM_ANIM[move] || 'idle'] || C.rows.idle;
+    const n = ((i % r[1]) + r[1]) % r[1];
+    const key = id + move + n + (faceLeft ? 'L' : 'R');
+    let c = customCache.get(key);
+    if (c) return c;
+    const [w, h] = C.cell;
+    c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    if (!faceLeft) {
+      g.translate(w, 0);
+      g.scale(-1, 1);
+    }
+    g.drawImage(im, n * w, r[0] * h, w, h, 0, 0, w, h);
+    c._custom = C;
+    customCache.set(key, c);
+    return c;
+  };
+  CW.leaderFrame = (id, side, variant, anim, i, flip) => {
+    const f = flip === undefined ? side === 'e' : flip;
+    if (customImg[id]) return CW.customFrame(id, anim, i, f);
+    return frame('L', id, side, variant, anim, i, f);
+  };
   CW.unitFrame = (uid, side, anim, i, flip) => frame('U', uid, side, '', anim, i, flip === undefined ? side === 'e' : flip);
   CW.bodiesLoaded = () => ready;
 
@@ -1817,6 +1860,7 @@
   const NIB = 'img/nibnub.png';
   CW.portraitURL = function (id, variant) {
     if (id === 'nibnub' && variant !== 'mystery') return NIB;
+    if (CW.CUSTOM[id] && CW.CUSTOM[id].portrait && variant !== 'mystery') return CW.CUSTOM[id].portrait;
     const key = id + '|' + (variant || '');
     if (!urlCache[key]) {
       const c = CW.portrait(id, variant);
@@ -1828,6 +1872,7 @@
   const headCache = {};
   CW.headURL = function (id, variant) {
     if (id === 'nibnub' && variant !== 'mystery') return NIB;
+    if (CW.CUSTOM[id] && CW.CUSTOM[id].portrait && variant !== 'mystery') return CW.CUSTOM[id].portrait;
     const key = id + '|' + (variant || '');
     if (!headCache[key]) {
       const p = CW.portrait(id, variant);
