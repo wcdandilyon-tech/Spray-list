@@ -1061,8 +1061,8 @@
     for (const f of B.zones) {
       if (!f._fl) {
         f._fl = [];
-        for (let x = f.x0 + 4; x < f.x1; x += 9)
-          for (let z = f.z0 + 3; z < f.z1; z += 8) {
+        for (let x = f.x0 + 3; x < f.x1; x += 7)
+          for (let z = f.z0 + 2; z < f.z1; z += 6) {
             const fx = x + (Math.random() - 0.5) * 7;
             const fz = z + (Math.random() - 0.5) * 5;
             f._fl.push({ kind: 'flame', x: fx, z: fz, air: false, s: Math.random(), ph: Math.random() * 6, d: Math.abs(fx - f.ox) / Math.max(1, f.x1 - f.x0), zone: f });
@@ -1076,7 +1076,7 @@
       for (const fl of f._fl) {
         if (fl.d > reach + 0.02) continue;
         const P = proj(fl.x, fl.z);
-        const r = 7 * P.s;
+        const r = 5.5 * P.s;
         const d = CW.disc(r, '#ff7a1a');
         g.drawImage(d, P.x - r, P.y - r * 0.45, r * 2, r * 0.9);
       }
@@ -1097,8 +1097,8 @@
   function drawFlame(fl, t) {
     const P = fl._P;
     const fk = 0.75 + 0.25 * Math.sin(t * 13 + fl.ph) + 0.12 * Math.sin(t * 21 + fl.ph * 2);
-    const h = (6 + 7 * fl.s) * P.s * fk * (0.3 + 0.7 * fl.life) * (1 + 0.6 * fl.front);
-    const w = (3.6 + 2.6 * fl.s) * P.s;
+    const h = (4.5 + 5 * fl.s) * P.s * fk * (0.3 + 0.7 * fl.life) * (1 + 0.6 * fl.front);
+    const w = (2.8 + 2 * fl.s) * P.s;
     const sw = Math.sin(t * 6 + fl.ph) * 0.8 * P.s;
     R(P.x - w / 2, P.y - h * 0.36, w, h * 0.36, FLAME[1]);
     R(P.x - w * 0.38 + sw * 0.4, P.y - h * 0.68, w * 0.76, h * 0.34, FLAME[2]);
