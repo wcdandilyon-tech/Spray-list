@@ -172,16 +172,7 @@ mechs. Each has moving frames (legs, wheels, tracks or rotors) and a firing fram
 from their character bibles: the Neanderthal Chief (`img/leaders/neanderthal/`: idle, walk, run, jump, hit, knock-out,
 Club Smash and Cave Bear Ambush) and Ka the Firekeeper (`img/leaders/firekeeper/`: the same rows with his Coal Hurl
 attack and Wildfire special). Each sheet has eight rows of 112x96 cells facing left, with a round portrait beside it.
-Ka's Wildfire also leaves a wall of fire on the ground (`CW.LINGER` in `js/data.js`): a strip running about 60 field
-units ahead of him, 30 wide, that races out over half a second and burns for 5 seconds. Every foe on foot who touches
-it loses 6% of their health a second (leaders 1%, both growing with his stars and prestige), and those it kills count
-as special kills for his prestige goal. It works the same against you when the enemy Ka lights it. The flames stand
-among the soldiers, sorted by depth, over glowing, scorched ground, and die down at the end.
-The Chief's Cave Bear Ambush sends a spirit cave bear after the charge: icy blue and glowing, it bursts out of him
-and stampedes straight across the field at 150 field units a second along a lane 32 wide, mauling every foe on foot it
-reaches once (15% of their health, leaders 3%, growing with his stars and prestige), knocking them back and stunning
-them, and leaving claw marks in the ground. Its kills count as special kills. The enemy Chief's bear charges your army. Each one is a
-single entry in `CW.CUSTOM` in `js/data.js`: the sheet and portrait paths, the cell size, the ground line and body centre
+Each one is a single entry in `CW.CUSTOM` in `js/data.js`: the sheet and portrait paths, the cell size, the ground line and body centre
 in the cell, the head height, which of their specials gets the special row, and for every row its index, frame count,
 frames per second and whether it loops. The battle picks the row from what the leader is doing: walk or run when moving
 (run when fast), the attack row when striking, the special row when that special fires, the jump row when cheering a
@@ -189,6 +180,17 @@ win, a hit frame when struck, and the knock-out row when they fall (an enemy lea
 ground). The same sheet is mirrored for your side, drawn at double size as an enemy leader, and the portrait replaces
 the generated one in the chips, Team page and Codex. To add another character, drop a sheet and portrait in
 `img/leaders/<id>/` and add a `CW.CUSTOM` entry for that leader's id.
+
+**Specials with their own effect on the field** (`CW.LINGER` in `js/data.js`, on top of what the special's kind does).
+Ka's Wildfire leaves a wall of fire on the ground: a strip running about 60 field
+units ahead of him, 30 wide, that races out over half a second and burns for 5 seconds. Every foe on foot who touches
+it loses 6% of their health a second (leaders 1%, both growing with his stars and prestige), and those it kills count
+as special kills for his prestige goal. It works the same against you when the enemy Ka lights it. The flames stand
+among the soldiers, sorted by depth, over glowing, scorched ground, and die down at the end.
+The Chief's Cave Bear Ambush sends a spirit cave bear after the charge: icy blue and glowing, it bursts out of him
+and stampedes straight across the field at 150 field units a second along a lane 32 wide, mauling every foe on foot it
+reaches once (15% of their health, leaders 3%, growing with his stars and prestige), knocking them back and stunning
+them, and leaving claw marks in the ground. Its kills count as special kills. The enemy Chief's bear charges your army.
 
 Body frames are the base sheet's 48x52 cell with a margin (16 px on each side, 8 on top) so raised swords, long spears
 and rifles, tall hats, crowns and horns are drawn in full; the figure keeps its place in the frame. Vehicles and animals
