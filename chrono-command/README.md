@@ -171,7 +171,12 @@ mechs. Each has moving frames (legs, wheels, tracks or rotors) and a firing fram
 **Hand-made characters.** A leader can swap the generated figure for a hand-drawn sprite sheet. Two have so far, both
 from their character bibles: the Neanderthal Chief (`img/leaders/neanderthal/`: idle, walk, run, jump, hit, knock-out,
 Club Smash and Cave Bear Ambush) and Ka the Firekeeper (`img/leaders/firekeeper/`: the same rows with his Coal Hurl
-attack and Wildfire special). Each sheet has eight rows of 112x96 cells facing left, with a round portrait beside it. Each one is a
+attack and Wildfire special). Each sheet has eight rows of 112x96 cells facing left, with a round portrait beside it.
+Ka's Wildfire also leaves a wall of fire on the ground (`CW.LINGER` in `js/data.js`): a strip running about 100 field
+units ahead of him, 56 wide, that races out over half a second and burns for 5 seconds. Every foe on foot who touches
+it loses 6% of their health a second (leaders 1%, both growing with his stars and prestige), and those it kills count
+as special kills for his prestige goal. It works the same against you when the enemy Ka lights it. The flames stand
+among the soldiers, sorted by depth, over glowing, scorched ground, and die down at the end. Each one is a
 single entry in `CW.CUSTOM` in `js/data.js`: the sheet and portrait paths, the cell size, the ground line and body centre
 in the cell, the head height, which of their specials gets the special row, and for every row its index, frame count,
 frames per second and whether it loops. The battle picks the row from what the leader is doing: walk or run when moving

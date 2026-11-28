@@ -54,7 +54,7 @@ A legendary clan leader of the Ice Age, said to have been the first to carry fir
 - **Ring of Fire** (third attribute): Your army takes 15% less damage
 
 **Special moves**
-- **Wildfire** (inferno, 100% meter; starts unlocked): Every enemy burns away 45% of their health over 6 seconds
+- **Wildfire** (inferno, 100% meter; starts unlocked): Every enemy burns away 45% of their health over 6 seconds. A wall of fire stays on the ground ahead of Ka for 5 seconds: anyone who touches it loses 6% of their health every second (leaders 1%)
 - **Torch Volley** (barrage, 100% meter; prestige 1: defeat 1,200 enemies): Every enemy loses 38% of their health (leaders 8%)
 - **Ember Dance** (rally, 80% meter; prestige 2: defeat 5,000 enemies with specials): +50% army damage and +31% attack speed for 8 seconds
 

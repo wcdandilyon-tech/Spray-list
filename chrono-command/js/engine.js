@@ -900,7 +900,7 @@
     for (const q of foes) eCap += q.cost;
     B = {
       info, phase: 'deploy', pt: 1.2, time: 0, ft: 0, a: allies, e: foes, ents: allies.concat(foes), boss, bossT, bossTMax: bossT,
-      proj: [], fx: [], sa: zeroSide(), se: zeroSide(), medT: 1, aliveA: allies.length, aliveE: foes.length,
+      proj: [], fx: [], zones: [], sa: zeroSide(), se: zeroSide(), medT: 1, aliveA: allies.length, aliveE: foes.length,
       g, aCap: Math.max(1, aCap), eCap: Math.max(1, eCap), buffs: [], bossMeter: boss ? 25 : 0, fullT: {},
       lids: commandIds().concat(CW.champs()),
     };
@@ -1194,7 +1194,7 @@
     const rank = CW.prestige(lid);
     const k = 1.25 * (1 + 0.05 * r.stars) * (1 + 0.2 * rank);
     const eq = CW.equippedIndex(lid);
-    return CW.SPECIALS[lid].map((sp, i) => ({ name: sp[0], t: sp[1], cost: SP_COST[sp[1]], k, i, sig: i === 0, unlocked: i <= rank, equipped: i === eq }));
+    return CW.SPECIALS[lid].map((sp, i) => ({ name: sp[0], t: sp[1], cost: SP_COST[sp[1]], k, i, lid, sig: i === 0, unlocked: i <= rank, equipped: i === eq }));
   };
   CW.equippedIndex = function (lid) {
     const i = (S && S.spEq && S.spEq[lid]) || 0;
@@ -1391,9 +1391,48 @@
         B.buffs.push({ side, t: Math.min(6, 3.2 * k), s: { shield: 1 } });
         break;
     }
+    const lf = lid && CW.LINGER && CW.LINGER[lid + ':' + sp.name];
+    if (lf) lingerFire(side, lid, lf, sp.k || 1);
     B.fx.push({ k: 'special', side, lid, name: sp.name, t: sp.t });
     emit('special', { side, lid, name: sp.name, t: sp.t });
     if (side === 'a' && lid) track('specials', 1, [lid]);
+  }
+  // fire left on the ground: a strip running ahead of the leader who lit it, burning every foe on foot who touches it
+  function lingerFire(side, lid, lf, k) {
+    const src = side === 'a' ? B.a.find((q) => q.isHero && !q.champ && q.lid === lid) : B.boss;
+    const dir = side === 'a' ? 1 : -1;
+    const x = src ? src.x : side === 'a' ? FX * 0.45 : FX * 0.55;
+    const z = src ? src.z : FZ / 2;
+    const xa = x + dir * 6;
+    const xb = x + dir * lf.len;
+    B.zones.push({
+      id: eid++, side, lid, x0: Math.max(-20, Math.min(xa, xb)), x1: Math.min(FX + 20, Math.max(xa, xb)), dir, ox: xa,
+      z0: Math.max(0, z - lf.half), z1: Math.min(FZ, z + lf.half), t: lf.t, T: lf.t, pct: lf.pct * k, lead: lf.lead * k,
+    });
+  }
+  function fireTick(dt) {
+    for (let i = B.zones.length - 1; i >= 0; i--) {
+      const f = B.zones[i];
+      f.t -= dt;
+      if (f.t <= 0) {
+        B.zones.splice(i, 1);
+        continue;
+      }
+      // the wall races out over its first half second
+      const reach = Math.min(1, (f.T - f.t) / 0.5);
+      const xr = f.dir > 0 ? f.x0 + (f.x1 - f.x0) * reach : f.x1 - (f.x1 - f.x0) * reach;
+      for (const q of f.side === 'a' ? B.e : B.a) {
+        if (!q.alive || q.air) continue;
+        if (q.z + q.rad < f.z0 || q.z - q.rad > f.z1) continue;
+        if (f.dir > 0 ? q.x + q.rad < f.x0 || q.x - q.rad > xr : q.x - q.rad > f.x1 || q.x + q.rad < xr) continue;
+        q.hp -= q.maxHp * (big(q) ? f.lead : f.pct) * dt;
+        if (q.hp <= 0) {
+          q.hp = 0;
+          q.alive = false;
+          onDeath(q, null, true);
+        }
+      }
+    }
   }
   // use a leader's equipped special
   CW.useSpecial = function (lid) {
@@ -1423,7 +1462,10 @@
     drain: (k) => `Every enemy loses ${pcS(0.15 * k)} of their health (leaders ${pcS(0.03 * k)}) and your army heals ${pcS(0.25 * k)}`,
     shield: (k) => `Your army can't be hurt for ${(Math.min(6, 3.2 * k)).toFixed(1)} seconds`,
   };
-  CW.specialText = (sp) => STXT[sp.t](sp.k);
+  CW.specialText = (sp) => {
+    const lf = sp.lid && CW.LINGER && CW.LINGER[sp.lid + ':' + sp.name];
+    return STXT[sp.t](sp.k) + (lf ? `. A wall of fire stays on the ground for ${lf.t} seconds: anyone who touches it loses ${pcS(lf.pct * sp.k)} of their health every second (leaders ${pcS(lf.lead * sp.k)})` : '');
+  };
   CW.posText = (lid) =>
     CW.prefPos(lid) === 'front'
       ? 'Excels leading from the front: +20% attribute strength and +50% damage when placed at the front'
@@ -1487,6 +1529,7 @@
     sides();
     const sa = B.sa;
     const se = B.se;
+    if (B.zones && B.zones.length) fireTick(dt);
     buildGrid();
     const aSpd = allySpd();
     const eSpd = enemySpd();

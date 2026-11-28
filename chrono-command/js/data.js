@@ -1460,6 +1460,13 @@
     },
   };
 
+  // specials that leave fire on the ground ('leader:special'): a strip running ahead of the leader that burns whoever
+  // touches it. len and half are field units (how far ahead it runs, how wide it is either side of the leader); t is
+  // seconds; pct and lead are the share of health lost each second by soldiers and by leaders (times the special's power)
+  CW.LINGER = {
+    'firekeeper:Wildfire': { t: 5, len: 110, half: 28, pct: 0.05, lead: 0.01 },
+  };
+
   // where each class leads best: fighters at the front, thinkers behind the army
   CW.FRONT_CLASSES = ['warrior', 'conqueror', 'revolutionary', 'defender'];
 

@@ -1054,6 +1054,61 @@
 
   const order = [];
   const byDepth = (a, b) => (a.air ? 1000 : 0) + a.z - ((b.air ? 1000 : 0) + b.z);
+  // ---- fire left on the ground (Ka's Wildfire): a glowing strip of scorched earth with flames standing on it, sorted
+  // in among the soldiers so the ones in front hide those behind. The wall races out, flickers, and dies down at the end.
+  const FLAME = ['#6a1408', '#c8320e', '#f26a14', '#ffb02a', '#fff2a8'];
+  function fireGround(B, dt, t) {
+    for (const f of B.zones) {
+      if (!f._fl) {
+        f._fl = [];
+        for (let x = f.x0 + 4; x < f.x1; x += 9)
+          for (let z = f.z0 + 3; z < f.z1; z += 8) {
+            const fx = x + (Math.random() - 0.5) * 7;
+            const fz = z + (Math.random() - 0.5) * 5;
+            f._fl.push({ kind: 'flame', x: fx, z: fz, air: false, s: Math.random(), ph: Math.random() * 6, d: Math.abs(fx - f.ox) / Math.max(1, f.x1 - f.x0), zone: f });
+          }
+        for (let i = 0; i < f._fl.length; i += 2) scorch(f._fl[i].x, f._fl[i].z, 5);
+      }
+      const reach = Math.min(1, (f.T - f.t) / 0.5);
+      const life = Math.min(1, f.t / 0.8);
+      // the ground glows under every flame (soft, overlapping pools of light rather than one hard-edged patch)
+      g.globalAlpha = 0.16 * life * (0.85 + 0.15 * Math.sin(t * 9));
+      for (const fl of f._fl) {
+        if (fl.d > reach + 0.02) continue;
+        const P = proj(fl.x, fl.z);
+        const r = 7 * P.s;
+        const d = CW.disc(r, '#ff7a1a');
+        g.drawImage(d, P.x - r, P.y - r * 0.45, r * 2, r * 0.9);
+      }
+      g.globalAlpha = 1;
+      for (const fl of f._fl) {
+        if (fl.d > reach + 0.02) continue;
+        fl._P = proj(fl.x, fl.z);
+        fl.life = life;
+        // the racing front burns tallest while the wall spreads
+        fl.front = reach < 1 ? Math.max(0, 1 - (reach - fl.d) * 6) : 0;
+        order.push(fl);
+        if (Math.random() < dt * 0.7 * life && parts.length < 260)
+          parts.push({ x: fl._P.x + (Math.random() - 0.5) * 3, y: fl._P.y - 9 * fl._P.s, vx: (Math.random() - 0.5) * 12, vy: 0, t: 0, life: 0.7, col: Math.random() < 0.5 ? FLAME[3] : FLAME[4], kind: 'up' });
+      }
+    }
+  }
+  // one tongue of fire: a dark-red base narrowing to an orange tip, with a yellow heart and a white-hot core
+  function drawFlame(fl, t) {
+    const P = fl._P;
+    const fk = 0.75 + 0.25 * Math.sin(t * 13 + fl.ph) + 0.12 * Math.sin(t * 21 + fl.ph * 2);
+    const h = (6 + 7 * fl.s) * P.s * fk * (0.3 + 0.7 * fl.life) * (1 + 0.6 * fl.front);
+    const w = (3.6 + 2.6 * fl.s) * P.s;
+    const sw = Math.sin(t * 6 + fl.ph) * 0.8 * P.s;
+    R(P.x - w / 2, P.y - h * 0.36, w, h * 0.36, FLAME[1]);
+    R(P.x - w * 0.38 + sw * 0.4, P.y - h * 0.68, w * 0.76, h * 0.34, FLAME[2]);
+    R(P.x - w * 0.2 + sw, P.y - h, w * 0.4, h * 0.34, FLAME[2]);
+    R(P.x - w * 0.3 + sw * 0.3, P.y - h * 0.58, w * 0.6, h * 0.5, FLAME[3]);
+    R(P.x - w * 0.12 + sw * 0.6, P.y - h * 0.8, w * 0.24, h * 0.24, FLAME[3]);
+    R(P.x - w * 0.15, P.y - h * 0.34, w * 0.3, h * 0.28, FLAME[4]);
+    R(P.x - w / 2, P.y - 0.5, w, 0.5, FLAME[0]);
+  }
+
   // ---- the camera: it frames the soldiers on the field, so a small battle fills the screen and a huge one zooms out
   // to show the whole field (never further out than that). It eases in and out slowly, and can be switched off.
   function updateCamera(B, dt) {
@@ -1142,6 +1197,7 @@
         order.push(q);
       }
     }
+    if (B.zones && B.zones.length) fireGround(B, dt, t);
     for (const q of order) if (q.alive) drawShadow(q, B);
     if (B.phase === 'deploy' || B.ft < 3) {
       for (const q of order)
@@ -1151,6 +1207,7 @@
     order.sort(byDepth);
     for (const q of order) {
       if (q.kind === 'unit') drawUnit(q, t, B);
+      else if (q.kind === 'flame') drawFlame(q, t);
       else drawHero(q, t, B);
     }
     drawProj(B);
