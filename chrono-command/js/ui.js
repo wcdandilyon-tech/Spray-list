@@ -160,11 +160,19 @@
   // The battle is seen from a raised, angled camera: far rows are smaller and higher up (CW.proj in art.js).
   const cv = $('#cv');
   const screenEl = $('#screen');
-  const K = 2;
-  let VW = FW * K;
-  let VH = FH * K;
-  let OX = 0;
+  const K0 = 2; // canvas pixels per field unit with the camera all the way out (the whole field in view)
+  let K = K0; // ...and right now: the camera zooms in on smaller battles (K = K0 x zoom)
+  let Z = 1;
+  let VW = FW * K0;
+  let VH = FH * K0;
+  let OX = 0; // where the field sits on the canvas with the camera all the way out
   let OY = 0;
+  let CX = 0; // ...and where it sits now
+  let CY = 0;
+  let safeT = 0; // canvas rows under the top bar, and the first row hidden by the dock
+  let safeB = VH;
+  const ZMAX = 1.6; // the camera's closest zoom
+  const cam = { z: 1, x: 192, y: 156, init: false };
   cv.width = VW;
   cv.height = VH;
   const g = cv.getContext('2d', { alpha: false });
@@ -176,11 +184,11 @@
     const dock = document.getElementById('dock');
     const d = dock ? dock.getBoundingClientRect().height : 0;
     const z = r.width < r.height ? 1.18 : 1;
-    const sc = Math.min((r.width * z) / (FW * K), Math.max(0.2, r.height - d * 0.8) / (FH * K));
-    let vw = Math.min(Math.round(r.width / sc), FW * K * 2.4);
+    const sc = Math.min((r.width * z) / (FW * K0), Math.max(0.2, r.height - d * 0.8) / (FH * K0));
+    let vw = Math.min(Math.round(r.width / sc), FW * K0 * 2.4);
     let vh = Math.min(Math.round(r.height / sc), vw * 3);
-    const ox = Math.round((vw - FW * K) / 2);
-    const oy = Math.round((vh - (d / sc) * 0.8 - FH * K) / 2);
+    const ox = Math.round((vw - FW * K0) / 2);
+    const oy = Math.round((vh - (d / sc) * 0.8 - FH * K0) / 2);
     vw -= vw % 2;
     vh -= vh % 2;
     if (vw !== VW || vh !== VH || ox !== OX || oy !== OY) {
@@ -194,6 +202,10 @@
       ambient.length = 0;
     }
     cv.style.imageRendering = r.width * (window.devicePixelRatio || 1) >= cv.width ? 'pixelated' : 'auto';
+    const top = document.querySelector('.top');
+    safeT = top ? Math.max(0, (top.getBoundingClientRect().bottom - r.top) / sc) : 0;
+    safeB = Math.max(safeT + 40, (vh * sc - d) / sc);
+    cam.init = false;
     // banners sit over the battle wherever it is on screen
     screenEl.style.setProperty('--bannerY', (((OY + 150) / VH) * 100).toFixed(1) + '%');
     document.documentElement.style.setProperty('--dockH', Math.round(d) + 'px');
@@ -308,6 +320,8 @@
   }
   // which frame of the base-body animation a fighter shows right now
   const ATK_T = 0.42;
+  // the attack animation plays faster for soldiers trained to strike quickly, so every blow gets its full swing
+  const atkT = (q) => (q.int ? Math.min(ATK_T, q.int * 0.7) : ATK_T);
   // a hand-made character plays its own moves at their own speeds: the special, its attack, a hit, walking, idling
   function customPose(q, B, t, C) {
     const R = C.rows;
@@ -326,10 +340,11 @@
   function pose(q, B, t, kind, who) {
     if (kind === 'L' && CW.hasCustom(who)) return customPose(q, B, t, CW.CUSTOM[who]);
     if (B.phase === 'victory' && q.side === 'a') return ['cheer', Math.floor(t * 7 + q.id) % 4];
-    if (q._atk !== undefined && q._atk < ATK_T) {
+    const at = atkT(q);
+    if (q._atk !== undefined && q._atk < at) {
       const a = q._aa || (q._aa = CW.attackAnim(kind, who));
       const n = CW.ANIM[a].f.length;
-      return [a, Math.min(n - 1, Math.floor((q._atk / ATK_T) * n))];
+      return [a, Math.min(n - 1, Math.floor((q._atk / at) * n))];
     }
     if (stepping(B, q)) return ['walk', Math.floor(t * 11 + q.id * 0.37) % 9];
     return ['idle', 0];
@@ -341,7 +356,7 @@
   function vehFrame(q, B, t) {
     let an = 'idle';
     let i = 0;
-    if (q._atk !== undefined && q._atk < ATK_T * 0.6) an = 'fire';
+    if (q._atk !== undefined && q._atk < atkT(q) * 0.6) an = 'fire';
     else if (stepping(B, q) || q.air) {
       an = 'move';
       i = Math.floor(t * 9 + q.id) % 4;
@@ -376,6 +391,7 @@
   function bakeBody(q) {
     const P = proj(q.x, q.z);
     let img;
+    let plain = false;
     if (q.kind === 'unit' && bodyOf(q)) {
       const f = CW.unitFrame(q.uid, q.side, 'idle', 0, q.face < 0);
       img = f ? sizedBody(f, P.s * BODY_K) : null;
@@ -386,10 +402,13 @@
       // vehicles leave a dark wreck where they stood (fliers crash where they fell)
       const wreck = v._wreck || (v._wreck = CW.tinted(v, '#2a221e'));
       gg.globalAlpha = 0.55;
-      gg.drawImage(wreck, Math.round(P.x * K - v.width / 2), Math.round(P.y * K - v.height + 2));
+      gg.drawImage(wreck, Math.round(P.x * K0 - v.width / 2), Math.round(P.y * K0 - v.height + 2));
       gg.globalAlpha = 1;
       return;
-    } else if (q.kind === 'unit') img = sized(unitImg(q).c, unitScale(q, P.s));
+    } else if (q.kind === 'unit') {
+      img = sized(unitImg(q).c, unitScale(q, P.s));
+      plain = true;
+    }
     else if (CW.hasCustom(q.lid)) {
       const C = CW.CUSTOM[q.lid];
       const ds = q.isBoss ? 2 : 1;
@@ -397,7 +416,7 @@
       if (!f) return;
       const v = sized(f, ds);
       gg.globalAlpha = 0.8;
-      gg.drawImage(v, Math.round(P.x * K - (q.side === 'e' ? C.cx : C.cell[0] - C.cx) * ds), Math.round(P.y * K - C.ground * ds));
+      gg.drawImage(v, Math.round(P.x * K0 - (q.side === 'e' ? C.cx : C.cell[0] - C.cx) * ds), Math.round(P.y * K0 - C.ground * ds));
       gg.globalAlpha = 1;
       return;
     } else {
@@ -407,14 +426,15 @@
     if (!img) return;
     const body = CW.corpse(img);
     gg.globalAlpha = 0.7;
-    gg.drawImage(body, Math.round(P.x * K - body.width / 2), Math.round(P.y * K - body.height * 0.75));
+    // the corpse lies across where the figure stood (frames have side margins, so place it by the figure's centre)
+    gg.drawImage(body, Math.round(P.x * K0 - body.width / 2), Math.round(P.y * K0 - body.height * (plain ? 0.75 : 0.5 + 12 / (CW.bodyFW || 48))));
     gg.globalAlpha = 1;
   }
   function scorch(x, z, r) {
     const P = proj(x, z);
-    const w = r * 2.4 * P.s * K;
+    const w = r * 2.4 * P.s * K0;
     gg.globalAlpha = 0.4;
-    gg.drawImage(CW.shadowImg, Math.round(P.x * K - w / 2), Math.round(P.y * K - w * 0.18), Math.round(w), Math.round(w * 0.36));
+    gg.drawImage(CW.shadowImg, Math.round(P.x * K0 - w / 2), Math.round(P.y * K0 - w * 0.18), Math.round(w), Math.round(w * 0.36));
     gg.globalAlpha = 1;
   }
 
@@ -669,7 +689,7 @@
       const [an, fi] = pose(q, B, t, 'U', q.uid);
       const f = CW.unitFrame(q.uid, q.side, an, fi, q.face < 0);
       if (f) {
-        const img = sizedBody(f, P.s * BODY_K);
+        const img = sizedBody(f, P.s * BODY_K * Z);
         const k = img.width / f.width;
         const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * (q.proj ? -0.6 : 2) * P.s * q.face : 0;
         const x = P.x - (f.width / 2 / K) * k + lx;
@@ -680,15 +700,16 @@
           blit(whiteOf(img), x, y);
           g.globalAlpha = 1;
         }
-        if (q.stun > 0) stunStars(P.x, y + 2, t, 4 * P.s);
-        if (q.burn && (q.id + Math.floor(t * 10)) % 3 === 0) R(P.x - 1 + Math.random() * 2, y + (img.height / K) * 0.4 - Math.random() * 3, 1, 1, '#ff9a3a');
+        const top = y + ((CW.bodyPadT || 0) / K) * k; // where the original cell starts
+        if (q.stun > 0) stunStars(P.x, top + 2, t, 4 * P.s);
+        if (q.burn && (q.id + Math.floor(t * 10)) % 3 === 0) R(P.x - 1 + Math.random() * 2, top + (img.height / K) * 0.35 - Math.random() * 3, 1, 1, '#ff9a3a');
         return;
       }
     }
     if (vehOf(q)) {
       const f = vehFrame(q, B, t);
       if (f) {
-        const img = sizedBody(f, P.s * BODY_K * vehK(q));
+        const img = sizedBody(f, P.s * BODY_K * vehK(q) * Z);
         const k = img.width / f.width;
         const bob = q.air ? -24 * P.s + Math.sin(t * 3 + q.id) * 1.2 : 0;
         const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * (q.proj ? -0.8 : 2.5) * P.s * q.face : 0;
@@ -706,7 +727,7 @@
       }
     }
     const sp = unitImg(q);
-    const img = sized(sp.c, unitScale(q, P.s));
+    const img = sized(sp.c, unitScale(q, P.s) * Z);
     const w = img.width / K;
     const h = img.height / K;
     let bob = 0;
@@ -733,7 +754,7 @@
     const P = q._P;
     const variant = isBoss ? info.variant : '';
     // leaders are drawn pixel for pixel (the enemy leader at double size), never squashed by distance
-    const ds = isBoss ? 2 : 1;
+    const ds = (isBoss ? 2 : 1) * Z;
     const flip = q.side === 'e';
     const C = CW.hasCustom(q.lid) ? CW.CUSTOM[q.lid] : null;
     let [an, fi] = q.alive ? pose(q, B, t, 'L', q.lid) : C ? ['ko', Math.min(C.rows.ko[1] - 1, Math.floor((q._ko || 0) * C.rows.ko[2]))] : ['idle', 0];
@@ -757,11 +778,11 @@
         g.globalAlpha = 0.35;
         blit(CW.tinted(img, '#0a0710'), x0, y0);
         g.globalAlpha = 1;
-        text('DOWN', P.x, y0 - 4, '#ff8a7a', 1, 'c');
+        text('DOWN', P.x, y0 + ((CW.bodyPadT || 0) / K) * ds - 4, '#ff8a7a', 1, 'c');
       }
       return;
     }
-    const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * 2.5 * (q.side === 'a' ? 1 : -1) * ds : 0;
+    const lx = q.lunge > 0 ? Math.sin(Math.min(1, q.lunge) * Math.PI) * 2.5 * (q.side === 'a' ? 1 : -1) * (isBoss ? 2 : 1) : 0;
     const x = x0 + lx;
     const y = y0 + 0.5;
     const hidden = isBoss && info.mystery && B.phase === 'deploy';
@@ -783,7 +804,7 @@
     }
     if (hidden) text('?', P.x, y + H * 0.3, '#e8d0ff', 4, 'c');
     if (!isBoss) hpBar(q, P.x - 9, P.y + 1.5, 18, q.main ? '#ffd23f' : q.champ ? '#c9a8ff' : '#5ad1ff');
-    if (q.stun > 0) stunStars(P.x, C ? y + ((C.head - 2) / K) * ds : y + 2, t, 7);
+    if (q.stun > 0) stunStars(P.x, C ? y + ((C.head - 2) / K) * ds : y + (((CW.bodyPadT || 0) + 2) / K) * ds, t, 7);
   }
 
   // ---- projectiles straight from the simulation: arrows and shells arc, bullets and lasers fly flat
@@ -942,10 +963,10 @@
   }
   function drawAmbient(dt, t, back) {
     if (sceneEra < 0) return;
-    const x0 = -OX / K;
-    const x1 = (VW - OX) / K;
-    const y0 = -OY / K;
-    const y1 = (VH - OY) / K;
+    const x0 = -CX / K;
+    const x1 = (VW - CX) / K;
+    const y0 = -CY / K;
+    const y1 = (VH - CY) / K;
     const w = x1 - x0;
     const h = y1 - y0;
     const kind = ambientKind();
@@ -1033,6 +1054,58 @@
 
   const order = [];
   const byDepth = (a, b) => (a.air ? 1000 : 0) + a.z - ((b.air ? 1000 : 0) + b.z);
+  // ---- the camera: it frames the soldiers on the field, so a small battle fills the screen and a huge one zooms out
+  // to show the whole field (never further out than that). It eases in and out slowly, and can be switched off.
+  function updateCamera(B, dt) {
+    let x0 = 1e9;
+    let x1 = -1e9;
+    let y0 = 1e9;
+    let y1 = -1e9;
+    for (const q of B.ents) {
+      if (!q.alive && !(q.isHero && q.side === 'a')) continue;
+      const P = q._P || proj(q.x, q.z);
+      const h = q.isBoss ? 62 : q.isHero ? 30 : q.air ? 44 * P.s : 24 * P.s;
+      if (P.x - 8 < x0) x0 = P.x - 8;
+      if (P.x + 8 > x1) x1 = P.x + 8;
+      if (P.y - h < y0) y0 = P.y - h;
+      if (P.y + 4 > y1) y1 = P.y + 4;
+    }
+    let zt = 1;
+    let fx = 192;
+    let fy = 156;
+    if (S().auto.zoom !== false && x1 > x0) {
+      // room for the health bars, damage numbers and a little air around the armies
+      const bw = x1 - x0 + 44;
+      const bh = y1 - y0 + 30;
+      // the bigger the armies that took the field, the less close the camera comes (a few dozen soldiers: all the
+      // way; three hundred: a little), even as the fighting thins them out
+      const cap = ZMAX - (ZMAX - 1.2) * Math.min(1, Math.max(0, (B.ents.length - 40) / 260));
+      zt = Math.max(1, Math.min(cap, VW / (bw * K0), (safeB - safeT) / (bh * K0)));
+      fx = (x0 + x1) / 2;
+      fy = (y0 + y1) / 2;
+    }
+    if (!cam.init) {
+      cam.z = zt;
+      cam.x = fx;
+      cam.y = fy;
+      cam.init = true;
+    } else {
+      cam.z += (zt - cam.z) * Math.min(1, dt * 0.9);
+      cam.x += (fx - cam.x) * Math.min(1, dt * 1.4);
+      cam.y += (fy - cam.y) * Math.min(1, dt * 1.4);
+    }
+    Z = Math.round(cam.z * 200) / 200;
+    K = K0 * Z;
+    // put the armies' centre in the middle of the open screen, without ever showing past the edge of the scene
+    let gx = VW / 2 - Z * (OX + K0 * cam.x);
+    let gy = (safeT + safeB) / 2 - Z * (OY + K0 * cam.y);
+    gx = Math.max(VW * (1 - Z), Math.min(0, gx));
+    gy = Math.max(VH * (1 - Z), Math.min(0, gy));
+    CX = Math.round(gx + Z * OX);
+    CY = Math.round(gy + Z * OY);
+  }
+  CW.camera = () => ({ z: Z, x: CX, y: CY, K });
+
   function render(dt, t) {
     const B = CW.battle();
     const st = S();
@@ -1043,11 +1116,12 @@
       sbT -= dt;
       if (sbT <= 0) setClass(hud.sb, 'sbanner');
     }
-    g.setTransform(1, 0, 0, 1, 0, 0);
+    updateCamera(B, dt);
+    g.setTransform(Z, 0, 0, Z, CX - Z * OX, CY - Z * OY);
     g.imageSmoothingEnabled = false;
     g.globalAlpha = 1;
     g.drawImage(ground, 0, 0);
-    g.setTransform(K, 0, 0, K, OX, OY);
+    g.setTransform(K, 0, 0, K, CX, CY);
     drawAmbient(dt, t, true);
     let sx = 0;
     let sy = 0;
@@ -1135,7 +1209,7 @@
       g.fillStyle = flashCol;
       g.fillRect(0, 0, VW, VH);
       g.globalAlpha = 1;
-      g.setTransform(K, 0, 0, K, OX, OY);
+      g.setTransform(K, 0, 0, K, CX, CY);
       flashT -= dt * 3;
     }
   }
@@ -1148,8 +1222,8 @@
     if (now - lastTap < 60) return;
     lastTap = now;
     const r = cv.getBoundingClientRect();
-    const x = (((e.clientX - r.left) / r.width) * VW - OX) / K;
-    const y = (((e.clientY - r.top) / r.height) * VH - OY) / K;
+    const x = (((e.clientX - r.left) / r.width) * VW - CX) / K;
+    const y = (((e.clientY - r.top) / r.height) * VH - CY) / K;
     let dmg;
     if (y > proj(0, 0).y) {
       const w = CW.unproj(x, y);
@@ -1517,7 +1591,7 @@
       el.panel.querySelectorAll('[data-stat]').forEach((s) => {
         const id = s.dataset.stat;
         const u = CW.unitStats(id);
-        setText(s, 'Lv ' + CW.unitLevel(id) + ' · DMG ' + fmt(u.atk) + ' · HP ' + fmt(u.hp));
+        setText(s, 'Lv ' + CW.unitLevel(id) + ' · DMG ' + fmt(u.atk) + (u.aspd >= 0.005 ? ' · SPD +' + Math.round(u.aspd * 100) + '%' : '') + ' · HP ' + fmt(u.hp));
       });
       el.panel.querySelectorAll('[data-champ]').forEach((s) => {
         const c = CW.champStats(s.dataset.champ);
@@ -1728,6 +1802,7 @@
       <div class="sets">
         <label class="tog"><input type="checkbox" data-act="autopush" ${st.auto.push ? 'checked' : ''}><span>Auto-advance<small>Push on to the next stage after each win; off keeps you farming this one</small></span></label>
         <label class="tog"><input type="checkbox" data-act="autospecial" ${st.auto.special !== false ? 'checked' : ''}><span>Auto specials<small>A charged special fires by itself after a few seconds</small></span></label>
+        <label class="tog"><input type="checkbox" data-act="autozoom" ${st.auto.zoom !== false ? 'checked' : ''}><span>Camera zoom<small>The camera moves in close on small battles and pulls back to fit big armies</small></span></label>
         <label class="tog"><input type="checkbox" data-act="sound" ${st.sound ? 'checked' : ''}> Sound</label>
         <label class="tog"><input type="checkbox" data-act="tips" ${st.guide.on !== false ? 'checked' : ''}><span>Nib Nub teaches new things<small>He explains each new thing the first time it happens, and writes it all down in his Guide (his face in the top corner).</small></span></label>
         <label class="tog"><input type="checkbox" data-act="chat" ${st.guide.chat !== false ? 'checked' : ''}><span>Nib Nub chats during battles<small>He reacts when leaders join you, new eras, big specials and more.</small></span></label>
@@ -1858,6 +1933,10 @@
     }
     if (e.target.dataset.act === 'autospecial') {
       CW.setAuto('special', e.target.checked);
+      return;
+    }
+    if (e.target.dataset.act === 'autozoom') {
+      CW.setAuto('zoom', e.target.checked);
       return;
     }
     if (e.target.dataset.act === 'tips') {
@@ -2292,7 +2371,7 @@
     { id: 'bars', sec: 'Basics', t: 'Who is winning?', d: () => ['See the bar at the top? Blue is your army. Red is the enemy.', 'Beat all the red ones to win the stage. Easy peasy!'], target: '.ov-l', when: (st) => st.stage >= 2 },
     { id: 'gold', sec: 'Army', t: 'Shiny gold!', d: () => ['Shiny! Every enemy you beat drops gold.', 'Nib Nub says: spend it! Open Army and tap Recruit to get more soldiers.'], target: '[data-sc="army"]', tab: 'army', when: (st) => (st.stage >= 2 || st.stats.kills >= 12) && st.gold >= cheapestRecruit() },
     { id: 'room', sec: 'Army', t: 'Only so much room', d: () => ['Your army can only fit so many soldiers.', 'Foot soldiers take 1 space, riders take 2 and big machines take 4. Every new era gives you more room.'], target: '.capline', when: () => !el.sheet.hidden && tab === 'army' },
-    { id: 'train', sec: 'Army', t: 'Recruit or train?', d: () => ['Recruit buys one more soldier. Train +1 makes every soldier of that kind stronger.', 'Both are good! And Auto-build always sends your best soldiers into battle.'], target: '.buys', when: (st) => !el.sheet.hidden && tab === 'army' && st.guide.seen.room },
+    { id: 'train', sec: 'Army', t: 'Recruit or train?', d: () => ['Recruit buys one more soldier. Train +1 makes every soldier of that kind stronger, and they attack a little faster too.', 'Both are good! And Auto-build always sends your best soldiers into battle.'], target: '.buys', when: (st) => !el.sheet.hidden && tab === 'army' && st.guide.seen.room },
     { id: 'boss', sec: 'Leaders', t: 'A famous leader!', d: () => ['Ooh, a famous leader from history!', 'Beat them before the timer runs out, and they will join your side. Nib Nub is hiding behind you, just in case.'], target: '#hudBoss', when: () => B_().info.isBoss && !B_().info.mystery },
     { id: 'lose', sec: 'Basics', t: 'Oops! That is okay', d: () => ['Oops! That is okay. Nib Nub loses all the time!', 'Your army steps back to an easier stage to earn more gold. Make it stronger, and it will try again by itself.'], ev: 'defeat' },
     { id: 'council', sec: 'Leaders', t: 'War Council', d: () => ['You won! Welcome to the War Council.', 'Pick one doctrine. It is a bonus for your whole army, and it lasts until your next Time Rift.'], modal: 'council', when: (st) => !!st.council && modalKind === 'council' },

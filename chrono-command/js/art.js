@@ -722,6 +722,612 @@
     const top = [d[0], d[1], d[2]];
     return (infoCache[era] = { night: luma(top) < 0.3, top, haze: [d[4], d[5], d[6]] });
   };
+  // ------------------------------------------------------------ scenery props: trees, rocks, ruins and machines, by era
+  // Each prop is drawn at its final size (k = scene pixels per field unit at its depth) on a grid of pixels, shaded
+  // from the top left like the soldiers, given a dark outline, and cached. The scene places them where soldiers never
+  // walk: a treeline just behind the far edge, groves in the corners beside the battle, low props in the foreground.
+  function Grid(w, h) {
+    this.w = Math.max(1, w);
+    this.h = Math.max(1, h);
+    this.c = new Array(this.w * this.h).fill(null);
+    this.glow = [];
+    this.ax = this.w / 2;
+  }
+  Grid.prototype.set = function (x, y, col) {
+    x = Math.floor(x);
+    y = Math.floor(y);
+    if (x >= 0 && y >= 0 && x < this.w && y < this.h) this.c[y * this.w + x] = col;
+  };
+  Grid.prototype.get = function (x, y) {
+    return x >= 0 && y >= 0 && x < this.w && y < this.h ? this.c[y * this.w + x] : null;
+  };
+  const SZ = (k, v) => Math.max(1, Math.round(k * v));
+  const tone = (pal, l) => pal[l > 0.45 ? 0 : l > -0.1 ? 1 : l > -0.55 ? 2 : 3];
+  // a shaded ball: canopies, boulders, domes, caps
+  function ball(G, cx, cy, rx, ry, pal, rough, rand) {
+    for (let y = Math.floor(cy - ry - 1); y <= Math.ceil(cy + ry + 1); y++)
+      for (let x = Math.floor(cx - rx - 1); x <= Math.ceil(cx + rx + 1); x++) {
+        const dx = (x + 0.5 - cx) / rx;
+        const dy = (y + 0.5 - cy) / ry;
+        let d = dx * dx + dy * dy;
+        if (rough) d += (rand() - 0.5) * rough;
+        if (d > 1) continue;
+        G.set(x, y, tone(pal, -(dx * 0.62 + dy * 0.78) + ((x + y) & 1 ? 0.07 : -0.07)));
+      }
+  }
+  function box(G, x, y, w, h, col) {
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) G.set(x + i, y + j, col);
+  }
+  // an upright shaded post: trunks, poles, pillars (light on the left, shadow on the right)
+  function post(G, cx, y0, y1, w, pal) {
+    const x0 = Math.round(cx - w / 2);
+    for (let y = Math.floor(y0); y < y1; y++)
+      for (let i = 0; i < w; i++) G.set(x0 + i, y, pal[w < 3 ? (i ? 2 : 1) : i / w < 0.3 ? 0 : i / w < 0.7 ? 1 : 2]);
+  }
+  // a thick line from (x0,y0) to (x1,y1)
+  function line(G, x0, y0, x1, y1, w, col) {
+    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 1.5));
+    for (let i = 0; i <= n; i++) {
+      const x = x0 + ((x1 - x0) * i) / n;
+      const y = y0 + ((y1 - y0) * i) / n;
+      const ww = typeof w === 'function' ? w(i / n) : w;
+      for (let a = 0; a < ww; a++) for (let b = 0; b < ww; b++) G.set(x - ww / 2 + a, y - ww / 2 + b, col);
+    }
+  }
+  // a triangle tier (pines, crystals, tents): lighter on the left
+  function tier(G, cx, top, bot, half, pal, jag) {
+    for (let y = Math.floor(top); y < bot; y++) {
+      const hw = (half * (y - top + 1)) / (bot - top);
+      for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++) {
+        const u = (x - (cx - hw)) / Math.max(1, 2 * hw);
+        G.set(x, y, pal[u < 0.3 ? 0 : u < 0.65 ? 1 : 2]);
+      }
+    }
+    if (jag) for (let x = Math.floor(cx - half); x <= cx + half; x += 2) G.set(x, bot, pal[2]);
+  }
+  // snow settles on every upward-facing edge
+  function snowCaps(G, col, depth) {
+    for (let x = 0; x < G.w; x++)
+      for (let y = 0; y < G.h; y++)
+        if (G.c[y * G.w + x] && !G.get(x, y - 1)) for (let d = 0; d < depth; d++) if (G.get(x, y + d)) G.set(x, y + d, d ? '#dfe9ee' : col);
+  }
+  // grid -> canvas, with a dark edge around everything and any glows on top
+  function gridCanvas(G) {
+    const pad = 1 + Math.max(0, ...G.glow.map((o) => Math.ceil(o.r)));
+    const c = canvas(G.w + pad * 2, G.h + pad);
+    const g = c.getContext('2d');
+    for (let y = -1; y <= G.h; y++)
+      for (let x = -1; x <= G.w; x++) {
+        if (G.get(x, y)) continue;
+        let nb = null;
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) nb = nb || G.get(x + dx, y + dy);
+        if (!nb || y === G.h) continue;
+        g.fillStyle = nb.startsWith('#') ? shade(nb, -0.62) : 'rgba(20,14,24,.8)';
+        g.fillRect(x + pad, y + pad, 1, 1);
+      }
+    for (let y = 0; y < G.h; y++)
+      for (let x = 0; x < G.w; x++) {
+        const col = G.c[y * G.w + x];
+        if (!col) continue;
+        g.fillStyle = col;
+        g.fillRect(x + pad, y + pad, 1, 1);
+      }
+    for (const o of G.glow) {
+      for (let r = Math.ceil(o.r); r > 0; r--) {
+        g.fillStyle = o.col;
+        g.globalAlpha = 0.07;
+        g.beginPath();
+        g.arc(o.x + pad, o.y + pad, r, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.globalAlpha = 1;
+    }
+    c.ax = G.ax + pad;
+    c.ay = G.h + pad;
+    return c;
+  }
+
+  const P_BARK = ['#a8784a', '#80563a', '#5a3c26', '#3a2618'];
+  const P_STONE = ['#c8c4bc', '#a09a90', '#78726a', '#544e48'];
+  const P_WOOD = ['#c89a5a', '#a07440', '#7a542e', '#523620'];
+  const P_STEEL = ['#9aa2ac', '#747c88', '#545a64', '#3a3e46'];
+  const P_LEAF = {
+    green: ['#9ae05a', '#62b83e', '#3e8a30', '#265a26'],
+    lush: ['#7ae06a', '#3eb84a', '#24883a', '#16582c'],
+    olive: ['#c4d49a', '#98aa74', '#6e8058', '#4a5a40'],
+    dry: ['#d8d06a', '#aaa448', '#7a7a34', '#525224'],
+    pine: ['#5aa070', '#3a7a56', '#265a42', '#18402e'],
+    cypress: ['#4e8a4a', '#326a38', '#224e2a', '#16361e'],
+    palm: ['#8ad05a', '#5aa83e', '#3a7e30', '#245622'],
+    autumn: ['#f0b040', '#d07a2a', '#a04e22', '#6a3018'],
+  };
+  const PROPS = {
+    tree(k, rand, o) {
+      const G = new Grid(SZ(k, 30), SZ(k, 44));
+      const W = G.w;
+      const H = G.h;
+      const cx = W / 2 + (rand() - 0.5) * 2;
+      const leaf = P_LEAF[o.leaf || 'green'];
+      post(G, cx, H * 0.4, H, Math.max(2, SZ(k, 3.4)), P_BARK);
+      line(G, cx, H * 0.62, cx - W * 0.2, H * 0.46, Math.max(1, SZ(k, 1.4)), P_BARK[2]);
+      line(G, cx, H * 0.58, cx + W * 0.22, H * 0.42, Math.max(1, SZ(k, 1.4)), P_BARK[2]);
+      const lumps = [[-0.2, 0.42, 0.24], [0.22, 0.4, 0.24], [0, 0.3, 0.3], [-0.14, 0.2, 0.22], [0.16, 0.18, 0.2], [0, 0.12, 0.2]];
+      for (const [dx, dy, r] of lumps) ball(G, cx + dx * W, dy * H + (rand() - 0.5) * 2, r * W * (0.9 + rand() * 0.2), r * W * 0.82, leaf, 0.35, rand);
+      if (o.fruit) for (let i = 0; i < 5; i++) {
+        const x = cx + (rand() - 0.5) * W * 0.6;
+        const y = H * (0.1 + rand() * 0.35);
+        if (G.get(x, y)) box(G, x, y, Math.max(1, SZ(k, 1)), Math.max(1, SZ(k, 1)), o.fruit);
+      }
+      if (o.snow) snowCaps(G, '#ffffff', Math.max(1, SZ(k, 1.2)));
+      G.ax = cx;
+      return G;
+    },
+    pine(k, rand, o) {
+      const G = new Grid(SZ(k, 22), SZ(k, 50));
+      const W = G.w;
+      const H = G.h;
+      const cx = W / 2;
+      post(G, cx, H * 0.8, H, Math.max(2, SZ(k, 2.6)), P_BARK);
+      const pal = P_LEAF.pine;
+      for (let i = 3; i >= 0; i--) {
+        const top = H * (0.02 + i * 0.17);
+        tier(G, cx, top, top + H * 0.3, W * (0.2 + i * 0.09), pal, true);
+      }
+      if (o.snow) snowCaps(G, '#ffffff', Math.max(1, SZ(k, 1.6)));
+      return G;
+    },
+    palm(k, rand) {
+      const G = new Grid(SZ(k, 34), SZ(k, 46));
+      const W = G.w;
+      const H = G.h;
+      const lean = (rand() - 0.5) * W * 0.35;
+      const tw = Math.max(2, SZ(k, 2.6));
+      let tx = W / 2;
+      const top = H * 0.24;
+      for (let y = H - 1; y >= top; y--) {
+        const t = (H - 1 - y) / (H - 1 - top);
+        tx = W / 2 + lean * t * t;
+        for (let i = 0; i < tw; i++) G.set(tx - tw / 2 + i, y, (Math.floor(y / Math.max(2, SZ(k, 2.2))) % 2 ? P_BARK[1] : P_BARK[0 + (i ? 1 : 0)]));
+      }
+      const leaf = P_LEAF.palm;
+      for (let f = 0; f < 7; f++) {
+        const a = -Math.PI + (f / 6) * Math.PI + (rand() - 0.5) * 0.3;
+        const L = W * (0.38 + rand() * 0.1);
+        let px = tx;
+        let py = top;
+        for (let s = 0; s <= 1; s += 1 / (L * 1.5)) {
+          const x = tx + Math.cos(a) * L * s;
+          const y = top + Math.sin(a) * L * s * 0.55 + s * s * L * 0.45;
+          line(G, px, py, x, y, s < 0.5 ? Math.max(1, SZ(k, 1.6)) : 1, leaf[s < 0.3 ? 1 : f % 2 ? 2 : 1]);
+          if (((s * L) | 0) % 3 === 0) G.set(x, y + 1, leaf[2]);
+          px = x;
+          py = y;
+        }
+      }
+      ball(G, tx, top + SZ(k, 1.5), SZ(k, 2.2), SZ(k, 1.8), ['#8a6a3a', '#6a4a26', '#4a321a', '#2a1c10'], 0, rand);
+      G.ax = W / 2;
+      return G;
+    },
+    cypress(k, rand) {
+      const G = new Grid(SZ(k, 11), SZ(k, 46));
+      post(G, G.w / 2, G.h * 0.9, G.h, Math.max(2, SZ(k, 1.8)), P_BARK);
+      ball(G, G.w / 2, G.h * 0.46, G.w * 0.46, G.h * 0.46, P_LEAF.cypress, 0.25, rand);
+      return G;
+    },
+    olive(k, rand) {
+      const G = new Grid(SZ(k, 32), SZ(k, 28));
+      const W = G.w;
+      const H = G.h;
+      line(G, W / 2, H, W / 2 - W * 0.08, H * 0.55, Math.max(2, SZ(k, 2.8)), P_BARK[1]);
+      line(G, W / 2 - W * 0.06, H * 0.7, W / 2 + W * 0.14, H * 0.46, Math.max(1, SZ(k, 2)), P_BARK[2]);
+      for (const [dx, dy, r] of [[-0.22, 0.4, 0.2], [0.2, 0.38, 0.22], [0, 0.28, 0.26], [-0.08, 0.18, 0.2], [0.14, 0.2, 0.18]])
+        ball(G, W / 2 + dx * W, dy * H, r * W, r * W * 0.62, P_LEAF.olive, 0.4, rand);
+      return G;
+    },
+    bush(k, rand, o) {
+      const G = new Grid(SZ(k, 20), SZ(k, 12));
+      const leaf = P_LEAF[o.leaf || 'green'];
+      for (const [dx, r] of [[-0.24, 0.24], [0.22, 0.26], [0, 0.34]]) ball(G, G.w / 2 + dx * G.w, G.h - r * G.w * 0.7, r * G.w, r * G.w * 0.7, leaf, 0.35, rand);
+      if (o.flower) for (let i = 0; i < 4; i++) {
+        const x = G.w * (0.2 + rand() * 0.6);
+        const y = G.h * (0.2 + rand() * 0.5);
+        if (G.get(x, y)) G.set(x, y, o.flower);
+      }
+      if (o.snow) snowCaps(G, '#ffffff', Math.max(1, SZ(k, 1.2)));
+      return G;
+    },
+    fern(k, rand) {
+      const G = new Grid(SZ(k, 18), SZ(k, 12));
+      for (let f = 0; f < 7; f++) {
+        const a = -Math.PI * (0.12 + (f / 6) * 0.76);
+        line(G, G.w / 2, G.h, G.w / 2 + Math.cos(a) * G.w * 0.48, G.h + Math.sin(a) * G.h * 0.95, 1, P_LEAF.lush[f % 2 ? 1 : 2]);
+      }
+      return G;
+    },
+    boulder(k, rand, o) {
+      const G = new Grid(SZ(k, 18 + rand() * 10), SZ(k, 11 + rand() * 5));
+      const pal = o.stone || P_STONE;
+      ball(G, G.w / 2, G.h * 0.58, G.w / 2 - 0.5, G.h * 0.58, pal, 0.25, rand);
+      ball(G, G.w * 0.3, G.h * 0.72, G.w * 0.22, G.h * 0.3, pal, 0.25, rand);
+      line(G, G.w * 0.55, G.h * 0.3, G.w * 0.62, G.h * 0.62, 1, pal[3]);
+      if (o.moss) for (let x = 0; x < G.w; x++) for (let y = 0; y < G.h; y++) if (G.get(x, y) && !G.get(x, y - 1) && rand() < 0.7) G.set(x, y, o.moss);
+      if (o.snow) snowCaps(G, '#ffffff', Math.max(1, SZ(k, 1.6)));
+      return G;
+    },
+    column(k, rand) {
+      const G = new Grid(SZ(k, 10), SZ(k, 24 + rand() * 16));
+      const pal = ['#fbf6ea', '#e2d8c2', '#bcb096', '#948870'];
+      const W = G.w;
+      const H = G.h;
+      box(G, 0, H - SZ(k, 2), W, SZ(k, 2), pal[1]);
+      const sw = Math.max(3, Math.round(W * 0.72));
+      const broken = rand() < 0.65;
+      for (let x = 0; x < sw; x++) {
+        const top = broken ? Math.round(H * 0.08 + rand() * H * 0.12) : SZ(k, 2);
+        for (let y = top; y < H - SZ(k, 2); y++) G.set((W - sw) / 2 + x, y, pal[x % 3 === 2 ? 2 : x / sw < 0.35 ? 0 : x / sw < 0.75 ? 1 : 2]);
+      }
+      if (!broken) box(G, 0, 0, W, SZ(k, 2), pal[0]);
+      return G;
+    },
+    obelisk(k, rand) {
+      const G = new Grid(SZ(k, 10), SZ(k, 42));
+      const W = G.w;
+      const H = G.h;
+      const pal = ['#f4dca8', '#dcbc80', '#b08e58', '#806440'];
+      const tip = H * 0.1;
+      for (let y = Math.floor(tip); y < H; y++) {
+        const hw = (W / 2) * (0.62 + 0.38 * ((y - tip) / (H - tip)));
+        for (let x = Math.floor(W / 2 - hw); x < W / 2 + hw; x++) G.set(x, y, pal[x < W / 2 - hw * 0.3 ? 0 : x < W / 2 + hw * 0.4 ? 1 : 2]);
+      }
+      tier(G, W / 2, 0, tip + 1, W * 0.31, ['#fff0a0', '#ffd23f', '#c8901e'], false);
+      for (let y = Math.floor(tip + 4); y < H - 4; y += 3) G.set(W / 2 - 1, y, pal[3]);
+      return G;
+    },
+    runestone(k, rand, o) {
+      const G = new Grid(SZ(k, 13), SZ(k, 22));
+      const W = G.w;
+      const H = G.h;
+      ball(G, W / 2, H * 0.3, W / 2 - 0.5, H * 0.3, P_STONE, 0.1, rand);
+      box(G, 0, Math.floor(H * 0.3), W, Math.ceil(H * 0.7), P_STONE[1]);
+      for (let y = Math.floor(H * 0.3); y < H; y++) G.set(W - 1, y, P_STONE[2]);
+      // a carved serpent band
+      for (let a = 0; a < Math.PI * 2; a += 0.08) G.set(W / 2 + Math.cos(a) * W * 0.3, H * 0.45 + Math.sin(a) * H * 0.28, '#b83a2a');
+      if (o.snow) snowCaps(G, '#ffffff', Math.max(1, SZ(k, 1.4)));
+      return G;
+    },
+    haystack(k, rand) {
+      const G = new Grid(SZ(k, 18), SZ(k, 15));
+      ball(G, G.w / 2, G.h * 0.62, G.w / 2 - 0.5, G.h * 0.62, ['#fff0a0', '#e8c860', '#c49a3a', '#8a6a2a'], 0.3, rand);
+      for (let x = 1; x < G.w; x += 3) for (let y = 2; y < G.h; y += 4) if (G.get(x, y)) G.set(x, y, '#a07a2a');
+      return G;
+    },
+    fence(k, rand) {
+      const G = new Grid(SZ(k, 34), SZ(k, 10));
+      const step = SZ(k, 7);
+      for (let x = 1; x < G.w; x += step) post(G, x, 0, G.h, Math.max(1, SZ(k, 1.4)), P_WOOD);
+      box(G, 0, SZ(k, 2.5), G.w, Math.max(1, SZ(k, 1.2)), P_WOOD[1]);
+      box(G, 0, SZ(k, 6), G.w, Math.max(1, SZ(k, 1.2)), P_WOOD[2]);
+      return G;
+    },
+    tent(k, rand, o) {
+      const G = new Grid(SZ(k, 26), SZ(k, 24));
+      const W = G.w;
+      const H = G.h;
+      const a = o.stripe || '#c8282a';
+      for (let y = SZ(k, 3); y < H; y++) {
+        const hw = (W / 2) * ((y - SZ(k, 3)) / (H - SZ(k, 3)));
+        for (let x = Math.floor(W / 2 - hw); x <= W / 2 + hw; x++) {
+          const band = Math.floor((x - (W / 2 - hw)) / Math.max(2, SZ(k, 3))) % 2;
+          G.set(x, y, band ? (x < W / 2 ? '#f6f0e2' : '#d8d0c0') : x < W / 2 ? a : shade(a, -0.25));
+        }
+      }
+      for (let y = Math.floor(H * 0.55); y < H; y++) for (let x = W / 2 - (y - H * 0.55) * 0.35; x < W / 2 + (y - H * 0.55) * 0.35; x++) G.set(x, y, '#3a2a22');
+      post(G, W / 2, 0, SZ(k, 4), 1, P_WOOD);
+      box(G, W / 2 + 1, 0, SZ(k, 4), SZ(k, 1.6), a);
+      return G;
+    },
+    banner(k, rand, o) {
+      const G = new Grid(SZ(k, 14), SZ(k, 36));
+      post(G, SZ(k, 2), 0, G.h, Math.max(1, SZ(k, 1.2)), P_WOOD);
+      const col = o.stripe || ['#c8282a', '#2a5ac8', '#e8b830', '#2a8a4a'][Math.floor(rand() * 4)];
+      for (let x = SZ(k, 3); x < G.w; x++) {
+        const off = Math.round(Math.sin(x * 0.6) * 1);
+        for (let y = SZ(k, 2) + off; y < SZ(k, 13) + off; y++) G.set(x, y, x < G.w * 0.5 ? col : shade(col, -0.2));
+      }
+      G.ax = SZ(k, 2);
+      return G;
+    },
+    barrel(k, rand, o) {
+      const G = new Grid(SZ(k, 9), SZ(k, 11));
+      const pal = o.drum ? [shade(o.drum, 0.3), o.drum, shade(o.drum, -0.25), shade(o.drum, -0.45)] : P_WOOD;
+      for (let x = 0; x < G.w; x++) for (let y = 0; y < G.h; y++) G.set(x, y, pal[x / G.w < 0.3 ? 0 : x / G.w < 0.7 ? 1 : 2]);
+      box(G, 0, SZ(k, 2), G.w, 1, pal[3]);
+      box(G, 0, G.h - SZ(k, 3), G.w, 1, pal[3]);
+      return G;
+    },
+    crates(k, rand, o) {
+      const G = new Grid(SZ(k, 20), SZ(k, 16));
+      const pal = o.metal ? P_STEEL : P_WOOD;
+      const s = SZ(k, 8);
+      const draw = (x0, y0) => {
+        for (let x = 0; x < s; x++) for (let y = 0; y < s; y++) G.set(x0 + x, y0 + y, x === 0 || y === 0 ? pal[0] : x === s - 1 || y === s - 1 ? pal[2] : pal[1]);
+        line(G, x0, y0, x0 + s - 1, y0 + s - 1, 1, pal[2]);
+        if (o.metal) box(G, x0 + 2, y0 + 2, Math.max(1, s - 4), 1, o.glow || '#2ee6ff');
+      };
+      draw(0, G.h - s);
+      draw(s + 1, G.h - s);
+      draw(Math.round(s / 2), G.h - s * 2);
+      return G;
+    },
+    deadtree(k, rand) {
+      const G = new Grid(SZ(k, 28), SZ(k, 40));
+      const col = ['#8a7a6a', '#6a5a4c', '#4a3e34', '#2e2620'];
+      const br = (x, y, a, len, w, d) => {
+        const x1 = x + Math.cos(a) * len;
+        const y1 = y + Math.sin(a) * len;
+        line(G, x, y, x1, y1, Math.max(1, Math.round(w)), col[d ? 2 : 1]);
+        if (d < 3) {
+          br(x1, y1, a - 0.45 - rand() * 0.3, len * 0.62, w * 0.6, d + 1);
+          br(x1, y1, a + 0.4 + rand() * 0.3, len * 0.58, w * 0.6, d + 1);
+        }
+      };
+      br(G.w / 2, G.h, -Math.PI / 2 + (rand() - 0.5) * 0.2, G.h * 0.42, SZ(k, 3.2), 0);
+      return G;
+    },
+    sandbags(k, rand) {
+      const G = new Grid(SZ(k, 28), SZ(k, 10));
+      const bw = SZ(k, 6);
+      const bh = SZ(k, 3.4);
+      for (let row = 0; row < 3; row++)
+        for (let x = (row % 2) * (bw / 2); x < G.w - bw * 0.5; x += bw)
+          ball(G, x + bw / 2, G.h - bh / 2 - row * (bh - 1), bw / 2, bh / 2, ['#e0cc96', '#c4ac74', '#9a8456', '#6e5e3c'], 0.15, rand);
+      return G;
+    },
+    hedgehog(k, rand) {
+      const G = new Grid(SZ(k, 16), SZ(k, 13));
+      const w = Math.max(1, SZ(k, 1.6));
+      line(G, 1, G.h - 1, G.w - 2, 1, w, P_STEEL[1]);
+      line(G, 1, 1, G.w - 2, G.h - 1, w, P_STEEL[2]);
+      line(G, G.w / 2, 0, G.w / 2, G.h - 1, w, P_STEEL[0]);
+      return G;
+    },
+    wire(k, rand) {
+      const G = new Grid(SZ(k, 34), SZ(k, 9));
+      for (let x = 1; x < G.w; x += SZ(k, 11)) post(G, x, 0, G.h, Math.max(1, SZ(k, 1.2)), P_WOOD);
+      for (let x = 0; x < G.w; x++) G.set(x, G.h * 0.45 + Math.sin(x * 0.9) * G.h * 0.3, '#8a8a8a');
+      return G;
+    },
+    ruinwall(k, rand) {
+      const G = new Grid(SZ(k, 34), SZ(k, 22));
+      const bw = SZ(k, 4);
+      const bh = SZ(k, 2);
+      for (let x = 0; x < G.w; x++) {
+        const top = Math.round(G.h * (0.1 + Math.abs(Math.sin(x * 0.21 + rand())) * 0.5));
+        for (let y = top; y < G.h; y++) {
+          const row = Math.floor(y / bh);
+          const edge = y % bh === 0 || (x + (row % 2) * (bw / 2)) % bw === 0;
+          const win = x > G.w * 0.55 && x < G.w * 0.7 && y > G.h * 0.35 && y < G.h * 0.65;
+          if (!win) G.set(x, y, edge ? P_STONE[2] : x < G.w * 0.4 ? P_STONE[0] : P_STONE[1]);
+        }
+      }
+      return G;
+    },
+    smokestack(k, rand) {
+      const G = new Grid(SZ(k, 22), SZ(k, 54));
+      const pal = ['#c87a5a', '#a05a40', '#7a402e', '#52281e'];
+      const W = G.w;
+      const H = G.h;
+      for (let y = Math.floor(H * 0.3); y < H; y++) {
+        const hw = SZ(k, 3) + ((y - H * 0.3) / (H * 0.7)) * SZ(k, 1.5);
+        for (let x = Math.floor(W / 2 - hw); x < W / 2 + hw; x++) G.set(x, y, (y % SZ(k, 6) === 0 ? pal[3] : pal[x < W / 2 - hw * 0.3 ? 0 : x < W / 2 + hw * 0.4 ? 1 : 2]));
+      }
+      for (let i = 0; i < 4; i++) ball(G, W / 2 + i * W * 0.12, H * 0.24 - i * H * 0.07, SZ(k, 3 + i), SZ(k, 2.5 + i * 0.6), ['#d8d4d0', '#b0aca8', '#8a8682', '#66625e'], 0.3, rand);
+      return G;
+    },
+    barrier(k, rand) {
+      const G = new Grid(SZ(k, 22), SZ(k, 9));
+      for (let y = 0; y < G.h; y++) {
+        const ins = Math.round((1 - y / G.h) * SZ(k, 2.5));
+        for (let x = ins; x < G.w - ins; x++) G.set(x, y, y < 2 ? '#d8d6d0' : x < G.w * 0.3 ? '#c4c2bc' : '#a6a49e');
+      }
+      for (let x = 0; x < G.w; x++) if (Math.floor(x / SZ(k, 2.5)) % 2) G.set(x, G.h - SZ(k, 2), '#e8c030');
+      return G;
+    },
+    mast(k, rand) {
+      const G = new Grid(SZ(k, 14), SZ(k, 56));
+      const W = G.w;
+      const H = G.h;
+      const col = '#9aa2ac';
+      line(G, 1, H - 1, W / 2 - 0.5, 1, 1, col);
+      line(G, W - 2, H - 1, W / 2 + 0.5, 1, 1, '#747c88');
+      for (let y = 4; y < H; y += SZ(k, 5)) {
+        const hw = (W / 2 - 1) * (y / H);
+        line(G, W / 2 - hw, y, W / 2 + hw, y + SZ(k, 5), 1, '#747c88');
+      }
+      G.set(W / 2, 0, '#ff3a3a');
+      G.glow.push({ x: W / 2, y: 0, r: SZ(k, 2.5), col: '#ff3a3a' });
+      return G;
+    },
+    lamp(k, rand, o) {
+      const G = new Grid(SZ(k, 12), SZ(k, 40));
+      const col = o.glow || (rand() < 0.5 ? '#2ee6ff' : '#ff3cac');
+      post(G, SZ(k, 3), SZ(k, 3), G.h, Math.max(2, SZ(k, 1.8)), ['#4a4a6a', '#34344e', '#22223a', '#14142a']);
+      box(G, SZ(k, 3), SZ(k, 2), SZ(k, 7), Math.max(1, SZ(k, 1.4)), '#34344e');
+      box(G, SZ(k, 7), SZ(k, 3), SZ(k, 4), Math.max(1, SZ(k, 1.4)), col);
+      G.glow.push({ x: SZ(k, 9), y: SZ(k, 4), r: SZ(k, 5), col });
+      G.ax = SZ(k, 3);
+      return G;
+    },
+    holo(k, rand, o) {
+      const G = new Grid(SZ(k, 12), SZ(k, 34));
+      const col = o.glow || (rand() < 0.5 ? '#2ee6ff' : '#ff3cac');
+      post(G, G.w / 2, 0, G.h, G.w - 2, ['#3a3a5a', '#2a2a46', '#1c1c34', '#101024']);
+      for (let y = SZ(k, 3); y < G.h - 2; y += SZ(k, 6)) box(G, 2, y, G.w - 4, Math.max(1, SZ(k, 1)), col);
+      G.glow.push({ x: G.w / 2, y: G.h * 0.4, r: SZ(k, 6), col });
+      return G;
+    },
+    dish(k, rand) {
+      const G = new Grid(SZ(k, 26), SZ(k, 28));
+      const W = G.w;
+      const H = G.h;
+      post(G, W / 2, H * 0.55, H, Math.max(2, SZ(k, 2.4)), P_STEEL);
+      box(G, W / 2 - SZ(k, 5), H - SZ(k, 2), SZ(k, 10), SZ(k, 2), P_STEEL[2]);
+      for (let a = -Math.PI * 0.95; a <= -Math.PI * 0.05; a += 0.02)
+        for (let r = 0; r < W * 0.46; r += 0.5) {
+          const x = W / 2 + Math.cos(a) * r - r * 0.15;
+          const y = H * 0.42 + Math.sin(a) * r * 0.55 + r * 0.25;
+          G.set(x, y, r > W * 0.42 ? '#8a929c' : a < -Math.PI * 0.6 ? '#f0f2f6' : '#c8ced6');
+        }
+      line(G, W / 2, H * 0.4, W / 2 + W * 0.1, H * 0.12, 1, P_STEEL[2]);
+      G.set(W / 2 + W * 0.1, H * 0.12, '#ff3a3a');
+      G.glow.push({ x: W / 2 + W * 0.1, y: H * 0.12, r: SZ(k, 2), col: '#ff3a3a' });
+      return G;
+    },
+    dome(k, rand) {
+      const G = new Grid(SZ(k, 32), SZ(k, 17));
+      const W = G.w;
+      const H = G.h;
+      ball(G, W / 2, H - 2, W / 2 - 1, H - 2, ['#e8fcff', '#9adcf0', '#5aa8c8', '#3a7a9a'], 0, rand);
+      for (let x = 0; x < W; x++) for (let y = H - SZ(k, 2.5); y < H; y++) G.set(x, y, x < W * 0.3 ? '#c8ccd4' : '#9aa0aa');
+      for (let y = 2; y < H - 3; y += SZ(k, 4)) for (let x = 0; x < W; x++) if (G.get(x, y) && G.get(x, y).startsWith('#9a') === false) G.set(x, y, '#5aa8c8');
+      return G;
+    },
+    crystal(k, rand, o) {
+      const G = new Grid(SZ(k, 18), SZ(k, 36));
+      const cols = o.cool ? [['#e8ffff', '#8ae8ff', '#3aa8d0'], ['#f4e0ff', '#c88aff', '#8a4ad0']] : [['#e8ffff', '#8ae8ff', '#3aa8d0']];
+      const spires = [[0.5, 0, 0.22], [0.25, 0.3, 0.16], [0.76, 0.22, 0.15], [0.38, 0.5, 0.12]];
+      for (const [fx, fy, hw] of spires) {
+        const pal = cols[Math.floor(rand() * cols.length)];
+        tier(G, G.w * fx, G.h * fy, G.h, G.w * hw, pal, false);
+      }
+      G.glow.push({ x: G.w / 2, y: G.h * 0.4, r: SZ(k, 6), col: '#8ae8ff' });
+      return G;
+    },
+    shroom(k, rand) {
+      const G = new Grid(SZ(k, 28), SZ(k, 36));
+      const W = G.w;
+      const H = G.h;
+      const lean = (rand() - 0.5) * W * 0.2;
+      const sw = Math.max(2, SZ(k, 3));
+      for (let y = Math.floor(H * 0.3); y < H; y++) {
+        const t = (H - y) / (H * 0.7);
+        const x = W / 2 + lean * t * t;
+        for (let i = 0; i < sw; i++) G.set(x - sw / 2 + i, y, i ? '#c8c0e0' : '#f0e8ff');
+      }
+      const cap = rand() < 0.5 ? ['#ff9ad8', '#e040a8', '#a02078', '#601048'] : ['#9affe8', '#3ad8c0', '#1a9a8a', '#0a5a52'];
+      ball(G, W / 2 + lean, H * 0.24, W * 0.46, H * 0.2, cap, 0.15, rand);
+      for (let x = 0; x < W; x++) for (let y = Math.floor(H * 0.32); y < H * 0.46; y++) if (G.get(x, y) && G.get(x, y) !== '#f0e8ff' && G.get(x, y) !== '#c8c0e0') G.set(x, y, cap[3]);
+      for (let i = 0; i < 6; i++) {
+        const x = W / 2 + lean + (rand() - 0.5) * W * 0.7;
+        const y = H * (0.12 + rand() * 0.16);
+        if (G.get(x, y)) box(G, x, y, Math.max(1, SZ(k, 1.5)), Math.max(1, SZ(k, 1.2)), '#fff6ff');
+      }
+      G.glow.push({ x: W / 2 + lean, y: H * 0.36, r: SZ(k, 7), col: cap[1] });
+      return G;
+    },
+  };
+  // which props grow in each era: [type, weight, options]. back = the treeline behind the battle, side = the
+  // corners beside it, low = things short enough to stand in the foreground in front of the soldiers
+  const ERA_PROPS = [
+    { back: [['tree', 3, { leaf: 'lush' }], ['pine', 1], ['bush', 1, { leaf: 'lush' }]], side: [['tree', 3, { leaf: 'lush' }], ['boulder', 2, { moss: '#5a8a3a' }], ['fern', 2], ['bush', 1, { leaf: 'lush', flower: '#ff7a9a' }]], low: [['bush', 2, { leaf: 'lush', flower: '#ffd84a' }], ['fern', 2], ['boulder', 1, { moss: '#5a8a3a' }]] },
+    { back: [['palm', 4], ['bush', 1, { leaf: 'dry' }], ['obelisk', 1]], side: [['palm', 3], ['boulder', 2, { stone: ['#f0d8a8', '#d0b07a', '#a8885a', '#7a6040'] }], ['obelisk', 1], ['bush', 1, { leaf: 'dry' }]], low: [['boulder', 2, { stone: ['#f0d8a8', '#d0b07a', '#a8885a', '#7a6040'] }], ['bush', 1, { leaf: 'dry' }]] },
+    { back: [['cypress', 3], ['olive', 2]], side: [['column', 3], ['cypress', 2], ['olive', 2], ['boulder', 1]], low: [['bush', 2, { flower: '#ffffff' }], ['boulder', 1]] },
+    { back: [['pine', 4, { snow: true }], ['boulder', 1, { snow: true }]], side: [['pine', 3, { snow: true }], ['boulder', 2, { snow: true }], ['runestone', 1, { snow: true }]], low: [['boulder', 2, { snow: true }], ['bush', 1, { leaf: 'pine', snow: true }]] },
+    { back: [['tree', 3], ['pine', 2]], side: [['tree', 2], ['tent', 2, { stripe: '#c8282a' }], ['banner', 1], ['haystack', 1], ['fence', 1]], low: [['fence', 2], ['haystack', 1], ['bush', 2, { flower: '#ff7a9a' }]] },
+    { back: [['tree', 3, { leaf: 'autumn' }], ['tree', 2], ['pine', 1]], side: [['tree', 2, { leaf: 'autumn' }], ['tent', 1, { stripe: '#2a5ac8' }], ['barrel', 1], ['haystack', 1], ['fence', 1]], low: [['fence', 2], ['barrel', 1], ['bush', 2]] },
+    { back: [['tree', 4], ['pine', 1]], side: [['tree', 2], ['fence', 2], ['barrel', 1], ['haystack', 1], ['tent', 1, { stripe: '#2a5ac8' }]], low: [['fence', 2], ['barrel', 1], ['bush', 2, { flower: '#ffffff' }]] },
+    { back: [['deadtree', 3], ['smokestack', 1], ['tree', 1, { leaf: 'dry' }]], side: [['deadtree', 2], ['sandbags', 2], ['wire', 1], ['crates', 1]], low: [['sandbags', 2], ['wire', 2]] },
+    { back: [['deadtree', 3], ['ruinwall', 1]], side: [['hedgehog', 2], ['sandbags', 2], ['deadtree', 2], ['ruinwall', 1]], low: [['hedgehog', 2], ['sandbags', 2], ['wire', 1]] },
+    { back: [['pine', 4, { snow: true }], ['mast', 1]], side: [['pine', 2, { snow: true }], ['barrier', 2], ['mast', 1], ['crates', 1, { metal: true, glow: '#e8c030' }]], low: [['barrier', 2], ['crates', 1, { metal: true, glow: '#e8c030' }]] },
+    { back: [['mast', 1], ['tree', 2, { leaf: 'dry' }], ['palm', 1]], side: [['barrier', 2], ['crates', 2, { metal: true, glow: '#e8c030' }], ['barrel', 1, { drum: '#3a6aa8' }], ['mast', 1]], low: [['barrier', 2], ['crates', 1, { metal: true, glow: '#e8c030' }], ['barrel', 1, { drum: '#c8482a' }]] },
+    { back: [['lamp', 2], ['holo', 2]], side: [['lamp', 2], ['holo', 2], ['crates', 1, { metal: true }]], low: [['crates', 2, { metal: true }]] },
+    { back: [['dish', 1], ['dome', 1], ['mast', 1], ['boulder', 1]], side: [['dish', 2], ['dome', 1], ['boulder', 2], ['crates', 1, { metal: true }]], low: [['boulder', 2], ['crates', 1, { metal: true }]] },
+    { back: [['crystal', 2, { cool: true }], ['shroom', 2]], side: [['crystal', 2, { cool: true }], ['shroom', 2], ['boulder', 1, { stone: ['#8a8ab0', '#6a6a90', '#4a4a70', '#30304e'] }]], low: [['crystal', 1, { cool: true }], ['boulder', 2, { stone: ['#8a8ab0', '#6a6a90', '#4a4a70', '#30304e'] }]] },
+  ];
+  CW.ERA_PROPS = ERA_PROPS;
+  const propCache = new Map();
+  function propCanvas(type, opts, k, variant, era) {
+    const kk = Math.max(0.5, Math.round(k * 4) / 4);
+    const key = type + '|' + JSON.stringify(opts || {}) + '|' + kk + '|' + variant;
+    let c = propCache.get(key);
+    if (!c) {
+      c = gridCanvas(PROPS[type](kk, rnd(variant * 7919 + era * 31 + kk * 97 + 1), opts || {}));
+      propCache.set(key, c);
+    }
+    return c;
+  }
+  CW.propCanvas = propCanvas;
+  // the props of one scene: what stands where (field units), back to front
+  function sceneProps(era, VW, OX, zMax) {
+    const P = ERA_PROPS[era] || ERA_PROPS[0];
+    const rand = rnd(era * 389 + 11);
+    const pick = (list) => {
+      let tot = 0;
+      for (const e of list) tot += e[1];
+      let v = rand() * tot;
+      for (const e of list) if ((v -= e[1]) <= 0) return e;
+      return list[0];
+    };
+    // the field x at each screen edge for a given depth
+    const edge = (z, sx) => {
+      const s = 0.6 + 0.45 * (z / 120);
+      return 180 + (sx / 2 - 192) / s;
+    };
+    const items = [];
+    // the treeline just behind the far edge
+    const bl = edge(-6, -OX) - 30;
+    const br = edge(-6, VW - OX) + 30;
+    for (let x = bl; x < br; x += 14 + rand() * 22) {
+      if (rand() < 0.22) continue;
+      const e = pick(P.back);
+      items.push({ e, x: x + rand() * 6, z: -2 - rand() * 10, sc: 0.6 + rand() * 0.25 });
+    }
+    // groves in the corners beside the battle (soldiers stay between x -20 and 380)
+    for (let z = 0; z < zMax; z += 7 + rand() * 9) {
+      const L = edge(z, -OX) - 20;
+      const R = edge(z, VW - OX) + 20;
+      for (const [a, b] of [[L, -44 - z * 0.15], [404 + z * 0.15, R]]) {
+        const span = b - a;
+        if (span < 6) continue;
+        const n = Math.max(1, Math.round(span / 70));
+        for (let i = 0; i < n; i++) if (rand() < 0.75) items.push({ e: pick(P.side), x: a + rand() * span, z: z + rand() * 6, sc: 0.8 + rand() * 0.35 });
+      }
+    }
+    // the near ground in front of the battle: only low props in front of the soldiers, anything off to the sides
+    if (zMax > 126) for (let z = 126; z < zMax; z += 8 + rand() * 10) {
+      const L = edge(z, -OX) - 20;
+      const R = edge(z, VW - OX) + 20;
+      const n = Math.max(1, Math.round((R - L) / 90));
+      for (let i = 0; i < n; i++) {
+        if (rand() < 0.35) continue;
+        const x = L + rand() * (R - L);
+        const lane = x > -60 && x < 420;
+        items.push({ e: pick(lane ? P.low : P.side), x, z, sc: lane ? 0.75 + rand() * 0.3 : 0.9 + rand() * 0.3, low: lane });
+      }
+    }
+    items.sort((a, b) => a.z - b.z);
+    return items;
+  }
+  CW.sceneProps = sceneProps;
+  // draw the props: g is translated to the field's origin; projU gives field-unit positions
+  function drawProps(g, era, VW, OX, zMax) {
+    const fieldBottom = 416; // the near edge of the battle, in scene pixels from the field's top
+    for (const it of sceneProps(era, VW, OX, zMax)) {
+      const p = projU(it.x, it.z);
+      const near = it.z > 120 ? 1 + (it.z - 120) / 110 : 1;
+      const k = p.s * 2 * it.sc * near;
+      const c = propCanvas(it.e[0], it.e[2], k, Math.floor(Math.abs(it.x * 13 + it.z * 7)) % 4, era);
+      const X = Math.round(p.x * 2);
+      const Y = Math.round(p.y * 2);
+      // props standing in front of the battle must not reach up over the soldiers at its near edge
+      if (it.low && Y - c.ay < fieldBottom + 4) continue;
+      g.fillStyle = 'rgba(0,0,0,.22)';
+      const sw = Math.round(c.width * 0.36);
+      g.fillRect(X - sw, Y - 1, sw * 2, Math.max(2, Math.round(k * 1.4)));
+      g.drawImage(c, Math.round(X - c.ax), Math.round(Y - c.ay));
+    }
+  }
+
   CW.scene = function (era, VW, VH, OX, OY) {
     const key = [era, VW, VH, OX, OY].join(',');
     if (sceneCache.has(key)) return sceneCache.get(key);
@@ -850,6 +1456,7 @@
       const k = p.s * 2 * (inField ? 1 : 1.2 + Math.max(0, z - 120) / 70);
       decor(g, kind, X, Y, k, ga, gb, rand, inField);
     }
+    drawProps(g, era, VW, OX, zMax);
     g.restore();
     vivid(g, VW, VH, 1.22);
     // gentle darkening towards the far edges, in steps

@@ -13,7 +13,11 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   in a strike at that spot.
 - **Buy your army with gold.** Soldiers are recruited with gold and stay yours until a Time Rift. Each unit type's price
   is set by its era, so a new era's units are expensive at first: the recruit button fills up as you save towards them.
-  Each extra soldier of the same type costs 1% more. Gold also trains a unit type to higher levels.
+  Each extra soldier of the same type costs 1% more. Gold also trains a unit type to higher levels. Every level makes
+  the unit stronger and also makes it attack faster: about +14% attack speed by level 10, +31% by level 25 and +50% by
+  level 50, approaching +75%. Each blow is lighter by the same share, so a level's damage per second (and the game's
+  balance, checked with the headless bot) is the same as before; the soldiers just swing, shoot and fire more often,
+  and their attack animation speeds up to match. Opening blows (charges, first strikes) and burning keep their full weight.
 - **Build your battle line.** Your army has a capacity (30 at the start, 10 more with every era you reach). Infantry and
   ranged soldiers take 1, cavalry 2 and heavy units 4. In the **Army** tab, choose how many of the soldiers you own march
   into battle (hold + or - to repeat) and mix eras freely. **Auto-build** sends your strongest soldiers instead.
@@ -137,9 +141,14 @@ reached. Later eras and the mystery leaders stay secret until you get there.
 The battlefield fills the whole screen on every device. A slim bar on top shows the era, stage and resources; the dock at
 the bottom holds your leaders (tap one for their special), the next-leader tracker and a six-button bar: **Army**, **Team**
 (commanders, positions, specials and prestige), **Codex** (the leaders you have found, searchable, with their attributes,
-specials and prestige goals), **Doctrines**, **Rift** and **Settings** (auto-advance, auto specials, sound, saves). Held upright, the
+specials and prestige goals), **Doctrines**, **Rift** and **Settings** (auto-advance, auto specials, camera zoom, sound, saves). Held upright, the
 battle zooms in a little and the era's scene carries on above and below it; turned sideways, the console shrinks to one
 slim row along the bottom and the menus open as a side drawer.
+
+**The camera follows the size of the battle.** It frames the soldiers on the field: a few dozen fill the screen
+(up to 1.6x closer), a few hundred are shown whole, and as the fighting thins the armies out it eases slowly in on what
+is left (less far for battles that started big). It never zooms out past the whole field, and **Settings → Camera
+zoom** turns it off. Sprites are prepared at the camera's size, so they stay pixel for pixel at any zoom.
 
 Saves are stored in the browser's `localStorage` on each device. Use **Settings → Export save** to move a game between devices.
 
@@ -170,6 +179,19 @@ win, a hit frame when struck, and the knock-out row when they fall (an enemy lea
 ground). The same sheet is mirrored for your side, drawn at double size as an enemy leader, and the portrait replaces
 the generated one in the chips, Team page and Codex. To add another character, drop a sheet and portrait in
 `img/leaders/<id>/` and add a `CW.CUSTOM` entry for that leader's id.
+
+Body frames are the base sheet's 48x52 cell with a margin (16 px on each side, 8 on top) so raised swords, long spears
+and rifles, tall hats, crowns and horns are drawn in full; the figure keeps its place in the frame. Vehicles and animals
+get a margin too (barrels, muzzle flashes, noses, tails), and a mount's canvas grows to fit its rider's head and lance.
+
+**Scenery by era.** Each era has its own props, drawn as shaded pixel art with dark outlines (`ERA_PROPS` in
+`js/art.js`): a treeline just behind the far edge of the field, groves in the empty corners beside the battle, and low
+props in the foreground where soldiers stand in front of them. Stone Age leafy trees, ferns and mossy boulders; Bronze
+Age palms and obelisks; Classical cypresses, olive trees and broken columns; Viking snowy pines and rune stones;
+Medieval and Gunpowder tents, banners, haystacks, fences and barrels; Industrial and World War dead trees, smokestacks,
+sandbags, barbed wire, tank traps and ruined walls; Cold War and Modern masts, concrete barriers, crates and oil drums;
+Future neon lamps and holo pillars; Space Age dishes and domes; Galactic crystal spires and glowing alien mushrooms.
+Nothing tall stands where soldiers walk.
 
 The battlefield is a tilted top-down view: soldiers further away are drawn smaller and higher up. Sprites are prepared
 at a handful of fixed sizes so they grow in clean pixel steps as they move toward the camera instead of shimmering, and

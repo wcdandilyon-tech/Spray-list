@@ -12,6 +12,8 @@
     eraPow: 2.6, // unit power per era
     lvlStep: 0.15, // +15% base per level
     lvlMilestone: 25, // x2 every 25 levels
+    lvlAspd: 0.75, // training also quickens attacks, approaching +75% attack speed...
+    lvlAspdScale: 45, // ...gradually (about +14% by Lv 10, +31% by Lv 25, +50% by Lv 50)
     costGrowth: 1.125,
     costBase: 15,
     eraCost: 2.9,
@@ -342,6 +344,10 @@
   const eraPow = (e) => Math.pow(CFG.eraPow, e);
   const lvlMult = (L) => (1 + CFG.lvlStep * (L - 1)) * Math.pow(2, Math.floor(L / CFG.lvlMilestone));
   CW.lvlMult = lvlMult;
+  // each level of training also makes a soldier attack faster; each hit is lighter by the same share, so the level's
+  // damage per second (and the game's balance) is unchanged; the soldiers just swing, shoot and fire more often
+  const lvlAspd = (L) => CFG.lvlAspd * (1 - Math.exp(-(L - 1) / CFG.lvlAspdScale));
+  CW.lvlAspd = lvlAspd;
   function bounty() {
     const m = mods();
     return CFG.bounty * growth(S.stage) * (1 + m.gold + (B && B.sa ? B.sa.gold : 0)) * m.shard;
@@ -618,11 +624,13 @@
     const h = 1 + m.hp + m[u.role] + m.lead + (ctx.combo ? m.combined : 0) + (ua.hp || 0);
     let hp = r.hp * base * h;
     if (u.trait === 'guard') hp *= 1.3;
-    let int = r.int / (1 + (ua.aspd || 0));
+    const qa = lvlAspd(CW.unitLevel(id));
+    let int = r.int / (1 + (ua.aspd || 0)) / (1 + qa);
     if (u.trait === 'swift') int /= 1.35;
+    int = Math.max(0.25, int);
     const range = (u.range !== undefined ? u.range : r.range) * (1 + (ua.range || 0)) * (u.trait === 'snipe' ? 1.5 : 1);
     const speed = (u.speed || r.speed) * (1 + (ua.move || 0) + m.move) * (u.trait === 'swift' ? 1.2 : 1);
-    return { hp, atk: r.atk * base * a, int, range, speed, ua };
+    return { hp, atk: (r.atk * base * a) / (1 + qa), int, range, speed, ua, aspd: qa };
   }
   CW.unitStats = (id) => unitStats(id, armyContext());
   function enemyStats(u, g) {
@@ -645,7 +653,7 @@
     const r = ROLES[u.role];
     return {
       id: eid++, side, uid: id, lid: null, kind: 'unit', role: u.role, trait: u.trait, era: u.era, x: 0, z: 0,
-      hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, range: st.range, speed: st.speed, ua: st.ua,
+      hp: st.hp, maxHp: st.hp, atk: st.atk, int: st.int, range: st.range, speed: st.speed, ua: st.ua, qa: st.aspd || 0,
       rad: r.rad * (u.size || 1), proj: u.proj !== undefined ? u.proj : r.proj || null, splash: u.splash !== undefined ? u.splash : r.splash || 0,
       air: !!u.air, cost: r.cost, t: Math.random() * st.int, rt: 0, target: null, alive: true, stun: 0, struck: false,
       face: side === 'a' ? 1 : -1, moving: false, flash: 0, lunge: 0, burn: null, revived: false, down: 0, isHero: false, isBoss: false,
@@ -752,6 +760,7 @@
       q.hp = q.alive ? st.hp * ratio : 0;
       q.atk = st.atk;
       q.int = st.int;
+      q.qa = st.aspd || 0;
       q.range = st.range;
       q.speed = st.speed;
       q.ua = st.ua;
@@ -1035,6 +1044,8 @@
     let dmg = a.atk * (ally ? allyAtkMult() : enemyAtkMult());
     if (!a.struck) {
       a.struck = true;
+      // the opening blow lands with the full weight of a trained soldier's level, however quick their later strikes are
+      dmg *= 1 + (a.qa || 0);
       if (a.trait === 'charge') dmg *= 4;
       if (ua.charge) dmg *= 1 + ua.charge;
       if (ally && m.firstStrike) dmg *= 1 + m.firstStrike;
@@ -1087,7 +1098,7 @@
       }
       const stn = (ally ? B.sa.stun : B.se.stun) + (a.trait === 'stun' ? 0.15 : 0) + (ua.stun || 0);
       if (stn && t.alive && Math.random() < stn) t.stun = Math.max(t.stun, t.isBoss ? 0.5 : 1);
-      if (ua.burn && t.alive) t.burn = { dps: (dmg * ua.burn) / 3, t: 3 };
+      if (ua.burn && t.alive) t.burn = { dps: (dmg * (1 + (a.qa || 0)) * ua.burn) / 3, t: 3 };
       if (B.fx.length < 400) B.fx.push({ k: 'hit', to: t.id, crit, dmg: done, side: a.side });
     }
   }
