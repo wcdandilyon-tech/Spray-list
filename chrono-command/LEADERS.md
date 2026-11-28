@@ -37,7 +37,7 @@ An Ice Age chieftain of the Neanderthals, the stocky, big-brained cousins of mod
 - **Mammoth Hunt** (third attribute): +24% gold
 
 **Special moves**
-- **Cave Bear Ambush** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned
+- **Cave Bear Ambush** (charge, 100% meter; starts unlocked): The nearest 40% of the enemy army loses 69% health and is stunned. A spirit cave bear then stampedes straight through the enemy lines: everyone in its path loses 19% of their health (leaders 4%), is knocked back and stunned
 - **Firelit Cavern** (shield, 80% meter; prestige 1: win 25 battles): Your army can't be hurt for 4.0 seconds
 - **Healing Herbs** (heal, 80% meter; prestige 2: win 200 battles without falling): Your whole army heals 56% of its health
 

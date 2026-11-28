@@ -1257,6 +1257,59 @@
     return c;
   }
   CW.propCanvas = propCanvas;
+  // the Neanderthal Chief's spirit cave bear: icy blue and glowing, mid-gallop (4 frames), jaws open, facing right.
+  // Drawn at 2 pixels per field unit, like the backdrops.
+  const bearCache = new Map();
+  CW.spiritBear = function (f, flip) {
+    const key = f + (flip ? 'f' : '');
+    let c = bearCache.get(key);
+    if (c) return c;
+    const G = new Grid(66, 46);
+    const pal = ['#f2fdff', '#aee6fb', '#64b6ea', '#2e6aac'];
+    const rand = rnd(17 + f);
+    const bob = f === 1 || f === 3 ? -1 : 0;
+    // legs first, so the body overlaps their tops: front pair and back pair, swinging through the gallop
+    const swing = [[7, -8], [1, 1], [-6, 8], [1, 1]][f];
+    const leg = (x, dx, near) => {
+      line(G, x, 30 + bob, x + dx, 41, near ? 4 : 3, near ? pal[2] : pal[3]);
+      box(G, x + dx - 2, 41, 5, 2, near ? pal[1] : pal[2]);
+      for (let i = 0; i < 3; i++) G.set(x + dx - 1 + i + (dx >= 0 ? 2 : -1), 43, '#ffffff');
+    };
+    leg(45, swing[0] - 2, false);
+    leg(18, swing[1] + 2, false);
+    leg(47, swing[0], true);
+    leg(16, swing[1], true);
+    ball(G, 15, 23 + bob, 11, 10, pal, 0.18, rand);
+    ball(G, 29, 24 + bob, 19, 11, pal, 0.18, rand);
+    ball(G, 39, 17 + bob, 11, 9, pal, 0.18, rand);
+    ball(G, 53, 18 + bob, 9, 8, pal, 0.1, rand);
+    ball(G, 61, 21 + bob, 5, 4, pal, 0, rand);
+    ball(G, 48, 10 + bob, 3, 3, pal, 0, rand);
+    ball(G, 55, 9 + bob, 3, 3, pal, 0, rand);
+    G.set(48, 10 + bob, pal[3]);
+    G.set(55, 9 + bob, pal[3]);
+    // open jaws with white teeth, a dark eye with a bright glint, a few fur strokes
+    line(G, 55, 24 + bob, 64, 23 + bob, 2, '#1a2e5a');
+    for (const x of [57, 59, 61, 63]) G.set(x, 23 + bob, '#ffffff');
+    G.set(56, 16 + bob, '#1a2e5a');
+    G.set(57, 16 + bob, '#1a2e5a');
+    G.set(56, 15 + bob, '#ffffff');
+    for (let i = 0; i < 7; i++) G.set(14 + i * 5, 16 + bob + (i % 2), pal[0]);
+    G.glow.push({ x: 33, y: 22, r: 9, col: '#9adcff' });
+    c = gridCanvas(G);
+    if (flip) {
+      const m = canvas(c.width, c.height);
+      const mg = m.getContext('2d');
+      mg.translate(c.width, 0);
+      mg.scale(-1, 1);
+      mg.drawImage(c, 0, 0);
+      m.ax = c.width - c.ax;
+      m.ay = c.ay;
+      c = m;
+    }
+    bearCache.set(key, c);
+    return c;
+  };
   // the props of one scene: what stands where (field units), back to front
   function sceneProps(era, VW, OX, zMax) {
     const P = ERA_PROPS[era] || ERA_PROPS[0];

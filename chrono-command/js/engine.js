@@ -1403,6 +1403,10 @@
     const dir = side === 'a' ? 1 : -1;
     const x = src ? src.x : side === 'a' ? FX * 0.45 : FX * 0.55;
     const z = src ? src.z : FZ / 2;
+    if (lf.kind === 'bear') {
+      B.zones.push({ id: eid++, kind: 'bear', side, lid, x, x0: x, z, dir, half: lf.half, speed: lf.speed, pct: lf.pct * k, lead: lf.lead * k, knock: lf.knock, stun: lf.stun, hit: new Set(), t: 0 });
+      return;
+    }
     const xa = x + dir * 6;
     const xb = x + dir * lf.len;
     B.zones.push({
@@ -1410,9 +1414,37 @@
       z0: Math.max(0, z - lf.half), z1: Math.min(FZ, z + lf.half), t: lf.t, T: lf.t, pct: lf.pct * k, lead: lf.lead * k,
     });
   }
+  // the spirit bear runs its lane and mauls each foe on foot it reaches, once
+  function bearTick(f, dt) {
+    const x0 = f.x;
+    f.x += f.dir * f.speed * dt;
+    f.t += dt;
+    const lo = Math.min(x0, f.x) - 6;
+    const hi = Math.max(x0, f.x) + 6;
+    for (const q of f.side === 'a' ? B.e : B.a) {
+      if (!q.alive || q.air || f.hit.has(q.id)) continue;
+      if (Math.abs(q.z - f.z) > f.half + q.rad || q.x < lo || q.x > hi) continue;
+      f.hit.add(q.id);
+      const b = big(q);
+      q.hp -= q.maxHp * (b ? f.lead : f.pct);
+      q.flash = 1;
+      q.x = Math.max(-20, Math.min(FX + 20, q.x + f.dir * f.knock * (b ? 0.25 : 1)));
+      if (B.fx.length < 400) B.fx.push({ k: 'maul', x: q.x, z: q.z, dir: f.dir });
+      if (q.hp <= 0) {
+        q.hp = 0;
+        q.alive = false;
+        onDeath(q, null, true);
+      } else q.stun = Math.max(q.stun, b ? f.stun * 0.4 : f.stun);
+    }
+    return f.x < -40 || f.x > FX + 40;
+  }
   function fireTick(dt) {
     for (let i = B.zones.length - 1; i >= 0; i--) {
       const f = B.zones[i];
+      if (f.kind === 'bear') {
+        if (bearTick(f, dt)) B.zones.splice(i, 1);
+        continue;
+      }
       f.t -= dt;
       if (f.t <= 0) {
         B.zones.splice(i, 1);
@@ -1464,7 +1496,9 @@
   };
   CW.specialText = (sp) => {
     const lf = sp.lid && CW.LINGER && CW.LINGER[sp.lid + ':' + sp.name];
-    return STXT[sp.t](sp.k) + (lf ? `. A wall of fire stays on the ground for ${lf.t} seconds: anyone who touches it loses ${pcS(lf.pct * sp.k)} of their health every second (leaders ${pcS(lf.lead * sp.k)})` : '');
+    if (!lf) return STXT[sp.t](sp.k);
+    if (lf.kind === 'bear') return STXT[sp.t](sp.k) + `. A spirit cave bear then stampedes straight through the enemy lines: everyone in its path loses ${pcS(lf.pct * sp.k)} of their health (leaders ${pcS(lf.lead * sp.k)}), is knocked back and stunned`;
+    return STXT[sp.t](sp.k) + `. A wall of fire stays on the ground for ${lf.t} seconds: anyone who touches it loses ${pcS(lf.pct * sp.k)} of their health every second (leaders ${pcS(lf.lead * sp.k)})`;
   };
   CW.posText = (lid) =>
     CW.prefPos(lid) === 'front'

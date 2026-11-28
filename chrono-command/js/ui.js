@@ -430,6 +430,16 @@
     gg.drawImage(body, Math.round(P.x * K0 - body.width / 2), Math.round(P.y * K0 - body.height * (plain ? 0.75 : 0.5 + 12 / (CW.bodyFW || 48))));
     gg.globalAlpha = 1;
   }
+  function clawMarks(x, z, dir) {
+    const P = proj(x + (Math.random() - 0.5) * 4, z + (Math.random() - 0.5) * 4);
+    const bx = Math.round(P.x * K0);
+    const by = Math.round(P.y * K0);
+    const n = Math.max(4, Math.round(8 * P.s));
+    gg.globalAlpha = 0.5;
+    gg.fillStyle = '#2a1e18';
+    for (let i = 0; i < 3; i++) for (let j = 0; j < n; j++) gg.fillRect(bx + i * 4 + j * dir, by - 3 + i + Math.round(j * 0.5), 2, 1);
+    gg.globalAlpha = 1;
+  }
   function scorch(x, z, r) {
     const P = proj(x, z);
     const w = r * 2.4 * P.s * K0;
@@ -504,6 +514,11 @@
         }
         burst(c.x, c.y, q.isBoss ? 18 : 4, q.side === 'e' ? '#c8c0b0' : '#9ad8ff');
         if (!q.isHero) bakeBody(q);
+      } else if (e.k === 'maul') {
+        // the spirit bear's swipe: a spray of frost and claw marks torn into the ground
+        const P = proj(e.x, e.z);
+        burst(P.x, P.y - 7 * P.s, 5, Math.random() < 0.5 ? '#bfefff' : '#ffffff');
+        clawMarks(e.x, e.z, e.dir);
       } else if (e.k === 'blast') {
         const P = proj(e.x, e.z);
         boom(P.x, P.y - 3 * P.s, e.r * P.s, e.side === 'a' ? '#ffd23f' : '#ff7a3a');
@@ -1059,6 +1074,17 @@
   const FLAME = ['#6a1408', '#c8320e', '#f26a14', '#ffb02a', '#fff2a8'];
   function fireGround(B, dt, t) {
     for (const f of B.zones) {
+      if (f.kind === 'bear') {
+        // the spirit bear joins the depth order like a soldier, with a frosty trail behind it
+        const o = f._o || (f._o = { kind: 'bear', air: false, zone: f });
+        o.x = f.x;
+        o.z = f.z;
+        o._P = proj(Math.max(-60, Math.min(420, f.x)), f.z);
+        order.push(o);
+        if (Math.random() < dt * 30 && parts.length < 260)
+          parts.push({ x: o._P.x - f.dir * 10 * o._P.s, y: o._P.y - Math.random() * 14 * o._P.s, vx: -f.dir * 20, vy: -4, t: 0, life: 0.5, col: Math.random() < 0.5 ? '#bfefff' : '#ffffff', kind: 'up' });
+        continue;
+      }
       if (!f._fl) {
         f._fl = [];
         for (let x = f.x0 + 3; x < f.x1; x += 7)
@@ -1092,6 +1118,26 @@
           parts.push({ x: fl._P.x + (Math.random() - 0.5) * 3, y: fl._P.y - 9 * fl._P.s, vx: (Math.random() - 0.5) * 12, vy: 0, t: 0, life: 0.7, col: Math.random() < 0.5 ? FLAME[3] : FLAME[4], kind: 'up' });
       }
     }
+  }
+  function drawBear(o, t) {
+    const f = o.zone;
+    const P = o._P;
+    const img = CW.spiritBear(Math.floor(t * 14) % 4, f.dir < 0);
+    const s = sized(img, P.s * 1.15 * Z);
+    const k = s.width / img.width;
+    const x = P.x - (img.ax * k) / K;
+    const y = P.y - (img.ay * k) / K + 1;
+    // fade in as it leaves the Chief, out as it runs off the field
+    const edge = Math.min(1, f.t / 0.15, Math.max(0, (f.dir > 0 ? CW.FX + 40 - f.x : f.x + 40) / 30));
+    g.globalAlpha = 0.9 * edge;
+    // speed lines streaming behind it
+    for (let i = 0; i < 5; i++) {
+      const len = (10 + ((i * 7) % 11)) * P.s;
+      const ly = P.y - (4 + i * 3.6) * P.s;
+      R(f.dir > 0 ? P.x - (img.ax * k) / K - len - 2 : P.x + (img.ax * k) / K + 2, ly, len, 0.5, i % 2 ? '#d8f6ff' : '#9adcff');
+    }
+    blit(s, x, y);
+    g.globalAlpha = 1;
   }
   // one tongue of fire: a dark-red base narrowing to an orange tip, with a yellow heart and a white-hot core
   function drawFlame(fl, t) {
@@ -1208,6 +1254,7 @@
     for (const q of order) {
       if (q.kind === 'unit') drawUnit(q, t, B);
       else if (q.kind === 'flame') drawFlame(q, t);
+      else if (q.kind === 'bear') drawBear(q, t);
       else drawHero(q, t, B);
     }
     drawProj(B);

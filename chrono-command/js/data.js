@@ -1460,11 +1460,16 @@
     },
   };
 
-  // specials that leave fire on the ground ('leader:special'): a strip running ahead of the leader that burns whoever
-  // touches it. len and half are field units (how far ahead it runs, how wide it is either side of the leader); t is
-  // seconds; pct and lead are the share of health lost each second by soldiers and by leaders (times the special's power)
+  // specials with something of their own on the battlefield ('leader:special'), on top of what their kind does:
+  // - fire: a strip of burning ground running ahead of the leader. len and half are field units (how far ahead it runs,
+  //   how wide either side of the leader), t is seconds, pct and lead the share of health soldiers and leaders lose
+  //   each second they touch it (times the special's power)
+  // - bear: a spirit cave bear that bursts out of the leader and stampedes straight across the field along a lane
+  //   (half wide either side), mauling everyone in its path once: pct / lead of their health (times the special's
+  //   power), knocked back knock field units and stunned for stun seconds
   CW.LINGER = {
-    'firekeeper:Wildfire': { t: 5, len: 60, half: 15, pct: 0.05, lead: 0.01 },
+    'firekeeper:Wildfire': { kind: 'fire', t: 5, len: 60, half: 15, pct: 0.05, lead: 0.01 },
+    'neanderthal:Cave Bear Ambush': { kind: 'bear', speed: 150, half: 16, pct: 0.15, lead: 0.03, knock: 14, stun: 1.5 },
   };
 
   // where each class leads best: fighters at the front, thinkers behind the army
