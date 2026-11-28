@@ -1878,9 +1878,63 @@
     S.partners = [p0, p1].filter(Boolean);
     if (S.champs) S.champs = S.champs.filter((id) => !ids.includes(id));
     M = null;
+    swapHeroes();
     emit('command');
     return true;
   };
+  // a new team takes the field at once: each newcomer steps into the place of the leader they replace, with the same
+  // share of health (a fallen leader's replacement stays down, so swapping can't heal or revive anyone)
+  function swapHeroes() {
+    if (!B) return;
+    const ctx = armyContext();
+    const old = B.a.filter((q) => q.isHero && !q.champ);
+    const ids = commandIds();
+    const leaving = old.filter((q) => !ids.includes(q.lid));
+    const out = new Set();
+    ids.forEach((lid, i) => {
+      const st = heroStats(lid, i === 0, ctx);
+      const have = old.find((q) => q.lid === lid);
+      if (have) {
+        const ratio = have.maxHp > 0 ? have.hp / have.maxHp : 1;
+        have.main = i === 0;
+        have.maxHp = st.hp;
+        have.hp = have.alive ? st.hp * ratio : 0;
+        have.atk = st.atk;
+        return;
+      }
+      const q = mkHero(lid, i, st);
+      const base = old[i] && !ids.includes(old[i].lid) && !out.has(old[i]) ? old[i] : leaving.find((h) => !out.has(h));
+      if (base) {
+        out.add(base);
+        if (B.phase !== 'deploy') {
+          if (!q.hold) q.x = base.x;
+          q.z = base.z;
+          q.face = base.face;
+        }
+        const ratio = base.maxHp > 0 ? base.hp / base.maxHp : 1;
+        q.alive = base.alive;
+        q.hp = base.alive ? q.maxHp * ratio : 0;
+        q.down = base.down;
+        q.revived = base.revived;
+        B.a[B.a.indexOf(base)] = q;
+        B.ents[B.ents.indexOf(base)] = q;
+        base.alive = false;
+      } else {
+        B.a.push(q);
+        B.ents.push(q);
+      }
+    });
+    // a leader promoted out of the ranks leaves their place in the ranks
+    for (const h of B.a.filter((q) => q.champ && ids.includes(q.lid))) leaving.push(h);
+    for (const h of leaving) {
+      if (out.has(h)) continue;
+      h.alive = false;
+      B.a.splice(B.a.indexOf(h), 1);
+      B.ents.splice(B.ents.indexOf(h), 1);
+    }
+    B.lids = ids.concat(CW.champs());
+    sides();
+  }
 
   // ------------------------------------------------------------ battle controls
   CW.challenge = function () {

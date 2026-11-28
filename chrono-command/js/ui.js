@@ -1246,8 +1246,9 @@
   // the Commanders sheet: full cards with each leader's attributes
   function renderCommand() {
     const st = S();
+    const spare = Object.keys(st.roster).length > [st.main].concat(st.partners).filter(Boolean).length;
     const card = (lid, i) => {
-      if (!lid) return '<div class="partner box"><div class="who"><b>Open slot</b><small>Win leader battles to recruit partners</small></div></div>';
+      if (!lid) return `<div class="partner box"><div class="who"><b>Open slot</b><small>${spare ? 'Pick one of your leaders as a partner' : 'Win leader battles to recruit partners'}</small>${spare ? `<button class="swapb" data-act="swap" data-w="${i}">Choose a partner</button>` : ''}</div></div>`;
       const L = LEADER[lid];
       const r = st.roster[lid];
       const main = i === 0;
@@ -1255,15 +1256,15 @@
       const pos = CW.leaderPos(lid);
       const pref = CW.prefPos(lid);
       const pb = (v, label) => `<button data-act="pos" data-id="${lid}" data-pos="${v}" aria-pressed="${pos === v}">${label}${pref === v ? '<span class="fit">★</span>' : ''}</button>`;
-      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)} ${pips(lid)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small></div>
+      return `<div class="${main ? 'lead' : 'partner'} box" data-card="${lid}"><img class="px" src="${CW.portraitURL(lid)}" alt=""><div class="who"><b>${esc(L.name)} ${pips(lid)}</b><small>${main ? `<span title="${esc(cl.d)}">${esc(cl.name)}</span>` : 'Partner'} · <span class="nw">Lv ${r.lv}</span> ${stars(r.stars)}</small>${spare ? `<button class="swapb" data-act="swap" data-w="${i}">Swap ${main ? 'commander' : 'partner'}</button>` : ''}</div>
         <div class="pos" role="group" aria-label="Where ${esc(short(lid))} fights">${pb('front', 'Front lines')}${pb('back', 'Behind the army')}</div>
         <p class="excel">${esc(CW.posText(lid))}</p>
         <ul class="attrs">${attrRows(lid, main ? [0, 1, 2] : [1], CW.attrStrength(lid, main ? 'main' : 'partner'))}</ul>
         <ul class="sps2">${specialRows(lid, true)}</ul></div>`;
     };
-    return `<div class="phead"><h2>Team</h2>${st.council ? '<button class="btn blue" data-act="council">Change at the War Council</button>' : ''}</div>
+    return `<div class="phead"><h2>Team</h2></div>
       <div class="cards">${card(st.main, 0)}${card(st.partners[0], 1)}${card(st.partners[1], 2)}</div>
-      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. ★ marks where a leader excels; positions apply from the next battle. Each leader equips one special at a time; their meter fills as your soldiers defeat enemies. ${CW.prestigeUnlocked() ? 'Prestige a leader by meeting their goal to unlock their next special (+25% strength on the field and +20% attributes each time).' : 'Leader prestige opens once the main story is over (finish the Galactic Age): then each leader can unlock two more specials by meeting their own goals.'}</p>`;
+      <p class="note">Your commander brings all three attributes and a class bonus; each partner brings one. Swap in any leader you have recruited: they step onto the battlefield right away. ★ marks where a leader excels; positions apply from the next battle. Each leader equips one special at a time; their meter fills as your soldiers defeat enemies. ${CW.prestigeUnlocked() ? 'Prestige a leader by meeting their goal to unlock their next special (+25% strength on the field and +20% attributes each time).' : 'Leader prestige opens once the main story is over (finish the Galactic Age): then each leader can unlock two more specials by meeting their own goals.'}</p>`;
   }
   let deckEls = null;
   function updateDeck() {
@@ -1780,6 +1781,7 @@
       CW.setChamp(b.dataset.id, false);
       renderPanel();
     } else if (act === 'council') openCouncil();
+    else if (act === 'swap') openSwap(+b.dataset.w);
     else if (act === 'leader') openLeader(b.dataset.id);
     else if (act === 'rift') openRiftConfirm();
     else if (act === 'save') {
@@ -1963,17 +1965,14 @@
       closeModal();
       renderPanel();
     } else if (act === 'setlead') {
-      const st = S();
-      const arr = [st.main, st.partners[0] || null, st.partners[1] || null];
-      const id = b.dataset.id;
-      const at = arr.indexOf(id);
-      if (at >= 0) arr[at] = arr[picker.w];
-      arr[picker.w] = id;
-      if (!arr[0]) arr[0] = id;
-      CW.setCommand(arr[0], arr[1], arr[2]);
+      placeLeader(b.dataset.id, picker.w);
       picker = null;
-      renderDeck();
       renderCouncil();
+    } else if (act === 'place') {
+      const id = b.dataset.id;
+      if (placeLeader(id, +b.dataset.w)) SFX.play('buy');
+      if (modalKind === 'leader') openLeader(id);
+      else closeModal();
     } else if (act === 'later') {
       modalKind = null;
       picker = null;
@@ -2083,6 +2082,17 @@
       <div class="acts">${c.picks ? '<button class="btn ghost" data-act="later">Decide later</button>' : '<button class="btn" data-act="close">Back to battle</button>'}</div>`;
   }
 
+  // a recruited leader's page offers their team slots: commander, or partner in place of someone
+  function teamButtons(id) {
+    const st = S();
+    const team = [st.main, st.partners[0] || null, st.partners[1] || null];
+    let h = id === st.main ? '' : `<button class="btn blue" data-act="place" data-id="${id}" data-w="0">Make commander</button>`;
+    for (const w of [1, 2]) {
+      if (team[w] === id || (w === 2 && !team[1] && !team[2])) continue;
+      h += `<button class="btn ghost" data-act="place" data-id="${id}" data-w="${w}">${team[w] ? 'Partner instead of ' + esc(short(team[w])) : 'Make partner'}</button>`;
+    }
+    return h;
+  }
   function openLeader(id) {
     const st = S();
     const l = LEADER[id];
@@ -2097,6 +2107,7 @@
     showModal(
       'leader',
       `<div class="lead" style="grid-template-columns:auto minmax(0,1fr)"><img class="px" src="${CW.portraitURL(id)}" alt="" style="width:128px;height:128px"><div class="who"><h2>${esc(l.name)}</h2><small>${esc(l.title)} · ${esc(l.yrs)}</small><small>${l.era === NERA ? 'Mystery · Shattered Time' : 'Era ' + ERAS[l.era].roman + ' · ' + ERAS[l.era].name} · ${esc(role)}</small>${r ? `<small>Level ${r.lv} ${stars(r.stars)}</small>` : ''}</div></div>
+      ${r && id !== st.main ? `<div class="acts tm">${teamButtons(id)}</div>` : ''}
       <p class="bio">${esc(l.bio)}</p>
       <h3>Attributes · always on</h3><div class="sklist">${[0, 1, 2].map((i) => `<div class="sk"><em>${labels[i]}</em><b>${esc(CW.attr(id, i).name)}</b>: ${esc(CW.attrText(id, i, r ? CW.attrStrength(id, i === 1 && st.main !== id ? 'partner' : 'main') : 1))}</div>`).join('')}<div class="sk"><em>Commander bonus · ${esc(cl.name)}</em>${esc(cl.d)}</div></div>
       <h3>Specials · one equipped at a time ${pips(id)}</h3>${CW.prestigeUnlocked() ? '' : '<p class="note">Prestige opens once the main story is over (finish the Galactic Age). Goals count from then on.</p>'}<ul class="sps2">${specialRows(id, !!r)}</ul>
@@ -2105,6 +2116,48 @@
       <div class="acts">${r ? `<button class="btn" data-act="train" data-id="${id}" ${CW.trainCost(id) > st.gold ? 'disabled' : ''}>Train to Lv ${r.lv + 1} · ${fmt(CW.trainCost(id))}</button>` : ''}<button class="btn ghost" data-act="close">Close</button></div>`
     );
   }
+
+  // put a recruited leader in a team slot (0 = commander, 1-2 = partners); someone already on the team trades places
+  function placeLeader(id, w) {
+    const st = S();
+    const arr = [st.main, st.partners[0] || null, st.partners[1] || null];
+    const at = arr.indexOf(id);
+    if (at >= 0) arr[at] = arr[w];
+    arr[w] = id;
+    if (!arr[0]) arr[0] = id;
+    const ok = CW.setCommand(arr[0], arr[1], arr[2]);
+    if (ok) renderDeck();
+    return ok;
+  }
+  function openSwap(w) {
+    const st = S();
+    const team = [st.main, st.partners[0], st.partners[1]];
+    const ids = LEADERS.filter((l) => st.roster[l.id]).map((l) => l.id);
+    const role = (id) => (id === st.main ? 'Commander' : st.partners.includes(id) ? 'Partner' : CW.champs().includes(id) ? 'In the ranks' : '');
+    const rows = ids
+      .map((id) => {
+        const l = LEADER[id];
+        const r = st.roster[id];
+        const here = team[w] === id;
+        const tag = role(id);
+        const hay = (l.name + ' ' + CLASSES[l.cls].name + ' ' + (l.era === NERA ? 'mystery' : ERAS[l.era].name)).toLowerCase();
+        return `<button class="pick${here ? ' sel' : ''}" data-act="place" data-id="${id}" data-w="${w}" data-hay="${esc(hay)}" ${here ? 'disabled' : ''}><img class="px" src="${CW.headURL(id)}" alt=""><span><em>${tag ? esc(tag) + ' · ' : ''}Lv ${r.lv} · ${esc(CLASSES[l.cls].name)}</em><b>${esc(l.name)}</b><small class="hint">${esc(w === 0 ? CW.attr(id, 0).name + ' +2 more' : CW.attr(id, 1).name)}</small></span></button>`;
+      })
+      .join('');
+    showModal(
+      'swap',
+      `<h2>Choose your ${w === 0 ? 'commander' : 'partner'}</h2>
+      <p class="note">${w === 0 ? 'Your commander brings all three attributes and their class bonus.' : 'A partner brings their middle attribute.'} The leader you pick steps onto the battlefield right away${team[w] ? ', taking ' + esc(short(team[w])) + "'s place" : ''}. Picking someone already on your team swaps their places.</p>
+      ${ids.length > 12 ? '<input class="swq" id="swq" type="search" placeholder="Find a leader" autocomplete="off">' : ''}
+      <div class="chooser swl">${rows}</div>
+      <div class="acts"><button class="btn ghost" data-act="close">Close</button></div>`
+    );
+  }
+  el.dlg.addEventListener('input', (e) => {
+    if (e.target.id !== 'swq') return;
+    const q = e.target.value.trim().toLowerCase();
+    for (const b of el.dlg.querySelectorAll('.swl .pick')) b.hidden = !!q && !b.dataset.hay.includes(q);
+  });
 
   function openRiftConfirm() {
     const n = CW.riftShards();
@@ -2567,6 +2620,10 @@
     if (!info.isBoss || !S().guide.seen.boss) return;
     if (info.mystery) chat('mystery', {});
     else if (Math.random() < 0.7) chat('boss', { name: LEADER[info.bossId].name, title: LEADER[info.bossId].title.replace(/^The /, 'the ') });
+  });
+  CW.on('command', () => {
+    const B = CW.battle();
+    if (B) for (const q of B.ents) if (!ents.has(q.id)) ents.set(q.id, q);
   });
   CW.on('special', (e) => {
     if (e.side === 'a' && gCur && gCur.tip && gCur.tip.ev2 === 'special') return stopTalking();

@@ -34,6 +34,11 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   assassin, Robo Hitler, an android queen, a neon shogun, a space admiral, the Archon) and, once time shatters, the Devil, Santa Claus and God.
 - **Commanders on the battlefield.** Your commander and two partners fight in the battle as full-body sprites. If one
   falls, their attributes switch off for the rest of that battle.
+- **Change your team any time.** Every leader you defeat joins your roster. Tap **Swap** on a Team card to pick any of
+  them as commander or partner, or open a leader in the Codex and tap **Make commander** or **Partner instead of ...**.
+  The new leader steps onto the battlefield at once, in the place and with the same share of health as the leader they
+  replace (a fallen leader's replacement stays down until the next battle). Picking someone already on the team swaps
+  their places.
 - **Front lines or behind the army.** Choose where each leader fights in the Team tab. Warriors, conquerors,
   revolutionaries and defenders excel at the front (+20% attribute strength and +50% damage there); strategists, tyrants,
   statesmen, peacemakers and orators excel commanding from behind (+20% attribute strength and a 30% faster special meter,
@@ -61,8 +66,8 @@ Open `index.html` in any browser to play. No build step, no installs, no server 
   Your commander brings all three plus a class bonus; each of your two partners brings one. The full list of leaders with
   every attribute and special is in [LEADERS.md](LEADERS.md).
 - **War Council.** After every leader battle you draw a **random doctrine** (31 army-management bonuses such as
-  Conscription for more army capacity, Supply Lines, Combined Arms, Cavalry School, Field Hospitals) and can
-  reassign your commander and partners.
+  Conscription for more army capacity, Supply Lines, Combined Arms, Cavalry School, Field Hospitals). You can also
+  reassign your commander and partners there.
 - **The time pathway.** Fourteen eras in order: Stone Age, Bronze Age, Classical, Viking Age, Medieval, Gunpowder,
   Revolution, Industrial, World War, Cold War, Modern, Future, Space Age and Galactic Age.
 - **Shattered Time.** Once the pathway is finished, time breaks: every era after that is picked at random, enemy armies
